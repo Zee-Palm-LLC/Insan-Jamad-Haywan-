@@ -1,25 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:insan_jamd_hawan/data/constants/app_colors.dart';
-import 'package:insan_jamd_hawan/data/constants/app_typography.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:insan_jamd_hawan/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/modules/widgets/buttons/custom_icon_button.dart';
 
 class RoomCodeText extends StatelessWidget {
-  const RoomCodeText({super.key});
+  final bool isSend;
+  const RoomCodeText({super.key, this.isSend = false});
 
   @override
   Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: 'Room Code: ',
-            style: AppTypography.kRegular19.copyWith(color: AppColors.kBlack),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'Room Code: ',
+                style: AppTypography.kRegular19.copyWith(
+                  color: AppColors.kBlack,
+                ),
+              ),
+              TextSpan(
+                text: 'XY21234',
+                style: AppTypography.kBold21.copyWith(
+                  color: AppColors.kPrimary,
+                ),
+              ),
+            ],
           ),
-          TextSpan(
-            text: 'XY21234',
-            style: AppTypography.kBold21.copyWith(color: AppColors.kPrimary),
-          ),
+        ),
+        if (isSend) ...[
+          SizedBox(width: 10.w),
+          CustomIconButton(icon: AppAssets.sendIcon, onTap: () {}),
         ],
-      ),
+      ],
     );
   }
 }

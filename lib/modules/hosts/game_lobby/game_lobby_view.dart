@@ -5,6 +5,7 @@ import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/game_logo.d
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/lobby_bg.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/player_list_card.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/room_code_text.dart';
+import 'package:insan_jamd_hawan/modules/hosts/letter_generator/letter_generator_view.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/primary_button.dart';
 
@@ -52,83 +53,22 @@ class _GameLobbyViewState extends State<GameLobbyView> {
               SizedBox(height: 34.h),
               PlayerListCard(),
               SizedBox(height: 20.h),
-              PrimaryButton(text: 'Start !', width: 209.w, onPressed: () {}),
+              PrimaryButton(
+                text: 'Start !',
+                width: 209.w,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => LetterGeneratorView(),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ),
       ),
-      // body: SingleChildScrollView(
-      //   child: Padding(
-      //     padding: const EdgeInsets.all(16.0),
-      //     child: Center(
-      //       child: Container(
-      //         width: double.infinity,
-      //         constraints: const BoxConstraints(maxWidth: 400),
-      //         decoration: BoxDecoration(
-      //           color: AppColors.cardBackgroundWhite,
-      //           borderRadius: BorderRadius.circular(24),
-      //           // Subtle pattern can be added with a decoration image or Container with decoration
-      //         ),
-      //         child: Padding(
-      //           padding: const EdgeInsets.all(20.0),
-      //           child: Column(
-      //             crossAxisAlignment: CrossAxisAlignment.center,
-      //             children: [
-      //               // Top section with back button, logo, and share button
-      //               Row(
-      //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //                 children: [
-      //                   // Back button
-      //                   _buildIconButton(
-      //                     icon: Icons.arrow_back,
-      //                     onTap: () => Navigator.of(context).pop(),
-      //                   ),
-      //                   // Game logo
-      //                   _buildGameLogo(),
-      //                   // Share button
-      //                   _buildIconButton(
-      //                     icon: Icons.share,
-      //                     onTap: () {
-      //                       // Handle share action
-      //                     },
-      //                   ),
-      //                 ],
-      //               ),
-      //               const SizedBox(height: 16),
-
-      //               // Room Code
-      //               Text('Room Code', style: AppTypography.roomCodeLabel),
-      //               const SizedBox(height: 4),
-      //               Text('XY21234', style: AppTypography.roomCodeValue),
-      //               const SizedBox(height: 24),
-
-      //               // Players section
-      //               _buildSectionHeader('Players'),
-      //               const SizedBox(height: 12),
-      //               _buildPlayersList(),
-      //               const SizedBox(height: 24),
-
-      //               // No. of Rounds
-      //               _buildSectionHeader('No. of Rounds'),
-      //               const SizedBox(height: 12),
-      //               _buildRoundsSelector(),
-      //               const SizedBox(height: 24),
-
-      //               // Time per round
-      //               _buildSectionHeader('Time per round'),
-      //               const SizedBox(height: 12),
-      //               _buildTimeSelector(),
-      //               const SizedBox(height: 32),
-
-      //               // Start button
-      //               _buildStartButton(),
-      //             ],
-      //           ),
-      //         ),
-      //       ),
-      //     ),
-      //   ),
-      // ),
     );
   }
 }
