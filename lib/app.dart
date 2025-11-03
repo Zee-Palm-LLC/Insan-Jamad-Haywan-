@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:insan_jamd_hawan/config/routes/router.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
+import 'package:insan_jamd_hawan/data/constants/app_theme.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -9,16 +11,40 @@ class InsanJamdHawan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ToastificationWrapper(
-      child: MaterialApp.router(
-        title: 'Insan Jamd Hawan',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
-        debugShowCheckedModeBanner: false,
-        routerConfig: AppRouter.router,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isTablet =
+            constraints.maxWidth >= 650 && constraints.maxWidth < 1100;
+        final Size designSize = isTablet
+            ? Size(constraints.maxWidth, constraints.maxHeight)
+            : const Size(375, 812);
+        return ScreenUtilInit(
+          designSize: designSize,
+          minTextAdapt: true,
+          builder: (context, child) {
+            return GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: ToastificationWrapper(
+                child: MaterialApp.router(
+                  title: 'INSAN JAMD HAWAN',
+                  scrollBehavior: ScrollBehavior().copyWith(overscroll: false),
+                  builder: (context, child) {
+                    return MediaQuery(
+                      data: MediaQuery.of(
+                        context,
+                      ).copyWith(textScaler: TextScaler.linear(1.2)),
+                      child: child!,
+                    );
+                  },
+                  debugShowCheckedModeBanner: false,
+                  theme: AppTheme.gameLobbyTheme,
+                  routerConfig: AppRouter.router,
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

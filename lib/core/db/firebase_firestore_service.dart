@@ -8,16 +8,13 @@ class FirebaseFirestoreService {
       FirebaseFirestoreService._privateConstructor();
   static FirebaseFirestoreService get instance => _instance;
 
-  /// Get Firestore instance for the Mash Platform Firebase project
   static FirebaseFirestore get _firestore {
     if (mashFirebaseApp != null) {
       return FirebaseFirestore.instanceFor(app: mashFirebaseApp!);
     }
-    // Fallback to default instance if mashFirebaseApp is not initialized
     return FirebaseFirestore.instance;
   }
 
-  /// Collection for Insan Jamd Hawan game results
   CollectionReference get gameResults => _firestore
       .collection('insan_jamd_hawan_results')
       .withConverter(
@@ -25,7 +22,6 @@ class FirebaseFirestoreService {
         toFirestore: (data, _) => data as Map<String, dynamic>,
       );
 
-  /// Collection for users (if needed)
   CollectionReference<UserModel> get users => _firestore
       .collection('users')
       .withConverter(

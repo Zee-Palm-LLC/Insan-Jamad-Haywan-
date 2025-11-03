@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/app.dart';
+import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
+import 'package:insan_jamd_hawan/modules/hosts/game_lobby/game_lobby_view.dart';
 import 'package:insan_jamd_hawan/modules/main_menu/main_menu_page.dart';
 import 'package:insan_jamd_hawan/modules/join_lobby/join_lobby_page.dart';
 import 'package:insan_jamd_hawan/modules/create_lobby/lobby_creation_page.dart';
 import 'package:insan_jamd_hawan/modules/solo_game/solo_game_page.dart';
-import 'package:insan_jamd_hawan/modules/lobby_waiting/lobby_waiting_page.dart';
 
 typedef R = AppRouter;
 
@@ -36,14 +37,14 @@ class AppRouter {
       ),
 
       GoRoute(
-        path: LobbyWaitingPage.path,
-        name: LobbyWaitingPage.name,
+        path: '/lobby/:id',
+        name: 'GameLobby',
         builder: (context, state) {
-          final controller = state.extra as dynamic;
+          final controller = state.extra as LobbyController?;
           if (controller == null) {
-            return const SizedBox();
+            return const Scaffold(body: Center(child: Text('Lobby not found')));
           }
-          return LobbyWaitingPage(controller: controller);
+          return GameLobbyView(controller: controller);
         },
       ),
 

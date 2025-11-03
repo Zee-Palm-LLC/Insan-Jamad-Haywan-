@@ -3,16 +3,21 @@ import 'dart:developer' as developer;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/cache/storage_service.dart';
 import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
+import 'package:insan_jamd_hawan/data/constants/app_theme.dart';
 import 'package:insan_jamd_hawan/firebase_options.dart';
 
 late FirebaseApp? mashFirebaseApp;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Set system UI overlay style
+  SystemChrome.setSystemUIOverlayStyle(defaultOverlay);
 
   // Initialize StorageService (SharedPreferences)
   await StorageService.instance.init();
