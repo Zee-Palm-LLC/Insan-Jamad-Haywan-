@@ -76,12 +76,9 @@ class GameLobbyView extends StatelessWidget {
                             players: players,
                             hostId: hostId,
                             selectedRounds: controller.selectedMaxRounds ?? 3,
-                            selectedTime:
-                                45, // TODO: Add time selection to controller
+                            selectedTime: 45,
                             onRoundSelected: controller.onMaxRoundChange,
-                            onTimeSelected: (time) {
-                              // TODO: Add time selection to controller
-                            },
+                            onTimeSelected: (time) {},
                             onKickPlayer: amHost
                                 ? (playerId) => controller.removePlayer(
                                     isKick: true,

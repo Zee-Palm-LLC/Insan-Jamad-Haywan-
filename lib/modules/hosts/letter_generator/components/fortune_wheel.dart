@@ -18,13 +18,21 @@ class FortuneWheelPage extends StatefulWidget {
 
 class _FortuneWheelPageState extends State<FortuneWheelPage>
     with SingleTickerProviderStateMixin {
-  final List<String> alphabets = List.generate(
-    26,
-    (i) => String.fromCharCode(65 + i),
-  );
+  late List<String> alphabets;
   final StreamController<int> controller = StreamController<int>();
   int selectedIndex = 0;
   String? selectedAlphabet;
+
+  @override
+  void initState() {
+    super.initState();
+    // Generate alphabets and shuffle them randomly each time
+    alphabets = List.generate(
+      26,
+      (i) => String.fromCharCode(65 + i),
+    );
+    alphabets.shuffle(Random());
+  }
 
   final List<Color> colors = [
     Color(0xFFFCF0DA),

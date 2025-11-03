@@ -7,6 +7,7 @@ import 'package:insan_jamd_hawan/data/constants/app_typography.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/animated_player_tile.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/rounds_selector_card.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/time_selector_card.dart';
+import 'package:insan_jamd_hawan/modules/widgets/custom_paint/hand_drawn_divider.dart';
 import 'package:insan_jamd_hawan/services/audio_service.dart'; // your existing file
 
 class PlayerListCard extends StatefulWidget {
@@ -115,7 +116,7 @@ class _PlayerListCardState extends State<PlayerListCard>
                         : null,
                   ),
                   if (i != _joinedPlayers.length - 1)
-                    Divider(
+                    HandDrawnDivider(
                       color: AppColors.kGray300,
                       thickness: 1,
                       height: 16.h,
@@ -142,7 +143,7 @@ class _PlayerListCardState extends State<PlayerListCard>
             ],
           ),
           SizedBox(height: 10.h),
-          Divider(color: AppColors.kGray300, thickness: 1, height: 16.h),
+          HandDrawnDivider(color: AppColors.kGray300, thickness: 1, height: 16.h),
           SizedBox(height: 10.h),
           Text('Time per round', style: AppTypography.kBold21),
           SizedBox(height: 10.h),

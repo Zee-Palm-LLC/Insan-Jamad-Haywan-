@@ -14,7 +14,9 @@ class GameLogo extends StatelessWidget {
       crossAxisAlignment: isDesktop
           ? CrossAxisAlignment.start
           : CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: isDesktop
+          ? MainAxisAlignment.spaceBetween
+          : MainAxisAlignment.center,
       children: [
         if (isDesktop)
           CustomIconButton(
