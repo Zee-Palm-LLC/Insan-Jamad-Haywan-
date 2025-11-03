@@ -37,7 +37,7 @@ class LetterGeneratorView extends StatelessWidget {
             SizedBox(height: 50.h),
             GameLogo(),
             SizedBox(height: 12.h),
-            RoomCodeText(isSend: true, lobbyId: 'XYZ124'),
+            RoomCodeText(iSend: true, lobbyId: 'XYZ124'),
             SizedBox(height: 50.h),
             FortuneWheelPage(
               onSpinComplete: (letter) {

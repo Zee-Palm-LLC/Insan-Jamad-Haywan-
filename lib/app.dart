@@ -19,6 +19,7 @@ class InsanJamdHawan extends StatelessWidget {
         final Size designSize = isTablet || isDesktop
             ? Size(constraints.maxWidth, constraints.maxHeight)
             : const Size(375, 812);
+
         return ScreenUtilInit(
           designSize: designSize,
           minTextAdapt: true,

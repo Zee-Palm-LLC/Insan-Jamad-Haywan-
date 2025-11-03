@@ -58,17 +58,51 @@ class PlayflowClient {
       if (playerId == null) {
         throw Exception('Player ID is not set');
       }
+
+      final requestData = config.toJson();
+      log('Creating lobby with config: $requestData', name: 'createGameRoom');
+
       final response = await _networkClient.post(
         PlayflowEndpoints.lobby,
         queryParameters: {'name': PlayflowCredentials.lobbyId},
-        data: config.toJson(),
+        data: requestData,
       );
+
+      log(
+        'Create lobby response status: ${response.statusCode}',
+        name: 'createGameRoom',
+      );
+      log(
+        'Create lobby response data: ${response.data}',
+        name: 'createGameRoom',
+      );
+
       if (response.statusCode != 201) {
-        throw Exception(response.data['message']);
+        final errorMsg =
+            response.data['message'] ??
+            response.data['error'] ??
+            'Failed to create lobby (Status: ${response.statusCode})';
+        log(
+          'Create lobby failed: $errorMsg',
+          name: 'createGameRoom',
+          error: errorMsg,
+        );
+        throw Exception(errorMsg);
       }
-      return LobbyModel.fromJson(response.data);
+
+      final lobby = LobbyModel.fromJson(response.data);
+      log(
+        'Lobby created successfully: ${lobby.id}, inviteCode: ${lobby.inviteCode}',
+        name: 'createGameRoom',
+      );
+      return lobby;
     } catch (e, stackTrace) {
-      log(e.toString(), error: e, stackTrace: stackTrace);
+      log(
+        'Create game room error: $e',
+        error: e,
+        stackTrace: stackTrace,
+        name: 'createGameRoom',
+      );
       rethrow;
     }
   }
@@ -121,10 +155,24 @@ class PlayflowClient {
       if (playerId == null) {
         throw Exception('Player ID is not set');
       }
-      String cleaned = code
-          .trim()
-          .replaceAll('insan-jamd-hawan-', '')
-          .replaceAll('INSAN-JAMD-HAWAN-', '');
+
+      final lobbyName = PlayflowCredentials.lobbyId;
+      String cleaned = code.trim();
+
+      // Normalize input: remove known prefixes and whitespace, allow either UUID or short codes
+      final variants = <String>[
+        cleaned,
+        cleaned.replaceAll(' ', ''),
+        cleaned.replaceAll('-', ''),
+        cleaned.replaceAll('${lobbyName.toLowerCase()}-', ''),
+        cleaned.replaceAll('${lobbyName.toUpperCase()}-', ''),
+        cleaned.replaceAll('insan-jamd-hawan-', ''),
+        cleaned.replaceAll('INSAN-JAMD-HAWAN-', ''),
+        cleaned.replaceAll('insan-jamd-haywan-', ''),
+        cleaned.replaceAll('INSAN-JAMD-HAYWAN-', ''),
+      ].where((e) => e.isNotEmpty).toSet().first;
+
+      cleaned = variants;
       final String withoutDashes = cleaned.replaceAll('-', '');
       final bool isUuid = cleaned.contains('-') && withoutDashes.length == 32;
 
@@ -143,13 +191,22 @@ class PlayflowClient {
       final response = await _networkClient.post(
         endpoint,
         data: {'playerId': playerId},
-        queryParameters: {'name': PlayflowCredentials.lobbyId},
+        queryParameters: {'name': lobbyName},
       );
       log('Join game response: ${response.data}', name: 'joinGameRoom');
       log('Response status: ${response.statusCode}', name: 'joinGameRoom');
 
       if (response.statusCode != 201) {
-        throw Exception(response.data['message'] ?? 'Failed to join lobby');
+        final errorMsg =
+            response.data['message'] ??
+            response.data['error'] ??
+            'Failed to join lobby (Status: ${response.statusCode})';
+        log(
+          'Join game failed: $errorMsg',
+          name: 'joinGameRoom',
+          error: errorMsg,
+        );
+        throw Exception(errorMsg);
       }
       return LobbyModel.fromJson(response.data);
     } catch (e, stackTrace) {
