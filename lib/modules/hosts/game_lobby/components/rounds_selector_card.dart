@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:insan_jamd_hawan/data/constants/constants.dart';
-import 'package:insan_jamd_hawan/modules/widgets/custom_paint/handdrawn_border.dart';
 import 'package:insan_jamd_hawan/services/audio_service.dart';
 
 class RoundSelectorCard extends StatelessWidget {
@@ -25,15 +24,12 @@ class RoundSelectorCard extends StatelessWidget {
       child: Container(
         height: 36.h,
         width: 36.h,
-        decoration: ShapeDecoration(
+        decoration: BoxDecoration(
           color: isSelected
               ? AppColors.kPrimary.withValues(alpha: 0.5)
               : AppColors.kLightYellow,
-          shape: HandStyleBorder(
-            side: BorderSide(color: AppColors.kGray600, width: 1),
-            borderRadius: BorderRadius.circular(6.r),
-            roughness: 1.5,
-          ),
+          border: Border.all(color: AppColors.kGray600, width: 1),
+          borderRadius: BorderRadius.circular(4.r),
         ),
         alignment: Alignment.center,
         child: Text(
