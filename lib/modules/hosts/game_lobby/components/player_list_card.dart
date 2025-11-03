@@ -10,7 +10,24 @@ import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/time_select
 import 'package:insan_jamd_hawan/services/audio_service.dart'; // your existing file
 
 class PlayerListCard extends StatefulWidget {
-  const PlayerListCard({super.key});
+  const PlayerListCard({
+    super.key,
+    required this.players,
+    required this.hostId,
+    required this.selectedRounds,
+    required this.selectedTime,
+    required this.onRoundSelected,
+    required this.onTimeSelected,
+    this.onKickPlayer,
+  });
+
+  final List<String> players;
+  final String? hostId;
+  final int selectedRounds;
+  final int selectedTime;
+  final Function(int?) onRoundSelected;
+  final Function(int) onTimeSelected;
+  final Function(String)? onKickPlayer;
 
   @override
   State<PlayerListCard> createState() => _PlayerListCardState();
@@ -18,32 +35,7 @@ class PlayerListCard extends StatefulWidget {
 
 class _PlayerListCardState extends State<PlayerListCard>
     with TickerProviderStateMixin {
-  final List<Map<String, String>> players = [
-    {
-      'name': 'Sophia',
-      'image':
-          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170',
-    },
-    {
-      'name': 'Liam',
-      'image':
-          'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687',
-    },
-    {
-      'name': 'Noah',
-      'image':
-          'https://plus.unsplash.com/premium_photo-1678197937465-bdbc4ed95815?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687',
-    },
-    {
-      'name': 'Emma',
-      'image':
-          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=688',
-    },
-  ];
-
-  final List<Map<String, String>> joinedPlayers = [];
-  int selectedRounds = 3;
-  int selectedTime = 45;
+  final List<String> _joinedPlayers = [];
 
   @override
   void initState() {
@@ -51,14 +43,41 @@ class _PlayerListCardState extends State<PlayerListCard>
     _simulateJoining();
   }
 
-  Future<void> _simulateJoining() async {
-    for (int i = 0; i < players.length; i++) {
-      await Future.delayed(Duration(milliseconds: 700 * i));
-      if (mounted) {
-        setState(() => joinedPlayers.add(players[i]));
-      }
-      await AudioService.instance.playAudio(AudioType.lobbyJoin);
+  @override
+  void didUpdateWidget(PlayerListCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.players != widget.players) {
+      _joinedPlayers.removeWhere((p) => !widget.players.contains(p));
+      _simulateJoining();
     }
+  }
+
+  Future<void> _simulateJoining() async {
+    final newPlayers = widget.players
+        .where((p) => !_joinedPlayers.contains(p))
+        .toList();
+
+    for (final player in newPlayers) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      if (mounted &&
+          !_joinedPlayers.contains(player) &&
+          widget.players.contains(player)) {
+        setState(() => _joinedPlayers.add(player));
+        await AudioService.instance.playAudio(AudioType.lobbyJoin);
+      }
+    }
+  }
+
+  String _getPlayerAvatar(String name) {
+    final hash = name.hashCode.abs();
+    final index = hash % 4;
+    final images = [
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170',
+      'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687',
+      'https://plus.unsplash.com/premium_photo-1678197937465-bdbc4ed95815?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687',
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=688',
+    ];
+    return images[index];
   }
 
   @override
@@ -82,14 +101,20 @@ class _PlayerListCardState extends State<PlayerListCard>
             padding: EdgeInsets.all(16.h),
             child: Column(
               children: [
-                for (int i = 0; i < joinedPlayers.length; i++) ...[
+                for (int i = 0; i < _joinedPlayers.length; i++) ...[
                   AnimatedPlayerTile(
                     index: i + 1,
-                    name: joinedPlayers[i]['name']!,
-                    imagePath: joinedPlayers[i]['image']!,
+                    name: _joinedPlayers[i],
+                    imagePath: _getPlayerAvatar(_joinedPlayers[i]),
                     color: AppColors.kRed500,
+                    isHost: _joinedPlayers[i] == widget.hostId,
+                    onKick:
+                        widget.onKickPlayer != null &&
+                            _joinedPlayers[i] != widget.hostId
+                        ? () => widget.onKickPlayer!(_joinedPlayers[i])
+                        : null,
                   ),
-                  if (i != joinedPlayers.length - 1)
+                  if (i != _joinedPlayers.length - 1)
                     Divider(
                       color: AppColors.kGray300,
                       thickness: 1,
@@ -108,12 +133,8 @@ class _PlayerListCardState extends State<PlayerListCard>
                 (round) => Padding(
                   padding: EdgeInsets.only(left: 8.w),
                   child: RoundSelectorCard(
-                    onTap: () {
-                      setState(() {
-                        selectedRounds = round;
-                      });
-                    },
-                    isSelected: selectedRounds == round,
+                    onTap: () => widget.onRoundSelected(round),
+                    isSelected: widget.selectedRounds == round,
                     round: round.toString(),
                   ),
                 ),
@@ -130,13 +151,9 @@ class _PlayerListCardState extends State<PlayerListCard>
             children: [45, 60, 90]
                 .map(
                   (time) => TimeSelectorCard(
-                    onTap: () {
-                      setState(() {
-                        selectedTime = time;
-                      });
-                    },
+                    onTap: () => widget.onTimeSelected(time),
                     time: time.toString(),
-                    isSelected: selectedTime == time,
+                    isSelected: widget.selectedTime == time,
                   ),
                 )
                 .toList(),

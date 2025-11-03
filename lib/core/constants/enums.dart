@@ -1,0 +1,26 @@
+enum GameDifficulty { easy, medium, hard }
+
+enum GamePhase { waiting, started, ended }
+
+enum RoomStatus { connected, deleted, updated, waiting, error }
+
+enum PlayerAction { submitAnswer, vote, chooseOption, skip }
+
+enum GameCategory {
+  general,
+  science,
+  history,
+  entertainment,
+  sports,
+  geography,
+}
+
+enum GameEvent {
+  playerJoined,
+  playerLeft,
+  gameStarted,
+  gameEnded,
+  roundStarted,
+  roundEnded,
+  playerAction,
+}

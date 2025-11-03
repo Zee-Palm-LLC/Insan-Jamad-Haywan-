@@ -1,54 +1,97 @@
+import 'dart:developer' as developer;
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:insan_jamd_hawan/app.dart';
+import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
+import 'package:insan_jamd_hawan/core/services/cache/storage_service.dart';
+import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
 import 'package:insan_jamd_hawan/data/constants/app_theme.dart';
-import 'package:insan_jamd_hawan/modules/hosts/game_lobby/game_lobby_view.dart';
+import 'package:insan_jamd_hawan/firebase_options.dart';
+
+late FirebaseApp? mashFirebaseApp;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(defaultOverlay);
-  runApp(const MyApp());
+  await StorageService.instance.init();
+  try {
+    mashFirebaseApp = await Firebase.initializeApp(
+      name: 'mash-platform',
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    if (kDebugMode) {
+      developer.log(
+        'Firebase initialized successfully: ${mashFirebaseApp?.name}',
+        name: 'main',
+      );
+      developer.log(
+        'Project ID: ${mashFirebaseApp?.options.projectId}',
+        name: 'main',
+      );
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      developer.log(
+        'Firebase initialization failed: $e',
+        name: 'main',
+        error: e,
+      );
+    }
+    mashFirebaseApp = null;
+  }
+  await _cleanupExistingLobby();
+
+  runApp(const InsanJamdHawan());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool isTablet =
-            constraints.maxWidth >= 650 && constraints.maxWidth < 1100;
-        final Size designSize = isTablet
-            ? Size(constraints.maxWidth, constraints.maxHeight)
-            : const Size(375, 812);
-        return ScreenUtilInit(
-          designSize: designSize,
-          minTextAdapt: true,
-          builder: (context, child) {
-            return GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              child: GetMaterialApp(
-                title: 'INSAN JAMD HAWAN',
-                scrollBehavior: ScrollBehavior().copyWith(overscroll: false),
-                builder: (context, child) {
-                  return MediaQuery(
-                    data: MediaQuery.of(
-                      context,
-                    ).copyWith(textScaler: TextScaler.linear(1.2)),
-                    child: child!,
-                  );
-                },
-                debugShowCheckedModeBanner: false,
-                theme: AppTheme.gameLobbyTheme,
-                home: child,
-              ),
-            );
-          },
-          child: const GameLobbyView(),
+Future<void> _cleanupExistingLobby() async {
+  try {
+    final playerId = await AppService.getPlayerId();
+    if (playerId == null || playerId.startsWith('guest_')) {
+      return;
+    }
+    try {
+      final lobby = await PlayflowClient.instance.getGameRoom();
+      if (lobby != null && lobby.id != null) {
+        developer.log(
+          'Found existing lobby ${lobby.id}, cleaning up...',
+          name: 'cleanupLobby',
         );
-      },
+        if (lobby.host == playerId) {
+          await PlayflowClient.instance.deleteLobby(lobbyId: lobby.id!);
+          developer.log(
+            'Deleted lobby ${lobby.id} (player was host)',
+            name: 'cleanupLobby',
+          );
+        } else {
+          await PlayflowClient.instance.kickPlayer(
+            lobbyId: lobby.id!,
+            playerIdToKick: playerId,
+            isKick: false,
+          );
+          developer.log('Left lobby ${lobby.id}', name: 'cleanupLobby');
+        }
+      }
+    } catch (e) {
+      // If getGameRoom fails (404, etc.), player is not in a lobby - that's fine
+      if (kDebugMode) {
+        developer.log(
+          'Player not in any lobby or error checking: $e',
+          name: 'cleanupLobby',
+        );
+      }
+    }
+  } catch (e, stackTrace) {
+    developer.log(
+      'Error during lobby cleanup: $e',
+      error: e,
+      stackTrace: stackTrace,
+      name: 'cleanupLobby',
     );
+    // Don't throw - cleanup failure shouldn't prevent app startup
   }
 }

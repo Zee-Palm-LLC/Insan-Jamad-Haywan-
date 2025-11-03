@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "536304071553",
+    "project_id": "mash-45080",
+    "storage_bucket": "mash-45080.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:536304071553:android:94d589ed680d0fa1dd6e80",
+        "android_client_info": {
+          "package_name": "com.example.insan_jamd_hawan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDp-gcfVLg9jLg5rQan7VHx5HSXsxHT2A8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:536304071553:android:ca1ed250b7465c95dd6e80",
+        "android_client_info": {
+          "package_name": "zeepalm.mash.platform.mash_platform"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDp-gcfVLg9jLg5rQan7VHx5HSXsxHT2A8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

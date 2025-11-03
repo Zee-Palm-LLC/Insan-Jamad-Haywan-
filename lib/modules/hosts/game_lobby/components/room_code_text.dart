@@ -5,10 +5,19 @@ import 'package:insan_jamd_hawan/modules/widgets/buttons/custom_icon_button.dart
 
 class RoomCodeText extends StatelessWidget {
   final bool isSend;
-  const RoomCodeText({super.key, this.isSend = false});
+  const RoomCodeText({super.key, required this.lobbyId, this.isSend = false});
+
+  final String lobbyId;
 
   @override
   Widget build(BuildContext context) {
+    String displayCode = lobbyId;
+    if (lobbyId.length > 8 && lobbyId.contains('-')) {
+      displayCode = lobbyId.substring(0, 8).toUpperCase();
+    } else if (lobbyId.length > 8) {
+      displayCode = lobbyId.substring(0, 8).toUpperCase();
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -22,7 +31,7 @@ class RoomCodeText extends StatelessWidget {
                 ),
               ),
               TextSpan(
-                text: 'XY21234',
+                text: displayCode,
                 style: AppTypography.kBold21.copyWith(
                   color: AppColors.kPrimary,
                 ),

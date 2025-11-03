@@ -7,12 +7,17 @@ class AnimatedPlayerTile extends StatefulWidget {
   final String name;
   final String imagePath;
   final Color color;
+  final bool isHost;
+  final VoidCallback? onKick;
 
-  const AnimatedPlayerTile({super.key, 
+  const AnimatedPlayerTile({
+    super.key,
     required this.index,
     required this.name,
     required this.imagePath,
     required this.color,
+    this.isHost = false,
+    this.onKick,
   });
 
   @override
@@ -83,13 +88,49 @@ class AnimatedPlayerTileState extends State<AnimatedPlayerTile>
               ),
             ),
             SizedBox(width: 10.w),
-            Text(
-              widget.name,
-              style: AppTypography.kBold21.copyWith(
-                color: widget.color,
-                fontSize: 20.sp,
+            Expanded(
+              child: Row(
+                children: [
+                  Text(
+                    widget.name,
+                    style: AppTypography.kBold21.copyWith(
+                      color: widget.color,
+                      fontSize: 20.sp,
+                    ),
+                  ),
+                  if (widget.isHost) ...[
+                    SizedBox(width: 8.w),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 6.w,
+                        vertical: 2.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.kPrimary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      child: Text(
+                        'Host',
+                        style: AppTypography.kBold16.copyWith(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.kPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
+            if (widget.onKick != null) ...[
+              IconButton(
+                icon: Icon(Icons.person_remove_alt_1_outlined, size: 20.sp),
+                onPressed: widget.onKick,
+                color: AppColors.kRed500,
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
+              ),
+            ],
           ],
         ),
       ),

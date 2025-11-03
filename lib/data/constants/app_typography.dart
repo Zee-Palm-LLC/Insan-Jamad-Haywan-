@@ -8,6 +8,14 @@ class AppTypography {
     fontSize: 19.sp,
     fontWeight: FontWeight.w400,
   );
+  static TextStyle kRegular24 = GoogleFonts.kalam(
+    fontSize: 24.sp,
+    fontWeight: FontWeight.w400,
+  );
+  static TextStyle kRegular41 = GoogleFonts.kalam(
+    fontSize: 41.sp,
+    fontWeight: FontWeight.w400,
+  );
 
   // Bold.
   static TextStyle kBold16 = GoogleFonts.kalam(
