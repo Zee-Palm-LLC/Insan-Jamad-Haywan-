@@ -350,12 +350,35 @@ class LobbyController extends GetxController {
 
         String? targetPlayerId = playerIdToKick ?? playerId;
 
+        // If host is leaving voluntarily and there are other players,
+        // reassign host instead of deleting the lobby.
         if (targetPlayerId == _currentRoom.host &&
             targetPlayerId == playerId &&
             !isKick) {
-          _playerHeartbeatTimer?.cancel();
-          await playflowClient.deleteLobby(lobbyId: lobby.id!);
-          return;
+          final others = List<String>.from(_currentRoom.players ?? [])
+            ..removeWhere((p) => p == _currentRoom.host);
+          if (others.isNotEmpty) {
+            final newHost = others.first;
+            await playflowClient.updateGameRoom(
+              lobbyId: lobby.id!,
+              resource: LobbyResourceModel(
+                host: newHost,
+                requesterId: playerId,
+              ),
+            );
+            // Also remove the leaving player
+            await playflowClient.kickPlayer(
+              lobbyId: lobby.id!,
+              playerIdToKick: playerId,
+              isKick: false,
+            );
+            return;
+          } else {
+            // No other players; delete lobby
+            _playerHeartbeatTimer?.cancel();
+            await playflowClient.deleteLobby(lobbyId: lobby.id!);
+            return;
+          }
         }
 
         await playflowClient.kickPlayer(

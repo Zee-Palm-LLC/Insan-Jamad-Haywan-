@@ -24,6 +24,7 @@ class GameLobbyView extends StatelessWidget {
       builder: (_) {
         final players = controller.currentRoom.players ?? [];
         final lobbyId = controller.currentRoom.id ?? '';
+        final inviteCode = controller.currentRoom.inviteCode;
         final hostId = controller.currentRoom.host;
 
         return FutureBuilder<String?>(
@@ -39,7 +40,7 @@ class GameLobbyView extends StatelessWidget {
                   padding: EdgeInsets.all(10.h),
                   child: CustomIconButton(
                     icon: AppAssets.backIcon,
-                    onTap: () => context.pop(),
+                    onTap: () => controller.removePlayer(isKick: false),
                   ),
                 ),
                 actions: [
@@ -55,7 +56,7 @@ class GameLobbyView extends StatelessWidget {
                       SizedBox(height: 50.h),
                       GameLogo(),
                       SizedBox(height: 12.h),
-                      RoomCodeText(lobbyId: lobbyId),
+                      RoomCodeText(lobbyId: lobbyId, inviteCode: inviteCode),
                       SizedBox(height: 34.h),
                       PlayerListCard(
                         players: players,
@@ -75,7 +76,7 @@ class GameLobbyView extends StatelessWidget {
                             : null,
                       ),
                       SizedBox(height: 20.h),
-                      if (amHost)
+                      if (amHost) ...[
                         PrimaryButton(
                           text: 'Start !',
                           width: 209.w,
@@ -83,14 +84,22 @@ class GameLobbyView extends StatelessWidget {
                             // TODO: Implement start game
                             // controller.startGame();
                           },
-                        )
-                      else
+                        ),
+                        SizedBox(height: 12.h),
                         PrimaryButton(
                           text: 'Leave Lobby',
                           width: 209.w,
                           onPressed: () =>
                               controller.removePlayer(isKick: false),
                         ),
+                      ] else ...[
+                        PrimaryButton(
+                          text: 'Leave Lobby',
+                          width: 209.w,
+                          onPressed: () =>
+                              controller.removePlayer(isKick: false),
+                        ),
+                      ],
                     ],
                   ),
                 ),
