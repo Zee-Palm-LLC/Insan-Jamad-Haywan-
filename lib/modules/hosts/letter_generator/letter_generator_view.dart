@@ -7,6 +7,8 @@ import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/game_logo.d
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/room_code_text.dart';
 import 'package:insan_jamd_hawan/modules/hosts/letter_generator/components/fortune_wheel.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/custom_icon_button.dart';
+import 'package:insan_jamd_hawan/modules/widgets/cards/desktop_wrapper.dart';
+import 'package:insan_jamd_hawan/responsive.dart';
 
 class LetterGeneratorView extends StatelessWidget {
   const LetterGeneratorView({super.key});
@@ -16,35 +18,48 @@ class LetterGeneratorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDesktop = Responsive.isDesktop(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        leading: Padding(
-          padding: EdgeInsets.all(10.h),
-          child: CustomIconButton(icon: AppAssets.backIcon, onTap: () {
-            context.pop();
-          }),
-        ),
-        actions: [
-          CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-          SizedBox(width: 16.w),
-        ],
-      ),
+      appBar: isDesktop
+          ? null
+          : AppBar(
+              leading: Padding(
+                padding: EdgeInsets.all(10.h),
+                child: CustomIconButton(
+                  icon: AppAssets.backIcon,
+                  onTap: () {
+                    context.pop();
+                  },
+                ),
+              ),
+              actions: [
+                CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+                SizedBox(width: 16.w),
+              ],
+            ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.h),
-        child: Column(
-          children: [
-            SizedBox(height: 50.h),
-            GameLogo(),
-            SizedBox(height: 12.h),
-            RoomCodeText(iSend: true, lobbyId: 'XYZ124'),
-            SizedBox(height: 50.h),
-            FortuneWheelPage(
-              onSpinComplete: (letter) {
-                context.push(AnswersHostView.path.replaceAll(':letter', letter));
-                },
+        child: Center(
+          child: DesktopWrapper(
+            child: Column(
+              children: [
+                if (!isDesktop) SizedBox(height: 50.h),
+                GameLogo(),
+                SizedBox(height: 12.h),
+                RoomCodeText(iSend: true, lobbyId: 'XYZ124'),
+                SizedBox(height: 50.h),
+                FortuneWheelPage(
+                  onSpinComplete: (letter) {
+                    context.push(
+                      AnswersHostView.path.replaceAll(':letter', letter),
+                    );
+                  },
+                ),
+                if (isDesktop) SizedBox(height: 40.h),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

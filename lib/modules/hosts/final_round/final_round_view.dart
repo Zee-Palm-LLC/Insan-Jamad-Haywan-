@@ -8,6 +8,8 @@ import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/room_code_t
 import 'package:insan_jamd_hawan/modules/hosts/scoreboard/scoreboard_view.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/primary_button.dart';
+import 'package:insan_jamd_hawan/modules/widgets/cards/desktop_wrapper.dart';
+import 'package:insan_jamd_hawan/responsive.dart';
 
 class FinalRoundView extends StatelessWidget {
   const FinalRoundView({
@@ -26,9 +28,10 @@ class FinalRoundView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDesktop = Responsive.isDesktop(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
+      appBar:isDesktop?null: AppBar(
         leading: Padding(
           padding: EdgeInsets.all(10.h),
           child: CustomIconButton(
@@ -44,107 +47,112 @@ class FinalRoundView extends StatelessWidget {
       body: LobbyBg(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.h),
-          child: Column(
-            children: [
-              SizedBox(height: 50.h),
-              GameLogo(),
-              SizedBox(height: 12.h),
-              RoomCodeText(lobbyId: 'XY21234'),
-              SizedBox(height: 40.h),
-              Container(
-                width: double.maxFinite,
-                padding: EdgeInsets.all(24.h),
-                decoration: BoxDecoration(
-                  color: AppColors.kLightYellow,
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(
-                    color: Color(0xFF493505).withValues(alpha: 0.6),
-                    width: 2,
+          child: Center(
+            child: DesktopWrapper(
+              child: Column(
+                children: [
+                  if (!isDesktop)
+                  SizedBox(height: 50.h),
+                  GameLogo(),
+                  SizedBox(height: 12.h),
+                  RoomCodeText(lobbyId: 'XY21234'),
+                  SizedBox(height: 40.h),
+                  Container(
+                    width: double.maxFinite,
+                    padding: EdgeInsets.all(24.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.kLightYellow,
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(
+                        color: Color(0xFF493505).withValues(alpha: 0.6),
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildDoubleBorderText('Final Round', fontSize: 40.sp),
+                        Text(
+                          'الجولة الأخيرة',
+                          style: AppTypography.kBold21.copyWith(
+                            color: AppColors.kOrange,
+                            fontSize: 24.sp,
+                          ),
+                        ),
+                        if (isPlayer) ...[
+                          SizedBox(height: 20.h),
+                          Text(
+                            'You only have 30 seconds & a surprise category',
+                            style: AppTypography.kRegular19,
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            'Points are doubled',
+                            style: AppTypography.kRegular19,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ),
-                child: Column(
-                  children: [
-                    _buildDoubleBorderText('Final Round', fontSize: 40.sp),
-                    Text(
-                      'الجولة الأخيرة',
-                      style: AppTypography.kBold21.copyWith(
-                        color: AppColors.kOrange,
-                        fontSize: 24.sp,
-                      ),
+                  if (!isPlayer) ...[
+                    SizedBox(height: 20.h),
+                    Row(
+                      children: [
+                        Text('Letter is', style: AppTypography.kRegular19),
+                        SizedBox(width: 12.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.kYellow,
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: Border.all(color: AppColors.kGray600),
+                          ),
+                          child: Text(
+                            selectedAlphabet ?? 'A',
+                            style: AppTypography.kBold21,
+                          ),
+                        ),
+                      ],
                     ),
-                    if (isPlayer) ...[
-                      SizedBox(height: 20.h),
-                      Text(
-                        'You only have 30 seconds & a surprise category',
-                        style: AppTypography.kRegular19,
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        'Points are doubled',
-                        style: AppTypography.kRegular19,
-                      ),
-                    ],
+                    SizedBox(height: 15.h),
+                    Row(
+                      children: [
+                        Text(
+                          'Surprise Category is',
+                          style: AppTypography.kRegular19,
+                        ),
+                        SizedBox(width: 10.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.kYellow,
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: Border.all(color: AppColors.kGray600),
+                          ),
+                          child: Text(
+                            category ?? 'Animals',
+                            style: AppTypography.kBold21,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 54.h),
+                    PrimaryButton(
+                      text: 'See Final Scoreboard',
+                      onPressed: () {
+                        context.push(ScoreboardView.path);
+                      },
+                    ),
                   ],
-                ),
+                ],
               ),
-              if (!isPlayer) ...[
-                SizedBox(height: 20.h),
-                Row(
-                  children: [
-                    Text('Letter is', style: AppTypography.kRegular19),
-                    SizedBox(width: 12.w),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 2.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.kYellow,
-                        borderRadius: BorderRadius.circular(8.r),
-                        border: Border.all(color: AppColors.kGray600),
-                      ),
-                      child: Text(
-                        selectedAlphabet ?? 'A',
-                        style: AppTypography.kBold21,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 15.h),
-                Row(
-                  children: [
-                    Text(
-                      'Surprise Category is',
-                      style: AppTypography.kRegular19,
-                    ),
-                    SizedBox(width: 10.w),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 2.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.kYellow,
-                        borderRadius: BorderRadius.circular(8.r),
-                        border: Border.all(color: AppColors.kGray600),
-                      ),
-                      child: Text(
-                        category ?? 'Animals',
-                        style: AppTypography.kBold21,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 54.h),
-                PrimaryButton(
-                  text: 'See Final Scoreboard',
-                  onPressed: () {
-                    context.push(ScoreboardView.path);
-                  },
-                ),
-              ],
-            ],
+            ),
           ),
         ),
       ),

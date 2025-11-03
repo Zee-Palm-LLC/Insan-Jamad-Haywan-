@@ -10,6 +10,8 @@ import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/room_code_t
 import 'package:insan_jamd_hawan/modules/hosts/scoring/components/scoring_playing_tile.dart';
 import 'package:insan_jamd_hawan/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/custom_icon_button.dart';
+import 'package:insan_jamd_hawan/modules/widgets/cards/desktop_wrapper.dart';
+import 'package:insan_jamd_hawan/responsive.dart';
 
 class ScoringView extends StatefulWidget {
   const ScoringView({super.key, required this.selectedAlphabet});
@@ -102,142 +104,168 @@ class _ScoringViewState extends State<ScoringView>
 
   @override
   Widget build(BuildContext context) {
-
+    final bool isDesktop = Responsive.isDesktop(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        leading: Padding(
-          padding: EdgeInsets.all(10.h),
-          child: CustomIconButton(
-            icon: AppAssets.backIcon,
-            onTap: () => context.pop(),
-          ),
-        ),
-        actions: [
-          CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-          SizedBox(width: 16.w),
-        ],
-      ),
+      appBar: isDesktop
+          ? null
+          : AppBar(
+              leading: Padding(
+                padding: EdgeInsets.all(10.h),
+                child: CustomIconButton(
+                  icon: AppAssets.backIcon,
+                  onTap: () => context.pop(),
+                ),
+              ),
+              actions: [
+                CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+                SizedBox(width: 16.w),
+              ],
+            ),
       body: LobbyBg(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.h),
-          child: Column(
-            children: [
-              SizedBox(height: 50.h),
-              GameLogo(),
-              SizedBox(height: 12.h),
-              RoomCodeText(lobbyId: 'XY21234'),
-              SizedBox(height: 20.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+          child: Center(
+            child: DesktopWrapper(
+              child: Column(
                 children: [
-                  Text('Letter', style: AppTypography.kRegular24),
-                  SizedBox(width: 8.w),
-                  InkWell(
-                    onTap: (){
-                      context.push(VotingView.path);
-                    },
-                    child: Container(
-                      height: 50.h,
-                      width: 74.w,
-                      decoration: BoxDecoration(
-                        color: AppColors.kPrimary,
-                        borderRadius: BorderRadius.circular(5.r),
-                      ),
-                      alignment: Alignment.bottomCenter,
-                      padding: EdgeInsets.only(top: 6.h),
-                      child: Text(
-                        widget.selectedAlphabet,
-                        style: AppTypography.kRegular41.copyWith(
-                          color: AppColors.kWhite,
-                          height: 1,
+                  if (!isDesktop) SizedBox(height: 50.h),
+                  GameLogo(),
+                  SizedBox(height: 12.h),
+                  RoomCodeText(lobbyId: 'XY21234'),
+                  SizedBox(height: 20.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Letter', style: AppTypography.kRegular24),
+                      SizedBox(width: 8.w),
+                      InkWell(
+                        onTap: () {
+                          context.push(VotingView.path);
+                        },
+                        child: Container(
+                          height: 50.h,
+                          width: 74.w,
+                          decoration: BoxDecoration(
+                            color: AppColors.kPrimary,
+                            borderRadius: BorderRadius.circular(5.r),
+                          ),
+                          alignment: Alignment.bottomCenter,
+                          padding: EdgeInsets.only(top: 6.h),
+                          child: Text(
+                            widget.selectedAlphabet,
+                            style: AppTypography.kRegular41.copyWith(
+                              color: AppColors.kWhite,
+                              height: 1,
+                            ),
+                          ),
                         ),
                       ),
+                    ],
+                  ),
+                  SizedBox(height: 20.h),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.kGreen100,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    padding: EdgeInsets.all(16.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Answers',
+                          style: AppTypography.kBold21.copyWith(height: 1),
+                        ),
+                        SizedBox(height: 10.h),
+                        Text(
+                          'Fruit',
+                          style: AppTypography.kRegular24.copyWith(height: 1),
+                        ),
+                        SizedBox(height: 12.h),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.kWhite,
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          padding: EdgeInsets.all(16.h),
+                          child: Column(
+                            children: [
+                              for (
+                                int i = 0;
+                                i < _shownFruitAnswers.length;
+                                i++
+                              ) ...[
+                                ScoringPlayingTile(
+                                  imagePath: _getPlayerAvatar(
+                                    _shownFruitAnswers[i]['name'] as String,
+                                  ),
+                                  name: _shownFruitAnswers[i]['name'] as String,
+                                  answer:
+                                      _shownFruitAnswers[i]['answer'] as String,
+                                  points:
+                                      _shownFruitAnswers[i]['points'] as int,
+                                  color:
+                                      _shownFruitAnswers[i]['color'] as Color,
+                                  index: i + 1,
+                                ),
+                                if (i != _shownFruitAnswers.length - 1)
+                                  Divider(
+                                    color: AppColors.kGray300,
+                                    thickness: 1,
+                                    height: 16.h,
+                                  ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 20.h),
+                        Text('Animals', style: AppTypography.kRegular24),
+                        SizedBox(height: 12.h),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.kWhite,
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          padding: EdgeInsets.all(16.h),
+                          child: Column(
+                            children: [
+                              for (
+                                int i = 0;
+                                i < _shownAnimalAnswers.length;
+                                i++
+                              ) ...[
+                                ScoringPlayingTile(
+                                  imagePath: _getPlayerAvatar(
+                                    _shownAnimalAnswers[i]['name'] as String,
+                                  ),
+                                  name:
+                                      _shownAnimalAnswers[i]['name'] as String,
+                                  answer:
+                                      _shownAnimalAnswers[i]['answer']
+                                          as String,
+                                  points:
+                                      _shownAnimalAnswers[i]['points'] as int,
+                                  color:
+                                      _shownAnimalAnswers[i]['color'] as Color,
+                                  index: i + 1,
+                                ),
+                                if (i != _shownAnimalAnswers.length - 1)
+                                  Divider(
+                                    color: AppColors.kGray300,
+                                    thickness: 1,
+                                    height: 16.h,
+                                  ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 20.h),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.kGreen100,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                padding: EdgeInsets.all(16.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Answers',
-                      style: AppTypography.kBold21.copyWith(height: 1),
-                    ),
-                    SizedBox(height: 10.h),
-                    Text(
-                      'Fruit',
-                      style: AppTypography.kRegular24.copyWith(height: 1),
-                    ),
-                    SizedBox(height: 12.h),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.kWhite,
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      padding: EdgeInsets.all(16.h),
-                      child: Column(
-                        children: [
-                          for (int i = 0; i < _shownFruitAnswers.length; i++) ...[
-                            ScoringPlayingTile(
-                              imagePath: _getPlayerAvatar(_shownFruitAnswers[i]['name'] as String),
-                              name: _shownFruitAnswers[i]['name'] as String,
-                              answer: _shownFruitAnswers[i]['answer'] as String,
-                              points: _shownFruitAnswers[i]['points'] as int,
-                              color: _shownFruitAnswers[i]['color'] as Color,
-                              index: i + 1,
-                            ),
-                            if (i != _shownFruitAnswers.length - 1)
-                              Divider(
-                                color: AppColors.kGray300,
-                                thickness: 1,
-                                height: 16.h,
-                              ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 20.h),
-                    Text('Animals', style: AppTypography.kRegular24),
-                    SizedBox(height: 12.h),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.kWhite,
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      padding: EdgeInsets.all(16.h),
-                      child: Column(
-                        children: [
-                          for (int i = 0; i < _shownAnimalAnswers.length; i++) ...[
-                            ScoringPlayingTile(
-                              imagePath: _getPlayerAvatar(_shownAnimalAnswers[i]['name'] as String),
-                              name: _shownAnimalAnswers[i]['name'] as String,
-                              answer: _shownAnimalAnswers[i]['answer'] as String,
-                              points: _shownAnimalAnswers[i]['points'] as int,
-                              color: _shownAnimalAnswers[i]['color'] as Color,
-                              index: i + 1,
-                            ),
-                            if (i != _shownAnimalAnswers.length - 1)
-                              Divider(
-                                color: AppColors.kGray300,
-                                thickness: 1,
-                                height: 16.h,
-                              ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
