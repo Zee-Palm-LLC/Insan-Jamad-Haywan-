@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
+import 'package:insan_jamd_hawan/modules/get_started/get_started_view.dart';
 import 'package:insan_jamd_hawan/modules/hosts/answers_host/answers_host_view.dart';
 import 'package:insan_jamd_hawan/modules/hosts/final_round/final_round_view.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/game_lobby_view.dart';
@@ -22,9 +23,13 @@ class AppRouter {
 
   static final _router = GoRouter(
     navigatorKey: navigatorKey,
-    initialLocation: PlayerInfo.path,
+    initialLocation: GetStartedView.path,
     routes: [
-      // Host Pages
+      GoRoute(
+        path: GetStartedView.path,
+        name: GetStartedView.name,
+        builder: (context, state) => const GetStartedView(),
+      ),
       GoRoute(
         path: LetterGeneratorView.path,
         name: LetterGeneratorView.name,

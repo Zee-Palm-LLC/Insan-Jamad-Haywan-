@@ -184,6 +184,7 @@ class _PlayerInfoState extends State<PlayerInfo> {
                   SizedBox(height: 32.h),
                   TextField(
                     controller: _usernameController,
+                    style: AppTypography.kRegular19.copyWith(fontSize: 16.sp),
                     enabled: !_isLoading,
                     textAlign: TextAlign.center,
                     decoration: InputDecoration(

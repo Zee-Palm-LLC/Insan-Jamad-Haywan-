@@ -83,7 +83,8 @@ class _MainMenuPageState extends State<MainMenuPage> {
                 SizedBox(width: 16.w),
               ],
             ),
-      body: LobbyBg(
+      body: 
+      LobbyBg(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.h),
           child: Center(
