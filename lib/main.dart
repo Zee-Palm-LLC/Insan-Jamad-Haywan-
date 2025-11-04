@@ -8,7 +8,7 @@ import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/cache/storage_service.dart';
 import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
-import 'package:insan_jamd_hawan/data/constants/app_theme.dart';
+import 'package:insan_jamd_hawan/core/data/constants/app_theme.dart';
 import 'package:insan_jamd_hawan/firebase_options.dart';
 
 late FirebaseApp? mashFirebaseApp;

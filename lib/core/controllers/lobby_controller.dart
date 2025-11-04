@@ -17,9 +17,9 @@ import 'package:insan_jamd_hawan/core/services/playflow/endpoints.dart';
 import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
 import 'package:insan_jamd_hawan/core/utils/network_call.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
-import 'package:insan_jamd_hawan/services/audio_service.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 
-import '../constants/enums.dart';
+import '../data/enums/enums.dart';
 
 class LobbyController extends GetxController {
   final LobbyModel lobby;

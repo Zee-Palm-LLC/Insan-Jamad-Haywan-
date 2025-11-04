@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
-import 'package:insan_jamd_hawan/modules/get_started/get_started_view.dart';
-import 'package:insan_jamd_hawan/modules/hosts/answers_host/answers_host_view.dart';
-import 'package:insan_jamd_hawan/modules/hosts/final_round/final_round_view.dart';
-import 'package:insan_jamd_hawan/modules/hosts/game_lobby/game_lobby_view.dart';
-import 'package:insan_jamd_hawan/modules/hosts/letter_generator/letter_generator_view.dart';
-import 'package:insan_jamd_hawan/modules/hosts/scoreboard/scoreboard_view.dart';
-import 'package:insan_jamd_hawan/modules/hosts/scoring/scoring_view.dart';
-import 'package:insan_jamd_hawan/modules/hosts/voting/voting_view.dart';
-import 'package:insan_jamd_hawan/modules/join_lobby/join_lobby_page.dart';
-import 'package:insan_jamd_hawan/modules/players/create_lobby/lobby_creation_page.dart';
-import 'package:insan_jamd_hawan/modules/players/main_menu/main_menu_page.dart';
-import 'package:insan_jamd_hawan/modules/players/player_info/player_info.dart';
-import 'package:insan_jamd_hawan/modules/solo_game/solo_game_page.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_round_view.dart';
+import 'package:insan_jamd_hawan/core/modules/main_menu/main_menu_page.dart';
+import 'package:insan_jamd_hawan/core/modules/players/player_info/player_info.dart';
+import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
+import 'package:insan_jamd_hawan/core/modules/get_started/get_started_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/answers_host_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/game_lobby_view.dart';
 
 typedef R = AppRouter;
 
@@ -23,7 +21,8 @@ class AppRouter {
 
   static final _router = GoRouter(
     navigatorKey: navigatorKey,
-    initialLocation: GetStartedView.path,
+    initialLocation: GetStartedView.path, // Start at player info
+    redirect: _handleRedirect,
     routes: [
       GoRoute(
         path: GetStartedView.path,
@@ -97,18 +96,6 @@ class AppRouter {
       ),
 
       GoRoute(
-        path: JoinLobbyPage.path,
-        name: JoinLobbyPage.name,
-        builder: (context, state) => const JoinLobbyPage(),
-      ),
-
-      GoRoute(
-        path: LobbyCreationPage.path,
-        name: LobbyCreationPage.name,
-        builder: (context, state) => const LobbyCreationPage(),
-      ),
-
-      GoRoute(
         path: '/lobby/:id',
         name: 'GameLobby',
         builder: (context, state) {
@@ -119,12 +106,35 @@ class AppRouter {
           return GameLobbyView(controller: controller);
         },
       ),
-
-      GoRoute(
-        path: SoloGamePage.path,
-        name: SoloGamePage.name,
-        builder: (context, state) => const SoloGamePage(),
-      ),
     ],
   );
+
+  // Global redirect to check username on every navigation
+  static Future<String?> _handleRedirect(
+    BuildContext context,
+    GoRouterState state,
+  ) async {
+    final playerId = await AppService.getPlayerId();
+    final hasUsername =
+        playerId != null &&
+        playerId.isNotEmpty &&
+        !playerId.startsWith('guest_');
+
+    final isOnPlayerInfo = state.matchedLocation == PlayerInfo.path;
+
+    // If no username and not on player-info page, redirect to player-info
+    if (!hasUsername && !isOnPlayerInfo) {
+      print('[Router] No username found, redirecting to player-info');
+      return PlayerInfo.path;
+    }
+
+    // If has username and on player-info page, redirect to main menu
+    if (hasUsername && isOnPlayerInfo) {
+      print('[Router] Username exists, redirecting to main menu');
+      return MainMenuPage.path;
+    }
+
+    // No redirect needed
+    return null;
+  }
 }
