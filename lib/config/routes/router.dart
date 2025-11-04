@@ -22,7 +22,7 @@ class AppRouter {
 
   static final _router = GoRouter(
     navigatorKey: navigatorKey,
-    initialLocation: PlayerInfo.path,
+    initialLocation: MainMenuPage.path,
     routes: [
       // Host Pages
       GoRoute(

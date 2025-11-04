@@ -55,6 +55,15 @@ class AnimatedPlayerTileState extends State<AnimatedPlayerTile>
     super.dispose();
   }
 
+  String _getInitials(String name) {
+    if (name.isEmpty) return '?';
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.substring(0, name.length > 1 ? 2 : 1).toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
@@ -77,14 +86,18 @@ class AnimatedPlayerTileState extends State<AnimatedPlayerTile>
               height: 32.h,
               width: 32.h,
               decoration: BoxDecoration(
-                color: AppColors.kGray300,
+                color: widget.color.withOpacity(0.2),
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.kGray500),
+                border: Border.all(color: widget.color, width: 2),
               ),
-              padding: EdgeInsets.all(2.h),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(100.r),
-                child: Image.network(widget.imagePath, fit: BoxFit.cover),
+              child: Center(
+                child: Text(
+                  _getInitials(widget.name),
+                  style: AppTypography.kBold16.copyWith(
+                    fontSize: 14.sp,
+                    color: widget.color,
+                  ),
+                ),
               ),
             ),
             SizedBox(width: 10.w),

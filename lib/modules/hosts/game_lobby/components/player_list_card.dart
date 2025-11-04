@@ -69,16 +69,14 @@ class _PlayerListCardState extends State<PlayerListCard>
     }
   }
 
-  String _getPlayerAvatar(String name) {
-    final hash = name.hashCode.abs();
-    final index = hash % 4;
-    final images = [
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170',
-      'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687',
-      'https://plus.unsplash.com/premium_photo-1678197937465-bdbc4ed95815?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687',
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=688',
+  Color _getPlayerColor(int index) {
+    final colors = [
+      AppColors.kPrimary,
+      AppColors.kBlue,
+      AppColors.kOrange,
+      AppColors.kRed500,
     ];
-    return images[index];
+    return colors[index % colors.length];
   }
 
   @override
@@ -106,8 +104,8 @@ class _PlayerListCardState extends State<PlayerListCard>
                   AnimatedPlayerTile(
                     index: i + 1,
                     name: _joinedPlayers[i],
-                    imagePath: _getPlayerAvatar(_joinedPlayers[i]),
-                    color: AppColors.kRed500,
+                    imagePath: '', // No longer used - showing initials instead
+                    color: _getPlayerColor(i),
                     isHost: _joinedPlayers[i] == widget.hostId,
                     onKick:
                         widget.onKickPlayer != null &&
@@ -143,7 +141,11 @@ class _PlayerListCardState extends State<PlayerListCard>
             ],
           ),
           SizedBox(height: 10.h),
-          HandDrawnDivider(color: AppColors.kGray300, thickness: 1, height: 16.h),
+          HandDrawnDivider(
+            color: AppColors.kGray300,
+            thickness: 1,
+            height: 16.h,
+          ),
           SizedBox(height: 10.h),
           Text('Time per round', style: AppTypography.kBold21),
           SizedBox(height: 10.h),

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
-import 'package:insan_jamd_hawan/data/constants/app_assets.dart';
+import 'package:insan_jamd_hawan/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/lobby_bg.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/player_list_card.dart';
@@ -52,7 +53,22 @@ class GameLobbyView extends StatelessWidget {
                       actions: [
                         CustomIconButton(
                           icon: AppAssets.shareIcon,
-                          onTap: () {},
+                          onTap: () async {
+                            final codeToShare = inviteCode ?? lobbyId;
+                            await Clipboard.setData(
+                              ClipboardData(text: codeToShare),
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Room code copied to clipboard',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          },
                         ),
                         SizedBox(width: 16.w),
                       ],
@@ -70,15 +86,16 @@ class GameLobbyView extends StatelessWidget {
                           RoomCodeText(
                             lobbyId: lobbyId,
                             inviteCode: inviteCode,
+                            iSend: true,
                           ),
                           SizedBox(height: 34.h),
                           PlayerListCard(
                             players: players,
                             hostId: hostId,
                             selectedRounds: controller.selectedMaxRounds ?? 3,
-                            selectedTime: 45,
+                            selectedTime: controller.selectedTimePerRound ?? 60,
                             onRoundSelected: controller.onMaxRoundChange,
-                            onTimeSelected: (time) {},
+                            onTimeSelected: controller.onTimePerRoundChange,
                             onKickPlayer: amHost
                                 ? (playerId) => controller.removePlayer(
                                     isKick: true,
@@ -92,7 +109,10 @@ class GameLobbyView extends StatelessWidget {
                               text: 'Start !',
                               width: 209.w,
                               onPressed: () {
-                                context.push(LetterGeneratorView.path);
+                                context.push(
+                                  LetterGeneratorView.path,
+                                  extra: controller,
+                                );
                               },
                             ),
                             SizedBox(height: 12.h),
@@ -103,6 +123,43 @@ class GameLobbyView extends StatelessWidget {
                                   controller.removePlayer(isKick: false),
                             ),
                           ] else ...[
+                            Container(
+                              padding: EdgeInsets.all(16.h),
+                              decoration: BoxDecoration(
+                                color: AppColors.kGreen100,
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(
+                                  color: AppColors.kPrimary,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: AppColors.kPrimary,
+                                    size: 48.w,
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    'You\'re in!',
+                                    style: AppTypography.kBold24.copyWith(
+                                      color: AppColors.kPrimary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    'Wait for host to start the game',
+                                    style: AppTypography.kRegular19.copyWith(
+                                      color: AppColors.kGray600,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
                             PrimaryButton(
                               text: 'Leave Lobby',
                               width: 209.w,
