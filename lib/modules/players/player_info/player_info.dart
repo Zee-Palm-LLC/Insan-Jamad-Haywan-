@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/lobby_bg.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/primary_button.dart';
@@ -45,7 +46,7 @@ class _PlayerInfoState extends State<PlayerInfo> {
 
   Future<void> _savePlayerInfo() async {
     final username = _usernameController.text.trim();
-  
+
     if (username.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter your username')),
@@ -75,35 +76,6 @@ class _PlayerInfoState extends State<PlayerInfo> {
         ).showSnackBar(SnackBar(content: Text('Error saving player info: $e')));
       }
     }
-  }
-
-  Widget _buildHeader(bool isDesktop) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 40.w : 16.w,
-        vertical: isDesktop ? 20.h : 16.h,
-      ),
-      child: Row(
-        crossAxisAlignment: isDesktop
-            ? CrossAxisAlignment.start
-            : CrossAxisAlignment.center,
-        mainAxisAlignment: isDesktop
-            ? MainAxisAlignment.spaceBetween
-            : MainAxisAlignment.center,
-        children: [
-          if (isDesktop)
-            CustomIconButton(
-              icon: AppAssets.backIcon,
-              onTap: () {
-                context.pop();
-              },
-            ),
-          Image.asset(AppAssets.logo),
-          if (isDesktop)
-            CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-        ],
-      ),
-    );
   }
 
   Widget _buildProfileImagePicker() {
@@ -195,8 +167,9 @@ class _PlayerInfoState extends State<PlayerInfo> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (isDesktop) _buildHeader(isDesktop),
-                  SizedBox(height: isDesktop ? 40.h : 24.h),
+                  if (!isDesktop) SizedBox(height: 50.h),
+                  GameLogo(),
+                  SizedBox(height: 12.h),
 
                   Text(
                     "Set up your profile information below. Your username and welcome message will be visible to other players in the lobby.",
