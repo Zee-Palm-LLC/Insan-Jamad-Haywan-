@@ -30,6 +30,9 @@ const String _narratorChooseLetter = 'audios/narrator_choose_letter.wav';
 const String _narratorTheLetterIs = 'audios/narrator_the_letter_is.wav';
 const String _wheelSpin = 'audios/wheel_spin.wav';
 const String _countdown = 'audios/countdown.wav';
+const String _playerJoinPop = 'audios/lobby_join.wav'; // "pop" sound
+const String _gameStartWhoosh =
+    'audios/game_started.wav'; // "whoosh+chime" sound
 
 enum AudioType {
   click,
@@ -41,6 +44,8 @@ enum AudioType {
   narratorTheLetterIs,
   wheelSpin,
   countdown,
+  playerJoinPop,
+  gameStartWhoosh,
 }
 
 extension AudioTypeExtension on AudioType {
@@ -54,5 +59,7 @@ extension AudioTypeExtension on AudioType {
     AudioType.narratorTheLetterIs => _narratorTheLetterIs,
     AudioType.wheelSpin => _wheelSpin,
     AudioType.countdown => _countdown,
+    AudioType.playerJoinPop => _playerJoinPop,
+    AudioType.gameStartWhoosh => _gameStartWhoosh,
   };
 }

@@ -17,6 +17,7 @@ import 'package:insan_jamd_hawan/core/services/playflow/endpoints.dart';
 import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
 import 'package:insan_jamd_hawan/core/utils/network_call.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
+import 'package:insan_jamd_hawan/services/audio_service.dart';
 
 import '../constants/enums.dart';
 
@@ -32,9 +33,19 @@ class LobbyController extends GetxController {
   int? _selectedMaxRounds;
   int? get selectedMaxRounds => _selectedMaxRounds;
 
+  int? _selectedTimePerRound;
+  int? get selectedTimePerRound => _selectedTimePerRound;
+
   void onMaxRoundChange(int? value) {
     if (value != null) {
       _selectedMaxRounds = value;
+      update();
+    }
+  }
+
+  void onTimePerRoundChange(int? value) {
+    if (value != null) {
+      _selectedTimePerRound = value;
       update();
     }
   }
@@ -742,6 +753,16 @@ class LobbyController extends GetxController {
         newRoom.settings?.status == GameStatus.started &&
         _currentRoom.settings?.status != GameStatus.started;
 
+    // Play "pop" sound on player join
+    if (joinedPlayers.isNotEmpty) {
+      AudioService.instance.playAudio(AudioType.playerJoinPop);
+    }
+
+    // Play "whoosh+chime" sound on game start
+    if (gameStarted) {
+      AudioService.instance.playAudio(AudioType.gameStartWhoosh);
+    }
+
     // Immediate UI update for join/leave (<1s requirement)
     _currentRoom = newRoom;
     update(); // Immediate UI refresh
@@ -760,7 +781,7 @@ class LobbyController extends GetxController {
       log('Game started broadcast received', name: 'SSE');
       phase = GamePhase.started;
 
-      // Optional: Show notification to user
+      // Show notification to user
       AppToaster.showToast(
         'Game Started!',
         subTitle: 'The game has begun',

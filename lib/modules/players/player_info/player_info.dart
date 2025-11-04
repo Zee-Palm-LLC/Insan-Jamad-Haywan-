@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/lobby_bg.dart';
@@ -57,23 +58,35 @@ class _PlayerInfoState extends State<PlayerInfo> {
     setState(() => _isLoading = true);
 
     try {
-      debugPrint('Username: $username');
-      debugPrint('Profile Image Path: $_profileImagePath');
+      // Save username to storage
+      await AppService.setPlayerId(username);
+
+      // TODO: Save profile image path if needed
+      // if (_profileImagePath != null) {
+      //   await AppService.setProfileImage(_profileImagePath!);
+      // }
 
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Player info saved successfully')),
+          const SnackBar(
+            content: Text('Player info saved successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
-        // Navigate back or to next screen
-        context.pop();
+
+        // Navigate to main menu
+        context.go('/main-menu');
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error saving player info: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving player info: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

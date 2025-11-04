@@ -129,7 +129,7 @@ class _AnimatedBgState extends State<AnimatedBg> with TickerProviderStateMixin {
               builder: (context, child) {
                 return _buildLetter(
                   letter: 'z',
-                  baseLeftPercent: 0.45,
+                  baseLeftPercent: 0.5,
                   baseTopPercent: 0.05,
                   color: const Color(0xFF90FF9F),
                   fontSize: 42.sp,
@@ -395,7 +395,7 @@ class _AnimatedBgState extends State<AnimatedBg> with TickerProviderStateMixin {
                     style: GoogleFonts.kalam(
                       fontSize: fontSize,
                       fontWeight: fontWeight,
-                      color: color.withValues(alpha: .2),
+                      color: color.withOpacity(0.08),
                     ),
                   ),
                 );
@@ -411,7 +411,7 @@ class _AnimatedBgState extends State<AnimatedBg> with TickerProviderStateMixin {
                     style: GoogleFonts.kalam(
                       fontSize: fontSize,
                       fontWeight: fontWeight,
-                      color: color.withValues(alpha: .2),
+                      color: color.withOpacity(0.08),
                     ),
                   ),
                 );
@@ -421,7 +421,7 @@ class _AnimatedBgState extends State<AnimatedBg> with TickerProviderStateMixin {
                 style: GoogleFonts.kalam(
                   fontSize: fontSize,
                   fontWeight: fontWeight,
-                  color: color.withOpacity(0.2),
+                  color: color.withOpacity(0.35),
                 ),
               ),
             ],

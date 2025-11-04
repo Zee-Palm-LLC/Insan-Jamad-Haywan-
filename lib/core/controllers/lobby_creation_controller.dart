@@ -137,7 +137,12 @@ class LobbyCreationController extends GetxController {
 
         final controller = LobbyController(lobby: updatedLobby);
         controller.onMaxRoundChange(int.tryParse(maxRounds) ?? 3);
-        context.push('/lobby/${lobby.id}', extra: controller);
+        controller.onTimePerRoundChange(int.tryParse(timerPerRound) ?? 60);
+
+        // Navigate to game lobby
+        if (context.mounted) {
+          context.push('/lobby/${lobby.id}', extra: controller);
+        }
       },
     );
   }
