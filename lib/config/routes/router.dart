@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/create_lobby/create_lobby_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
@@ -15,6 +14,7 @@ import 'package:insan_jamd_hawan/core/modules/get_started/get_started_view.dart'
 import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/answers_host_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/game_lobby_view.dart';
+import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
 typedef R = AppRouter;
 
