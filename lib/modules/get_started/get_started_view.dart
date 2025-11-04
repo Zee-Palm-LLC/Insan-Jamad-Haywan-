@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/data/constants/app_assets.dart';
-import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/lobby_bg.dart';
+import 'package:insan_jamd_hawan/modules/players/main_menu/main_menu_page.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/modules/widgets/cards/animated_bg.dart';
-import 'package:insan_jamd_hawan/modules/widgets/cards/desktop_wrapper.dart';
 
 class GetStartedView extends StatelessWidget {
   const GetStartedView({super.key});
@@ -15,31 +16,33 @@ class GetStartedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: LobbyBg(
-        child: AnimatedBg(
-          child: DesktopWrapper(
-            child: Padding(
-              padding: EdgeInsets.all(16.h),
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    const Spacer(),
-                    Center(
-                      child: Image.asset(
-                        AppAssets.logo,
-                        height: 180.h,
-                        width: 180.h,
-                        fit: BoxFit.contain,
-                      ),
+      body: AnimatedBg(
+        showHorizontalLines: true,
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(16.h),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  const Spacer(),
+                  Center(
+                    child: Image.asset(
+                      AppAssets.logo,
+                      height: 180.h,
+                      width: 180.h,
+                      fit: BoxFit.contain,
                     ),
-                    const Spacer(),
-                    PrimaryButton(
-                      text: 'Get Started!',
-                      width: 260.w,
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
+                  ),
+                  const Spacer(),
+                  PrimaryButton(
+                    text: 'Get Started!',
+                    width: 260.w,
+                    onPressed: () {
+                      AudioService.instance.playAudio(AudioType.click);
+                      context.push(MainMenuPage.path);
+                    },
+                  ),
+                ],
               ),
             ),
           ),

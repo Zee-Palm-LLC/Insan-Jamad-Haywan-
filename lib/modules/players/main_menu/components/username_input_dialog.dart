@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
 import 'package:insan_jamd_hawan/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/modules/widgets/buttons/primary_button.dart';
+import 'package:insan_jamd_hawan/responsive.dart';
 
 class UsernameInputDialog extends StatefulWidget {
   const UsernameInputDialog({super.key});
@@ -69,26 +71,17 @@ class _UsernameInputDialogState extends State<UsernameInputDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDesktop = Responsive.isDesktop(context);
     return AlertDialog(
       backgroundColor: AppColors.kGreen100,
       insetPadding: EdgeInsets.symmetric(horizontal: 16.w),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       content: SizedBox(
-        width: double.maxFinite,
+        width: isDesktop ? 350.w : double.maxFinite,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
-
-            // Subtitle
-            Text(
-              'Enter your name to continue',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-
+            Text('Enter your name to continue', style: AppTypography.kBold21),
             const SizedBox(height: 24),
 
             // Name Input
@@ -97,56 +90,24 @@ class _UsernameInputDialogState extends State<UsernameInputDialog> {
               enabled: !_isLoading,
               autofocus: true,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18),
-              decoration: InputDecoration(
-                hintText: 'Your name',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-              ),
+              style: AppTypography.kRegular19.copyWith(fontSize: 16.sp),
+              decoration: InputDecoration(hintText: 'Your name'),
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _saveUsername(),
             ),
-
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
 
             // Info Text
             Text(
               'Your name will be used as your player ID',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
-              textAlign: TextAlign.center,
+              style: AppTypography.kRegular19.copyWith(fontSize: 14.sp),
             ),
-
-            const SizedBox(height: 24),
+            SizedBox(height: 24.h),
 
             // Continue Button
-            ElevatedButton(
-              onPressed: _isLoading ? null : _saveUsername,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text(
-                      'Continue',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+            PrimaryButton(
+              text: _isLoading ? 'Loading...' : 'Continue',
+              onPressed: _isLoading ? () {} : _saveUsername,
             ),
           ],
         ),
