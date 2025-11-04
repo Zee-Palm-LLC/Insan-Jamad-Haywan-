@@ -73,6 +73,15 @@ class LobbyController extends GetxController {
     update();
   }
 
+  String? _currentLetter;
+  String? get currentLetter => _currentLetter;
+
+  void setCurrentLetter(String letter) {
+    _currentLetter = letter;
+    log('Current letter set to: $letter', name: 'LetterSelection');
+    update();
+  }
+
   GamePhase _phase = GamePhase.waiting;
   GamePhase get phase => _phase;
 
@@ -243,6 +252,60 @@ class LobbyController extends GetxController {
     );
   }
 
+  /// Broadcasts the selected letter to all players
+  /// This is called by the host after the wheel spin is complete
+  Future<void> broadcastSelectedLetter(String letter) async {
+    await NetworkCall.networkCall(
+      onError: (e, s) => AppToaster.showToast(
+        'Error',
+        subTitle: 'Failed to broadcast letter: ${e.toString()}',
+        type: ToastificationType.error,
+      ),
+      future: () async {
+        String? playerId = await AppService.getPlayerId();
+        if (playerId == null) {
+          throw Exception('Player ID is not set');
+        }
+
+        // Set letter locally first for immediate feedback
+        setCurrentLetter(letter);
+
+        // Create a round status list with the selected letter
+        final roundStatus = [
+          'letter:$letter',
+          'timestamp:${DateTime.now().toIso8601String()}',
+        ];
+
+        // Broadcast via lobby settings update
+        final updated = await playflowClient.updateGameRoom(
+          lobbyId: currentRoom.id!,
+          resource: LobbyResourceModel(
+            settings: LobbySettings(
+              settings: GameSettings(
+                status: _currentRoom.settings?.status ?? GameStatus.started,
+                maxRounds: _currentRoom.settings?.maxRounds ?? 3,
+                currentRound: _currentRoom.settings?.currentRound ?? 1,
+                roundStatus: roundStatus,
+                scoreConfig:
+                    _currentRoom.settings?.scoreConfig ??
+                    const ScoreConfig(correctGuess: 100, fooledOther: 50),
+              ),
+            ),
+            requesterId: playerId,
+          ),
+        );
+
+        if (updated != null) {
+          setCurrentRoom(updated);
+          log(
+            'Letter "$letter" broadcast to all players via SSE',
+            name: 'BroadcastLetter',
+          );
+        }
+      },
+    );
+  }
+
   void setCurrentRoom(LobbyModel room) {
     String? playerId = AppService.getPlayerName();
     if (room.players?.contains(playerId) == false) {
@@ -266,6 +329,21 @@ class LobbyController extends GetxController {
     }
 
     _currentRoom = room;
+
+    // Check for letter updates in roundStatus
+    if (room.settings?.roundStatus != null &&
+        room.settings!.roundStatus!.isNotEmpty) {
+      for (final status in room.settings!.roundStatus!) {
+        if (status.startsWith('letter:')) {
+          final letter = status.substring('letter:'.length);
+          if (_currentLetter != letter) {
+            _currentLetter = letter;
+            log('Received letter update: $letter', name: 'LetterSync');
+          }
+        }
+      }
+    }
+
     update();
 
     if (room.settings?.status == GameStatus.started) {
