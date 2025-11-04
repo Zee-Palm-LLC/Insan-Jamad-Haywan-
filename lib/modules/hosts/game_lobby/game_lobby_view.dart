@@ -12,6 +12,8 @@ import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/room_code_t
 import 'package:insan_jamd_hawan/modules/hosts/letter_generator/letter_generator_view.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/primary_button.dart';
+import 'package:insan_jamd_hawan/modules/widgets/cards/desktop_wrapper.dart';
+import 'package:insan_jamd_hawan/responsive.dart';
 
 class GameLobbyView extends StatelessWidget {
   const GameLobbyView({super.key, required this.controller});
@@ -20,6 +22,7 @@ class GameLobbyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDesktop = Responsive.isDesktop(context);
     return GetBuilder<LobbyController>(
       init: controller,
       builder: (_) {
@@ -36,71 +39,80 @@ class GameLobbyView extends StatelessWidget {
 
             return Scaffold(
               extendBodyBehindAppBar: true,
-              appBar: AppBar(
-                leading: Padding(
-                  padding: EdgeInsets.all(10.h),
-                  child: CustomIconButton(
-                    icon: AppAssets.backIcon,
-                    onTap: () => controller.removePlayer(isKick: false),
-                  ),
-                ),
-                actions: [
-                  CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-                  SizedBox(width: 16.w),
-                ],
-              ),
+              appBar: isDesktop
+                  ? null
+                  : AppBar(
+                      leading: Padding(
+                        padding: EdgeInsets.all(10.h),
+                        child: CustomIconButton(
+                          icon: AppAssets.backIcon,
+                          onTap: () => controller.removePlayer(isKick: false),
+                        ),
+                      ),
+                      actions: [
+                        CustomIconButton(
+                          icon: AppAssets.shareIcon,
+                          onTap: () {},
+                        ),
+                        SizedBox(width: 16.w),
+                      ],
+                    ),
               body: LobbyBg(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.all(16.h),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 50.h),
-                      GameLogo(),
-                      SizedBox(height: 12.h),
-                      RoomCodeText(lobbyId: lobbyId, inviteCode: inviteCode),
-                      SizedBox(height: 34.h),
-                      PlayerListCard(
-                        players: players,
-                        hostId: hostId,
-                        selectedRounds: controller.selectedMaxRounds ?? 3,
-                        selectedTime:
-                            45, // TODO: Add time selection to controller
-                        onRoundSelected: controller.onMaxRoundChange,
-                        onTimeSelected: (time) {
-                          // TODO: Add time selection to controller
-                        },
-                        onKickPlayer: amHost
-                            ? (playerId) => controller.removePlayer(
-                                isKick: true,
-                                playerIdToKick: playerId,
-                              )
-                            : null,
+                  child: Center(
+                    child: DesktopWrapper(
+                      child: Column(
+                        children: [
+                          if (!isDesktop) SizedBox(height: 50.h),
+                          GameLogo(),
+                          SizedBox(height: 12.h),
+                          RoomCodeText(
+                            lobbyId: lobbyId,
+                            inviteCode: inviteCode,
+                          ),
+                          SizedBox(height: 34.h),
+                          PlayerListCard(
+                            players: players,
+                            hostId: hostId,
+                            selectedRounds: controller.selectedMaxRounds ?? 3,
+                            selectedTime: 45,
+                            onRoundSelected: controller.onMaxRoundChange,
+                            onTimeSelected: (time) {},
+                            onKickPlayer: amHost
+                                ? (playerId) => controller.removePlayer(
+                                    isKick: true,
+                                    playerIdToKick: playerId,
+                                  )
+                                : null,
+                          ),
+                          SizedBox(height: 20.h),
+                          if (amHost) ...[
+                            PrimaryButton(
+                              text: 'Start !',
+                              width: 209.w,
+                              onPressed: () {
+                                context.push(LetterGeneratorView.path);
+                              },
+                            ),
+                            SizedBox(height: 12.h),
+                            PrimaryButton(
+                              text: 'Leave Lobby',
+                              width: 209.w,
+                              onPressed: () =>
+                                  controller.removePlayer(isKick: false),
+                            ),
+                          ] else ...[
+                            PrimaryButton(
+                              text: 'Leave Lobby',
+                              width: 209.w,
+                              onPressed: () =>
+                                  controller.removePlayer(isKick: false),
+                            ),
+                          ],
+                        ],
                       ),
-                      SizedBox(height: 20.h),
-                      if (amHost) ...[
-                        PrimaryButton(
-                          text: 'Start !',
-                          width: 209.w,
-                          onPressed: () {
-                           context.push(LetterGeneratorView.path);
-                           },
-                        ),
-                        SizedBox(height: 12.h),
-                        PrimaryButton(
-                          text: 'Leave Lobby',
-                          width: 209.w,
-                          onPressed: () =>
-                              controller.removePlayer(isKick: false),
-                        ),
-                      ] else ...[
-                        PrimaryButton(
-                          text: 'Leave Lobby',
-                          width: 209.w,
-                          onPressed: () =>
-                              controller.removePlayer(isKick: false),
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
                 ),
               ),

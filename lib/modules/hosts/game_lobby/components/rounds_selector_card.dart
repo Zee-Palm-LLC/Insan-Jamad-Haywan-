@@ -25,11 +25,11 @@ class RoundSelectorCard extends StatelessWidget {
         height: 36.h,
         width: 36.h,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: AppColors.kGray600),
           color: isSelected
               ? AppColors.kPrimary.withValues(alpha: 0.5)
               : AppColors.kLightYellow,
+          border: Border.all(color: AppColors.kGray600, width: 1),
+          borderRadius: BorderRadius.circular(4.r),
         ),
         alignment: Alignment.center,
         child: Text(

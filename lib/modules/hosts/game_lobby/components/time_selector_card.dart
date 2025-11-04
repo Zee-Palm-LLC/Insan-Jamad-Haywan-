@@ -26,11 +26,11 @@ class TimeSelectorCard extends StatelessWidget {
         width: 84.w,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: AppColors.kGray600),
           color: isSelected
               ? AppColors.kPrimary.withValues(alpha: 0.5)
               : AppColors.kLightYellow,
+          border: Border.all(color: AppColors.kGray600, width: 1),
+          borderRadius: BorderRadius.circular(4.r),
         ),
         child: Text(
           '$time sec',

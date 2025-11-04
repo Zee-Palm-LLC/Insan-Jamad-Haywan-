@@ -9,6 +9,8 @@ import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/game_logo.d
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/room_code_text.dart';
 import 'package:insan_jamd_hawan/modules/hosts/letter_generator/components/fortune_wheel.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/custom_icon_button.dart';
+import 'package:insan_jamd_hawan/modules/widgets/cards/desktop_wrapper.dart';
+import 'package:insan_jamd_hawan/responsive.dart';
 
 class LetterGeneratorView extends StatefulWidget {
   const LetterGeneratorView({super.key, this.controller});
@@ -43,6 +45,7 @@ class _LetterGeneratorViewState extends State<LetterGeneratorView> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDesktop = Responsive.isDesktop(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -60,56 +63,58 @@ class _LetterGeneratorViewState extends State<LetterGeneratorView> {
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.h),
-        child: Column(
-          children: [
-            SizedBox(height: 50.h),
-            GameLogo(),
-            SizedBox(height: 12.h),
-            GetBuilder<LobbyController>(
-              init: widget.controller,
-              builder: (controller) {
-                return RoomCodeText(
-                  iSend: true,
-                  lobbyId: controller.currentRoom.inviteCode ?? 'XYZ124',
-                );
-              },
-            ),
-            SizedBox(height: 50.h),
-            FortuneWheelPage(
-              isHost: true,
-              onSpinComplete: _handleSpinComplete,
-              onCountdownComplete: _handleCountdownComplete,
-            ),
-            if (_selectedLetter != null) ...[
-              SizedBox(height: 30.h),
-              Container(
-                padding: EdgeInsets.all(16.h),
-                decoration: BoxDecoration(
-                  color: AppColors.kGreen100,
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: AppColors.kPrimary, width: 2),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Selected Letter',
-                      style: AppTypography.kBold16.copyWith(
-                        color: AppColors.kGray600,
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      _selectedLetter!,
-                      style: AppTypography.kBold24.copyWith(
-                        fontSize: 48.sp,
-                        color: AppColors.kPrimary,
-                      ),
-                    ),
-                  ],
-                ),
+        child: DesktopWrapper(
+          child: Column(
+            children: [
+              if (!isDesktop) SizedBox(height: 50.h),
+              GameLogo(),
+              SizedBox(height: 12.h),
+              GetBuilder<LobbyController>(
+                init: widget.controller,
+                builder: (controller) {
+                  return RoomCodeText(
+                    iSend: true,
+                    lobbyId: controller.currentRoom.inviteCode ?? 'XYZ124',
+                  );
+                },
               ),
+              SizedBox(height: 50.h),
+              FortuneWheelPage(
+                isHost: true,
+                onSpinComplete: _handleSpinComplete,
+                onCountdownComplete: _handleCountdownComplete,
+              ),
+              if (_selectedLetter != null) ...[
+                if (isDesktop) SizedBox(height: 30.h),
+                Container(
+                  padding: EdgeInsets.all(16.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.kGreen100,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColors.kPrimary, width: 2),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Selected Letter',
+                        style: AppTypography.kBold16.copyWith(
+                          color: AppColors.kGray600,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        _selectedLetter!,
+                        style: AppTypography.kBold24.copyWith(
+                          fontSize: 48.sp,
+                          color: AppColors.kPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

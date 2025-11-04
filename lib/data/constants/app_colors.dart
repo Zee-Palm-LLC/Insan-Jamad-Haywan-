@@ -17,4 +17,5 @@ class AppColors {
   static const Color kOrange = Color(0xFFFF8C42);
   static const Color kCreamyOrange = Color(0xFFFFDAB9);
   static const Color kYellow = Color(0xFFFFEF9C);
+  static const Color kLightBorder = Color(0xFFFFEFD0);
 }
