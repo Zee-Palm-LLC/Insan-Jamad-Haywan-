@@ -108,12 +108,14 @@ class GameLobbyView extends StatelessWidget {
                             PrimaryButton(
                               text: 'Start !',
                               width: 209.w,
-                              onPressed: () {
-                                context.push(
-                                  LetterGeneratorView.path,
-                                  extra: controller,
-                                );
-                              },
+                              onPressed: players.length < 2
+                                  ? null // Disable button if less than 2 players
+                                  : () {
+                                      context.push(
+                                        LetterGeneratorView.path,
+                                        extra: controller,
+                                      );
+                                    },
                             ),
                             SizedBox(height: 12.h),
                             PrimaryButton(

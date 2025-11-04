@@ -16,8 +16,10 @@ import 'package:insan_jamd_hawan/responsive.dart';
 
 class LobbyCreationPage extends StatelessWidget {
   const LobbyCreationPage({super.key});
+
   static const String path = '/create-lobby';
   static const String name = 'CreateLobby';
+
   @override
   Widget build(BuildContext context) {
     final bool isDesktop = Responsive.isDesktop(context);
@@ -58,6 +60,7 @@ class LobbyCreationPage extends StatelessWidget {
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 34.h),
+
                       // Settings Card
                       Container(
                         decoration: BoxDecoration(
@@ -70,6 +73,7 @@ class LobbyCreationPage extends StatelessWidget {
                           children: [
                             Text('Game Settings', style: AppTypography.kBold21),
                             SizedBox(height: 16.h),
+
                             // Lobby Name Input
                             Container(
                               decoration: BoxDecoration(
@@ -88,28 +92,36 @@ class LobbyCreationPage extends StatelessWidget {
                                   TextField(
                                     controller: controller.lobbyNameController,
                                     enabled: !controller.isLoading,
-
                                     decoration: InputDecoration(
                                       hintText: 'Enter lobby name',
+                                      filled: true,
+                                      fillColor: AppColors.kGreen100,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 16.w,
+                                        vertical: 16.h,
+                                      ),
                                     ),
-                                    style: AppTypography.kRegular19.copyWith(
-                                      fontSize: 16.sp,
-                                    ),
+                                    style: AppTypography.kRegular19,
                                   ),
                                 ],
                               ),
                             ),
+
                             SizedBox(height: 18.h),
+
                             // Max Players
                             Container(
                               decoration: BoxDecoration(
                                 color: AppColors.kWhite,
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
-                              padding: EdgeInsets.symmetric(
-                                vertical: 4.h,
-                                horizontal: 10.w,
-                              ),
+                              padding: EdgeInsets.all(16.h),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -142,7 +154,9 @@ class LobbyCreationPage extends StatelessWidget {
                                 ],
                               ),
                             ),
+
                             SizedBox(height: 18.h),
+
                             // Number of Rounds
                             Row(
                               children: [
@@ -167,6 +181,7 @@ class LobbyCreationPage extends StatelessWidget {
                                 ),
                               ],
                             ),
+
                             SizedBox(height: 10.h),
                             HandDrawnDivider(
                               color: AppColors.kGray300,
@@ -174,6 +189,7 @@ class LobbyCreationPage extends StatelessWidget {
                               height: 16.h,
                             ),
                             SizedBox(height: 10.h),
+
                             // Time per Round
                             Text(
                               'Time per round',
@@ -199,7 +215,9 @@ class LobbyCreationPage extends StatelessWidget {
                           ],
                         ),
                       ),
+
                       SizedBox(height: 20.h),
+
                       // Create Button
                       PrimaryButton(
                         text: controller.isLoading

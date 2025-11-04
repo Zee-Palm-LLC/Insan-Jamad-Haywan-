@@ -139,7 +139,7 @@ class PlayerInfo extends StatelessWidget {
                       Center(
                         child: PrimaryButton(
                           onPressed: controller.isLoading
-                              ? () {}
+                              ? null // Disabled during loading
                               : () => controller.savePlayerInfo(context),
                           text: controller.isLoading ? 'Loading...' : 'Save',
                           width: 220.w,

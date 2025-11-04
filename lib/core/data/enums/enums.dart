@@ -1,6 +1,6 @@
 enum GameDifficulty { easy, medium, hard }
 
-enum GamePhase { waiting, started, ended }
+enum GamePhase { waiting, started, letterSelection, ended }
 
 enum RoomStatus { connected, deleted, updated, waiting, error }
 

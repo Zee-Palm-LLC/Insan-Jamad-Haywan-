@@ -106,7 +106,11 @@ class AppRouter {
         name: MainMenuPage.name,
         builder: (context, state) => const MainMenuPage(),
       ),
-
+      GoRoute(
+        path: LobbyCreationPage.path,
+        name: LobbyCreationPage.name,
+        builder: (context, state) => const LobbyCreationPage(),
+      ),
       GoRoute(
         path: '/lobby/:id',
         name: 'GameLobby',
