@@ -26,8 +26,22 @@ const String _gameStarted = 'audios/game_started.wav';
 const String _lobbyJoin = 'audios/lobby_join.wav';
 const String _lobbyLeave = 'audios/lobby_leave.wav';
 const String _scoreboard = 'audios/scoreboard.wav';
+const String _narratorChooseLetter = 'audios/narrator_choose_letter.wav';
+const String _narratorTheLetterIs = 'audios/narrator_the_letter_is.wav';
+const String _wheelSpin = 'audios/wheel_spin.wav';
+const String _countdown = 'audios/countdown.wav';
 
-enum AudioType { click, gameStarted, lobbyJoin, lobbyLeave, scoreboard }
+enum AudioType {
+  click,
+  gameStarted,
+  lobbyJoin,
+  lobbyLeave,
+  scoreboard,
+  narratorChooseLetter,
+  narratorTheLetterIs,
+  wheelSpin,
+  countdown,
+}
 
 extension AudioTypeExtension on AudioType {
   String get path => switch (this) {
@@ -36,5 +50,9 @@ extension AudioTypeExtension on AudioType {
     AudioType.lobbyJoin => _lobbyJoin,
     AudioType.lobbyLeave => _lobbyLeave,
     AudioType.scoreboard => _scoreboard,
+    AudioType.narratorChooseLetter => _narratorChooseLetter,
+    AudioType.narratorTheLetterIs => _narratorTheLetterIs,
+    AudioType.wheelSpin => _wheelSpin,
+    AudioType.countdown => _countdown,
   };
 }
