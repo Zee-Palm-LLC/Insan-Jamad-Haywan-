@@ -12,6 +12,7 @@ import 'package:insan_jamd_hawan/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/modules/join_lobby/join_lobby_page.dart';
 import 'package:insan_jamd_hawan/modules/players/create_lobby/lobby_creation_page.dart';
 import 'package:insan_jamd_hawan/modules/players/main_menu/main_menu_page.dart';
+import 'package:insan_jamd_hawan/modules/players/player_info/player_info.dart';
 import 'package:insan_jamd_hawan/modules/solo_game/solo_game_page.dart';
 
 typedef R = AppRouter;
@@ -21,7 +22,7 @@ class AppRouter {
 
   static final _router = GoRouter(
     navigatorKey: navigatorKey,
-    initialLocation: MainMenuPage.path,
+    initialLocation: PlayerInfo.path,
     routes: [
       // Host Pages
       GoRoute(
@@ -30,6 +31,13 @@ class AppRouter {
         builder: (context, state) {
           final controller = state.extra as LobbyController?;
           return LetterGeneratorView(controller: controller);
+        },
+      ),
+      GoRoute(
+        path: PlayerInfo.path,
+        name: PlayerInfo.name,
+        builder: (context, state) {
+          return const PlayerInfo();
         },
       ),
       GoRoute(

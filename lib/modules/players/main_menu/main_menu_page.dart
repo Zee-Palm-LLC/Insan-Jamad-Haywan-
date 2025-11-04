@@ -8,7 +8,7 @@ import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/lobby_bg.da
 import 'package:insan_jamd_hawan/modules/players/main_menu/components/join_lobby_dialog.dart';
 import 'package:insan_jamd_hawan/modules/players/main_menu/components/menu_button.dart';
 import 'package:insan_jamd_hawan/modules/players/main_menu/components/player_tile.dart';
-import 'package:insan_jamd_hawan/modules/username_input/username_input_dialog.dart';
+import 'package:insan_jamd_hawan/modules/players/main_menu/components/username_input_dialog.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
