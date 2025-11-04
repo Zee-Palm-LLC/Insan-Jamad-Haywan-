@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_bg.dart';
-import 'package:insan_jamd_hawan/core/modules/players/player_info/player_info_controller.dart';
+import 'package:insan_jamd_hawan/core/controllers/player_info_controller.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
@@ -139,7 +139,7 @@ class PlayerInfo extends StatelessWidget {
                       Center(
                         child: PrimaryButton(
                           onPressed: controller.isLoading
-                              ? () {}
+                              ? null // Disabled during loading
                               : () => controller.savePlayerInfo(context),
                           text: controller.isLoading ? 'Loading...' : 'Save',
                           width: 220.w,

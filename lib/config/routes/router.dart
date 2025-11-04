@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/create_lobby/create_lobby_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_round_view.dart';
+
 import 'package:insan_jamd_hawan/core/modules/main_menu/main_menu_page.dart';
 import 'package:insan_jamd_hawan/core/modules/players/player_info/player_info.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
@@ -94,7 +96,11 @@ class AppRouter {
         name: MainMenuPage.name,
         builder: (context, state) => const MainMenuPage(),
       ),
-
+      GoRoute(
+        path: LobbyCreationPage.path,
+        name: LobbyCreationPage.name,
+        builder: (context, state) => const LobbyCreationPage(),
+      ),
       GoRoute(
         path: '/lobby/:id',
         name: 'GameLobby',
