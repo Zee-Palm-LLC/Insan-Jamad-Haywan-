@@ -82,7 +82,7 @@ class _AnimatedBgState extends State<AnimatedBg> with TickerProviderStateMixin {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final height = constraints.maxHeight;
-    
+
         return Stack(
           children: [
             if (widget.showHorizontalLines)
@@ -125,12 +125,48 @@ class _AnimatedBgState extends State<AnimatedBg> with TickerProviderStateMixin {
               },
             ),
             AnimatedBuilder(
+              animation: Listenable.merge([_controller1, _controller3]),
+              builder: (context, child) {
+                return _buildLetter(
+                  letter: 'L',
+                  baseLeftPercent: 0.9,
+                  baseTopPercent: 0.22,
+                  color: const Color(0xFFFCF0DA),
+                  fontSize: 48.sp,
+                  fontWeight: FontWeight.w700,
+                  width: width,
+                  height: height,
+                  animation: _controller1,
+                  animationType: AnimationType.floating,
+                  scaleAnimation: _controller3,
+                );
+              },
+            ),
+            AnimatedBuilder(
               animation: Listenable.merge([_controller2, _controller4]),
               builder: (context, child) {
                 return _buildLetter(
                   letter: 'z',
-                  baseLeftPercent: 0.5,
+                  baseLeftPercent: 0.2,
                   baseTopPercent: 0.05,
+                  color: const Color(0xFF90FF9F),
+                  fontSize: 42.sp,
+                  fontWeight: FontWeight.w400,
+                  width: width,
+                  height: height,
+                  animation: _controller2,
+                  animationType: AnimationType.upDown,
+                  rotationAnimation: _controller4,
+                );
+              },
+            ),
+            AnimatedBuilder(
+              animation: Listenable.merge([_controller2, _controller4]),
+              builder: (context, child) {
+                return _buildLetter(
+                  letter: 'z',
+                  baseLeftPercent: 0.6,
+                  baseTopPercent: 0,
                   color: const Color(0xFF90FF9F),
                   fontSize: 42.sp,
                   fontWeight: FontWeight.w400,
@@ -395,7 +431,7 @@ class _AnimatedBgState extends State<AnimatedBg> with TickerProviderStateMixin {
                     style: GoogleFonts.kalam(
                       fontSize: fontSize,
                       fontWeight: fontWeight,
-                      color: color.withOpacity(0.08),
+                      color: AppColors.kGray300,
                     ),
                   ),
                 );

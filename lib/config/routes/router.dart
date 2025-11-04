@@ -23,7 +23,7 @@ class AppRouter {
 
   static final _router = GoRouter(
     navigatorKey: navigatorKey,
-    initialLocation: MainMenuPage.path,
+    initialLocation: GetStartedView.path,
     routes: [
       GoRoute(
         path: GetStartedView.path,
