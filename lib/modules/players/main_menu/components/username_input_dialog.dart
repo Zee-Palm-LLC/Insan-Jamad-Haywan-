@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
+import 'package:insan_jamd_hawan/data/constants/constants.dart';
 
 class UsernameInputDialog extends StatefulWidget {
   const UsernameInputDialog({super.key});
@@ -67,23 +69,15 @@ class _UsernameInputDialogState extends State<UsernameInputDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
+    return AlertDialog(
+      backgroundColor: AppColors.kGreen100,
+      insetPadding: EdgeInsets.symmetric(horizontal: 16.w),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+      content: SizedBox(
+        width: double.maxFinite,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Title
-            Text(
-              'Welcome to Insan Jamd Hawan',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-
             const SizedBox(height: 8),
 
             // Subtitle

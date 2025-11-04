@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
-import 'package:insan_jamd_hawan/modules/create_lobby/lobby_creation_page.dart';
 import 'package:insan_jamd_hawan/modules/hosts/answers_host/answers_host_view.dart';
 import 'package:insan_jamd_hawan/modules/hosts/final_round/final_round_view.dart';
 import 'package:insan_jamd_hawan/modules/hosts/game_lobby/game_lobby_view.dart';
@@ -11,7 +10,8 @@ import 'package:insan_jamd_hawan/modules/hosts/scoreboard/scoreboard_view.dart';
 import 'package:insan_jamd_hawan/modules/hosts/scoring/scoring_view.dart';
 import 'package:insan_jamd_hawan/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/modules/join_lobby/join_lobby_page.dart';
-import 'package:insan_jamd_hawan/modules/main_menu/main_menu_page.dart';
+import 'package:insan_jamd_hawan/modules/players/create_lobby/lobby_creation_page.dart';
+import 'package:insan_jamd_hawan/modules/players/main_menu/main_menu_page.dart';
 import 'package:insan_jamd_hawan/modules/solo_game/solo_game_page.dart';
 
 typedef R = AppRouter;

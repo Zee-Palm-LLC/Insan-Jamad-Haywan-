@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_creation_controller.dart';
+import 'package:insan_jamd_hawan/data/constants/app_assets.dart';
+import 'package:insan_jamd_hawan/modules/widgets/buttons/custom_icon_button.dart';
+import 'package:insan_jamd_hawan/responsive.dart';
 
 class LobbyCreationPage extends StatelessWidget {
   const LobbyCreationPage({super.key});
@@ -11,17 +14,27 @@ class LobbyCreationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDesktop = Responsive.isDesktop(context);
     return GetBuilder<LobbyCreationController>(
       init: LobbyCreationController(),
       builder: (controller) {
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Create Lobby'),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.pop(),
-            ),
-          ),
+          extendBodyBehindAppBar: true,
+          appBar: isDesktop
+              ? null
+              : AppBar(
+                  leading: Padding(
+                    padding: EdgeInsets.all(10.h),
+                    child: CustomIconButton(
+                      icon: AppAssets.backIcon,
+                      onTap: (){},
+                    ),
+                  ),
+                  actions: [
+                    CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+                    SizedBox(width: 16.w),
+                  ],
+                ),
           body: SafeArea(
             child: Center(
               child: ConstrainedBox(

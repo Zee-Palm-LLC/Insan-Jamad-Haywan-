@@ -12,4 +12,7 @@ class AppAssets {
   static const String shareIcon = 'assets/icons/share.svg';
   static const String sendIcon = 'assets/icons/send.svg';
   static const String timerIcon = 'assets/icons/timer.svg';
+
+  static const String createLobby = 'assets/icons/create_lobby.svg';
+  static const String joinLobby = 'assets/icons/join_lobby.svg';
 }
