@@ -27,7 +27,10 @@ class AppRouter {
       GoRoute(
         path: LetterGeneratorView.path,
         name: LetterGeneratorView.name,
-        builder: (context, state) => const LetterGeneratorView(),
+        builder: (context, state) {
+          final controller = state.extra as LobbyController?;
+          return LetterGeneratorView(controller: controller);
+        },
       ),
       GoRoute(
         path: AnswersHostView.path,
