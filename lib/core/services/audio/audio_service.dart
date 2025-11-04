@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:audioplayers/audioplayers.dart';
-import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 
 class AudioService {
   static AudioService get instance => _instance;
@@ -12,30 +11,42 @@ class AudioService {
   final player = AudioPlayer();
 
   Future<void> playAudio(AudioType audioType) async {
-    log('playAudio: ${audioType.path}', name: 'AudioService');
-    log('isSoundOn: ${AppService.getIsSoundOn()}', name: 'AudioService');
-    if (AppService.getIsSoundOn()) {
-      try {
-        await player.play(AssetSource(audioType.path, mimeType: 'audio/wav'));
-      } catch (e, stackTrace) {
-        log(
-          e.toString(),
-          error: e,
-          stackTrace: stackTrace,
-          name: 'AudioService',
-        );
-      }
+    // if (AppHelpers.getIsSoundOn()) {
+    try {
+      await player.play(AssetSource(audioType.path, mimeType: 'audio/wav'));
+    } catch (e, stackTrace) {
+      log(e.toString(), error: e, stackTrace: stackTrace, name: 'AudioService');
     }
+    // }
   }
 }
 
-const String _clickSound = 'sounds/click.wav';
-const String _gameStarted = 'sounds/game_started.wav';
-const String _lobbyJoin = 'sounds/lobby_join.wav';
-const String _lobbyLeave = 'sounds/lobby_leave.wav';
-const String _scoreboard = 'sounds/scoreboard.wav';
+const String _clickSound = 'audios/click.wav';
+const String _gameStarted = 'audios/game_started.wav';
+const String _lobbyJoin = 'audios/lobby_join.wav';
+const String _lobbyLeave = 'audios/lobby_leave.wav';
+const String _scoreboard = 'audios/scoreboard.wav';
+const String _narratorChooseLetter = 'audios/narrator_choose_letter.wav';
+const String _narratorTheLetterIs = 'audios/narrator_the_letter_is.wav';
+const String _wheelSpin = 'audios/wheel_spin.wav';
+const String _countdown = 'audios/countdown.wav';
+const String _playerJoinPop = 'audios/lobby_join.wav'; // "pop" sound
+const String _gameStartWhoosh =
+    'audios/game_started.wav'; // "whoosh+chime" sound
 
-enum AudioType { click, gameStarted, lobbyJoin, lobbyLeave, scoreboard }
+enum AudioType {
+  click,
+  gameStarted,
+  lobbyJoin,
+  lobbyLeave,
+  scoreboard,
+  narratorChooseLetter,
+  narratorTheLetterIs,
+  wheelSpin,
+  countdown,
+  playerJoinPop,
+  gameStartWhoosh,
+}
 
 extension AudioTypeExtension on AudioType {
   String get path => switch (this) {
@@ -44,5 +55,11 @@ extension AudioTypeExtension on AudioType {
     AudioType.lobbyJoin => _lobbyJoin,
     AudioType.lobbyLeave => _lobbyLeave,
     AudioType.scoreboard => _scoreboard,
+    AudioType.narratorChooseLetter => _narratorChooseLetter,
+    AudioType.narratorTheLetterIs => _narratorTheLetterIs,
+    AudioType.wheelSpin => _wheelSpin,
+    AudioType.countdown => _countdown,
+    AudioType.playerJoinPop => _playerJoinPop,
+    AudioType.gameStartWhoosh => _gameStartWhoosh,
   };
 }
