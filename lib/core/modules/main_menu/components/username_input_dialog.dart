@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
-import 'package:insan_jamd_hawan/core/modules/players/main_menu/components/username_input_controller.dart';
+import 'package:insan_jamd_hawan/core/modules/main_menu/components/username_input_controller.dart';
 
 class UsernameInputDialog extends StatelessWidget {
   const UsernameInputDialog({super.key});

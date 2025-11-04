@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/answers_host_view.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_round_view.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/game_lobby_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
-import 'package:insan_jamd_hawan/core/modules/players/create_lobby/lobby_creation_page.dart';
-import 'package:insan_jamd_hawan/core/modules/players/main_menu/main_menu_page.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_round_view.dart';
+import 'package:insan_jamd_hawan/core/modules/main_menu/main_menu_page.dart';
 import 'package:insan_jamd_hawan/core/modules/players/player_info/player_info.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
+import 'package:insan_jamd_hawan/core/modules/get_started/get_started_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/answers_host_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/game_lobby_view.dart';
 
 typedef R = AppRouter;
 
@@ -21,10 +21,14 @@ class AppRouter {
 
   static final _router = GoRouter(
     navigatorKey: navigatorKey,
-    initialLocation: PlayerInfo.path, // Start at player info
+    initialLocation: GetStartedView.path, // Start at player info
     redirect: _handleRedirect,
     routes: [
-      // Host Pages
+      GoRoute(
+        path: GetStartedView.path,
+        name: GetStartedView.name,
+        builder: (context, state) => const GetStartedView(),
+      ),
       GoRoute(
         path: LetterGeneratorView.path,
         name: LetterGeneratorView.name,
@@ -89,17 +93,6 @@ class AppRouter {
         path: MainMenuPage.path,
         name: MainMenuPage.name,
         builder: (context, state) => const MainMenuPage(),
-      ),
-
-      // GoRoute(
-      //   path: JoinLobbyPage.path,
-      //   name: JoinLobbyPage.name,
-      //   builder: (context, state) => const JoinLobbyPage(),
-      // ),
-      GoRoute(
-        path: LobbyCreationPage.path,
-        name: LobbyCreationPage.name,
-        builder: (context, state) => const LobbyCreationPage(),
       ),
 
       GoRoute(

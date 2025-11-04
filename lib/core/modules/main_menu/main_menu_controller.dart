@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
-import 'package:insan_jamd_hawan/core/modules/players/main_menu/components/username_input_dialog.dart';
+import 'package:insan_jamd_hawan/core/modules/main_menu/components/username_input_dialog.dart';
 
 class MainMenuController extends GetxController {
   String playerName = '';
