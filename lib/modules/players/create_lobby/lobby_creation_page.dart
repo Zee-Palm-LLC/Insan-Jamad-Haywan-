@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_creation_controller.dart';
-import 'package:insan_jamd_hawan/data/constants/app_assets.dart';
+import 'package:insan_jamd_hawan/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/game_logo.dart';
+import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/lobby_bg.dart';
+import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/rounds_selector_card.dart';
+import 'package:insan_jamd_hawan/modules/hosts/game_lobby/components/time_selector_card.dart';
 import 'package:insan_jamd_hawan/modules/widgets/buttons/custom_icon_button.dart';
+import 'package:insan_jamd_hawan/modules/widgets/buttons/primary_button.dart';
+import 'package:insan_jamd_hawan/modules/widgets/cards/desktop_wrapper.dart';
+import 'package:insan_jamd_hawan/modules/widgets/custom_paint/hand_drawn_divider.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class LobbyCreationPage extends StatelessWidget {
@@ -27,7 +35,7 @@ class LobbyCreationPage extends StatelessWidget {
                     padding: EdgeInsets.all(10.h),
                     child: CustomIconButton(
                       icon: AppAssets.backIcon,
-                      onTap: (){},
+                      onTap: () => context.pop(),
                     ),
                   ),
                   actions: [
@@ -35,133 +43,149 @@ class LobbyCreationPage extends StatelessWidget {
                     SizedBox(width: 16.w),
                   ],
                 ),
-          body: SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24.0),
+          body: LobbyBg(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(16.h),
+              child: Center(
+                child: DesktopWrapper(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(
-                        Icons.group_add,
-                        size: 80,
-                        color: Theme.of(context).primaryColor.withOpacity(0.7),
-                      ),
-
-                      const SizedBox(height: 32),
-
+                      if (!isDesktop) SizedBox(height: 50.h),
+                      GameLogo(),
+                      SizedBox(height: 12.h),
                       Text(
                         'Create New Lobby',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        style: AppTypography.kBold24,
                         textAlign: TextAlign.center,
                       ),
+                      SizedBox(height: 34.h),
 
-                      const SizedBox(height: 48),
-
-                      _SettingCard(
-                        icon: Icons.people,
-                        title: 'Max Players',
-                        child: DropdownButton<String>(
-                          value: controller.maxPlayers,
-                          isExpanded: true,
-                          underline: const SizedBox(),
-                          items: List.generate(7, (index) => index + 2)
-                              .map(
-                                (value) => DropdownMenuItem(
-                                  value: value.toString(),
-                                  child: Text('$value Players'),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: controller.isLoading
-                              ? null
-                              : (value) => controller.setMaxPlayers(value),
+                      // Settings Card
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.kGreen100,
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
-                      ),
+                        padding: EdgeInsets.all(16.h),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Game Settings', style: AppTypography.kBold21),
+                            SizedBox(height: 16.h),
 
-                      const SizedBox(height: 16),
-
-                      _SettingCard(
-                        icon: Icons.replay,
-                        title: 'Max Rounds',
-                        child: DropdownButton<String>(
-                          value: controller.maxRounds,
-                          isExpanded: true,
-                          underline: const SizedBox(),
-                          items: List.generate(8, (index) => index + 3)
-                              .map(
-                                (value) => DropdownMenuItem(
-                                  value: value.toString(),
-                                  child: Text('$value Rounds'),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: controller.isLoading
-                              ? null
-                              : (value) => controller.setMaxRounds(value),
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: controller.isLoading
-                              ? null
-                              : () => controller.createLobby(context),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                            // Max Players
+                            Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.kWhite,
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              padding: EdgeInsets.all(16.h),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Max Players',
+                                    style: AppTypography.kBold21,
+                                  ),
+                                  DropdownButton<String>(
+                                    value: controller.maxPlayers,
+                                    underline: const SizedBox(),
+                                    items:
+                                        List.generate(7, (index) => index + 2)
+                                            .map(
+                                              (value) => DropdownMenuItem(
+                                                value: value.toString(),
+                                                child: Text(
+                                                  value.toString(),
+                                                  style:
+                                                      AppTypography.kRegular19,
+                                                ),
+                                              ),
+                                            )
+                                            .toList(),
+                                    onChanged: controller.isLoading
+                                        ? null
+                                        : (value) =>
+                                              controller.setMaxPlayers(value),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          child: controller.isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  'Create Lobby',
-                                  style: TextStyle(fontSize: 16),
+
+                            SizedBox(height: 18.h),
+
+                            // Number of Rounds
+                            Row(
+                              children: [
+                                Text(
+                                  'No. of Rounds',
+                                  style: AppTypography.kBold21,
                                 ),
+                                const Spacer(),
+                                ...[3, 5, 7].map(
+                                  (round) => Padding(
+                                    padding: EdgeInsets.only(left: 8.w),
+                                    child: RoundSelectorCard(
+                                      onTap: () => controller.setMaxRounds(
+                                        round.toString(),
+                                      ),
+                                      isSelected:
+                                          controller.maxRounds ==
+                                          round.toString(),
+                                      round: round.toString(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            SizedBox(height: 10.h),
+                            HandDrawnDivider(
+                              color: AppColors.kGray300,
+                              thickness: 1,
+                              height: 16.h,
+                            ),
+                            SizedBox(height: 10.h),
+
+                            // Time per Round
+                            Text(
+                              'Time per round',
+                              style: AppTypography.kBold21,
+                            ),
+                            SizedBox(height: 10.h),
+                            Wrap(
+                              spacing: 8.w,
+                              children: [45, 60, 90]
+                                  .map(
+                                    (time) => TimeSelectorCard(
+                                      onTap: () => controller.setTimerPerRound(
+                                        time.toString(),
+                                      ),
+                                      time: time.toString(),
+                                      isSelected:
+                                          controller.timerPerRound ==
+                                          time.toString(),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ],
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      SizedBox(height: 20.h),
 
-                      Card(
-                        color: Colors.green[50],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                color: Colors.green[700],
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'You will be the host of this lobby and can start the game when ready',
-                                  style: TextStyle(
-                                    color: Colors.green[900],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      // Create Button
+                      PrimaryButton(
+                        text: controller.isLoading
+                            ? 'Creating...'
+                            : 'Create Lobby',
+                        width: double.infinity,
+                        onPressed: controller.isLoading
+                            ? () {}
+                            : () => controller.createLobby(context),
                       ),
                     ],
                   ),
@@ -171,49 +195,6 @@ class LobbyCreationPage extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _SettingCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final Widget child;
-
-  const _SettingCard({
-    required this.icon,
-    required this.title,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 20, color: Colors.grey[600]),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[700],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            child,
-          ],
-        ),
-      ),
     );
   }
 }
