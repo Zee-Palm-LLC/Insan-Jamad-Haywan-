@@ -15,4 +15,5 @@ class AppAssets {
 
   static const String createLobby = 'assets/icons/create_lobby.svg';
   static const String joinLobby = 'assets/icons/join_lobby.svg';
+  static const String done = 'assets/icons/done.svg';
 }

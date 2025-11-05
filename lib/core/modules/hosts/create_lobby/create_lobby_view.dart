@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_creation_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/rounds_selector_card.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/time_selector_card.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/custom_paint/hand_drawn_divider.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
@@ -43,7 +43,8 @@ class LobbyCreationPage extends StatelessWidget {
                     SizedBox(width: 16.w),
                   ],
                 ),
-          body: LobbyBg(
+          body: AnimatedBg(
+            showHorizontalLines: true,
             child: SingleChildScrollView(
               padding: EdgeInsets.all(16.h),
               child: Center(
@@ -121,7 +122,7 @@ class LobbyCreationPage extends StatelessWidget {
                                 color: AppColors.kWhite,
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
-                              padding: EdgeInsets.all(16.h),
+                              padding: EdgeInsets.symmetric(horizontal: 12.w,vertical: 5.h),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,

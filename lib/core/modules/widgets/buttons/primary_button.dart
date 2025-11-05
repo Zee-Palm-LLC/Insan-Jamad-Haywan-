@@ -7,11 +7,13 @@ class PrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed; // Made nullable for disabled state
   final double? width;
+  final Color? color;
   const PrimaryButton({
     super.key,
     required this.text,
     required this.onPressed,
     this.width,
+    this.color,
   });
 
   @override
@@ -27,7 +29,7 @@ class PrimaryButton extends StatelessWidget {
         backgroundColor: onPressed == null
             ? AppColors
                   .kGray300 // Disabled color
-            : AppColors.kPrimary,
+            : color ?? AppColors.kPrimary,
         foregroundColor: onPressed == null
             ? AppColors
                   .kGray600 // Disabled text color

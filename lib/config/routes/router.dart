@@ -4,6 +4,7 @@ import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/modules/get_started/get_started_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/answers_host_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/player_answer_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/create_lobby/create_lobby_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_round_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/game_lobby_view.dart';
@@ -107,11 +108,6 @@ class AppRouter {
         builder: (context, state) => const MainMenuPage(),
       ),
       GoRoute(
-        path: LobbyCreationPage.path,
-        name: LobbyCreationPage.name,
-        builder: (context, state) => const LobbyCreationPage(),
-      ),
-      GoRoute(
         path: '/lobby/:id',
         name: 'GameLobby',
         builder: (context, state) {
@@ -120,6 +116,14 @@ class AppRouter {
             return const Scaffold(body: Center(child: Text('Lobby not found')));
           }
           return GameLobbyView(controller: controller);
+        },
+      ),
+      GoRoute(
+        path: PlayerAnswerView.path,
+        name: PlayerAnswerView.name,
+        builder: (context, state) {
+          final letter = state.uri.queryParameters['letter'] ?? 'A';
+          return PlayerAnswerView(selectedLetter: letter);
         },
       ),
     ],
