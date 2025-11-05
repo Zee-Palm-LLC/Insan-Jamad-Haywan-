@@ -3,8 +3,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
+import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
 class NetworkCall<T> {
   static Future<void> networkCall<T>({

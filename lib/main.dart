@@ -4,47 +4,25 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/cache/storage_service.dart';
 import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_theme.dart';
 import 'package:insan_jamd_hawan/firebase_options.dart';
+import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
-late FirebaseApp? mashFirebaseApp;
+late FirebaseApp insanJamdHawanFirebaseApp;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(defaultOverlay);
   await StorageService.instance.init();
-  try {
-    mashFirebaseApp = await Firebase.initializeApp(
-      name: 'mash-platform',
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+  insanJamdHawanFirebaseApp = await Firebase.initializeApp(
+    name: 'mash-platform',
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
-    if (kDebugMode) {
-      developer.log(
-        'Firebase initialized successfully: ${mashFirebaseApp?.name}',
-        name: 'main',
-      );
-      developer.log(
-        'Project ID: ${mashFirebaseApp?.options.projectId}',
-        name: 'main',
-      );
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      developer.log(
-        'Firebase initialization failed: $e',
-        name: 'main',
-        error: e,
-      );
-    }
-    mashFirebaseApp = null;
-  }
   await _cleanupExistingLobby();
-
   runApp(const InsanJamdHawan());
 }
 
