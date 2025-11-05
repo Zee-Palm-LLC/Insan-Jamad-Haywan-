@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:insan_jamd_hawan/config/routes/router.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_theme.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/final_round_scoreboard.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -27,7 +27,7 @@ class InsanJamdHawan extends StatelessWidget {
             return GestureDetector(
               onTap: () => FocusScope.of(context).unfocus(),
               child: ToastificationWrapper(
-                child: MaterialApp.router(
+                child: MaterialApp(
                   title: 'INSAN JAMD HAWAN',
                   scrollBehavior: ScrollBehavior().copyWith(overscroll: false),
                   builder: (context, child) {
@@ -40,7 +40,7 @@ class InsanJamdHawan extends StatelessWidget {
                   },
                   debugShowCheckedModeBanner: false,
                   theme: AppTheme.gameLobbyTheme,
-                  routerConfig: AppRouter.router,
+                  home: FinalRoundScoreboard(),
                 ),
               ),
             );
