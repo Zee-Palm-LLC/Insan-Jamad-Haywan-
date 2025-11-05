@@ -18,13 +18,6 @@ class GameConfigController extends GetxController {
     try {
       GameConfig.init(firebaseApp: firebaseApp);
       isInitialized = true;
-      FirebaseFirestore.instance.collection("testbywaqas").doc("test").set(
-        {
-          "name": "test",
-          "age": 20,
-        },
-        SetOptions(merge: true),
-      );
       update();
     } catch (e) {
       throw Exception("Failed to initialize game");
