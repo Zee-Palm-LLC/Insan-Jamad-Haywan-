@@ -38,13 +38,13 @@ class PlayerInfoController extends GetxController {
     update();
 
     try {
-      // Save username to storage
+      // Save username to local storage (username = playerId)
       await AppService.setPlayerId(username);
 
-      // TODO: Save profile image path if needed
-      // if (profileImagePath != null) {
-      //   await AppService.setProfileImage(profileImagePath!);
-      // }
+      // Save profile image path if provided
+      if (profileImagePath != null) {
+        await AppService.setProfileImage(profileImagePath!);
+      }
 
       if (context.mounted) {
         isLoading = false;

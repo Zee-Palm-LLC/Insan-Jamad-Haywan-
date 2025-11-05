@@ -30,6 +30,22 @@ class AppService {
     return storage.getString(StoredKeys.playerId);
   }
 
+  static Future<void> setProfileImage(String imagePath) async {
+    await storage.setString(StoredKeys.profileImage, imagePath);
+  }
+
+  static Future<String?> getProfileImage() async {
+    return storage.getString(StoredKeys.profileImage);
+  }
+
+  static String? getProfileImageSync() {
+    return storage.getString(StoredKeys.profileImage);
+  }
+
+  static Future<void> clearProfileImage() async {
+    await storage.remove(StoredKeys.profileImage);
+  }
+
   static bool getIsSoundOn() {
     return storage.getString(StoredKeys.isSoundOn) == 'true';
   }
