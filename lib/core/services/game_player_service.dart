@@ -1,4 +1,4 @@
-import 'package:insan_jamd_hawan/core/db/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/core/models/session/game_player_model.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 

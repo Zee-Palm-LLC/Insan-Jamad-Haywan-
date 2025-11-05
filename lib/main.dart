@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,13 +18,49 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(defaultOverlay);
   await StorageService.instance.init();
+
+  // Initialize Firebase
   insanJamdHawanFirebaseApp = await Firebase.initializeApp(
     name: 'mash-platform',
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Sign in anonymously for Firestore access
+  await _signInAnonymously();
+
   await _cleanupExistingLobby();
   runApp(const InsanJamdHawan());
+}
+
+/// Sign in anonymously to Firebase Auth for Firestore permissions
+Future<void> _signInAnonymously() async {
+  try {
+    final auth = FirebaseAuth.instanceFor(app: insanJamdHawanFirebaseApp);
+
+    // Check if already signed in
+    if (auth.currentUser != null) {
+      developer.log(
+        'Already signed in as: ${auth.currentUser!.uid}',
+        name: 'FirebaseAuth',
+      );
+      return;
+    }
+
+    // Sign in anonymously
+    final userCredential = await auth.signInAnonymously();
+    developer.log(
+      'Signed in anonymously: ${userCredential.user?.uid}',
+      name: 'FirebaseAuth',
+    );
+  } catch (e, stackTrace) {
+    developer.log(
+      'Error signing in anonymously: $e',
+      error: e,
+      stackTrace: stackTrace,
+      name: 'FirebaseAuth',
+    );
+    // Don't throw - app can still work without Firestore
+  }
 }
 
 Future<void> _cleanupExistingLobby() async {

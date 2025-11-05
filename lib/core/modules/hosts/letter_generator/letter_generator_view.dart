@@ -9,13 +9,12 @@ import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_l
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/components/fortune_wheel.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class LetterGeneratorView extends StatelessWidget {
-  const LetterGeneratorView({super.key, this.controller});
-
-  final LobbyController? controller;
+  const LetterGeneratorView({super.key});
 
   static const String path = '/letter-generator';
   static const String name = 'LetterGenerator';
@@ -24,7 +23,7 @@ class LetterGeneratorView extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isDesktop = Responsive.isDesktop(context);
     return GetBuilder<LetterGeneratorController>(
-      init: LetterGeneratorController(lobbyController: controller),
+      init: LetterGeneratorController(),
       builder: (letterController) {
         return Scaffold(
           extendBodyBehindAppBar: true,
@@ -53,12 +52,12 @@ class LetterGeneratorView extends StatelessWidget {
                     GameLogo(),
                     SizedBox(height: 12.h),
                     GetBuilder<LobbyController>(
-                      init: controller,
                       builder: (lobbyController) {
                         return RoomCodeText(
                           iSend: true,
                           lobbyId:
-                              lobbyController.currentRoom.inviteCode ?? 'XYZ124',
+                              lobbyController.currentRoom.inviteCode ??
+                              'XYZ124',
                         );
                       },
                     ),
@@ -69,14 +68,18 @@ class LetterGeneratorView extends StatelessWidget {
                       onCountdownComplete:
                           letterController.handleCountdownComplete,
                     ),
-                    if (letterController.selectedLetter != null) ...[
-                      if (isDesktop) SizedBox(height: 30.h),
+                    if (letterController.selectedLetter != null &&
+                        !letterController.countdownStarted) ...[
+                      SizedBox(height: 30.h),
                       Container(
                         padding: EdgeInsets.all(16.h),
                         decoration: BoxDecoration(
                           color: AppColors.kGreen100,
                           borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: AppColors.kPrimary, width: 2),
+                          border: Border.all(
+                            color: AppColors.kPrimary,
+                            width: 2,
+                          ),
                         ),
                         child: Column(
                           children: [
@@ -96,6 +99,12 @@ class LetterGeneratorView extends StatelessWidget {
                             ),
                           ],
                         ),
+                      ),
+                      SizedBox(height: 20.h),
+                      PrimaryButton(
+                        text: 'Continue',
+                        width: double.infinity,
+                        onPressed: letterController.startCountdown,
                       ),
                     ],
                   ],

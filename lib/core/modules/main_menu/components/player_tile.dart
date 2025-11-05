@@ -1,6 +1,11 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
+import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 
 class PlayerTile extends StatelessWidget {
@@ -23,22 +28,54 @@ class PlayerTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              height: 54.h,
-              width: 54.h,
-              decoration: BoxDecoration(
-                color: AppColors.kGray300,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.kGray500),
-              ),
-              padding: EdgeInsets.all(2.h),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(100.r),
-                child: Image.network(
-                  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170',
-                  fit: BoxFit.cover,
-                ),
-              ),
+            GetBuilder<PlayerTileController>(
+              init: PlayerTileController(),
+              builder: (controller) {
+                return Container(
+                  height: 54.h,
+                  width: 54.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.kGray300,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.kGray500),
+                  ),
+                  padding: EdgeInsets.all(2.h),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(100.r),
+                    child: controller.profileImagePath != null
+                        ? kIsWeb
+                              ? (controller.profileImagePath!.startsWith(
+                                          'blob:',
+                                        ) ||
+                                        controller.profileImagePath!.startsWith(
+                                          'data:',
+                                        ) ||
+                                        controller.profileImagePath!.startsWith(
+                                          'http://',
+                                        ) ||
+                                        controller.profileImagePath!.startsWith(
+                                          'https://',
+                                        ))
+                                    ? Image.network(
+                                        controller.profileImagePath!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return _buildPlaceholder();
+                                            },
+                                      )
+                                    : _buildPlaceholder()
+                              : Image.file(
+                                  File(controller.profileImagePath!),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return _buildPlaceholder();
+                                  },
+                                )
+                        : _buildPlaceholder(),
+                  ),
+                );
+              },
             ),
             SizedBox(width: 12.w),
             Expanded(
@@ -53,5 +90,27 @@ class PlayerTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: AppColors.kGray300,
+      child: Icon(Icons.person, size: 32.sp, color: AppColors.kGray600),
+    );
+  }
+}
+
+class PlayerTileController extends GetxController {
+  String? profileImagePath;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    profileImagePath = await AppService.getProfileImage();
+    update();
   }
 }

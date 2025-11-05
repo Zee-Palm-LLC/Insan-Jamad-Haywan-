@@ -16,7 +16,6 @@ class FortuneWheelController extends GetxController {
   int countdownValue = 3;
 
   final bool isHost;
-  final LobbyController? lobbyController;
 
   Function(String letter)? onSpinComplete;
   Function(String letter)? onCountdownComplete;
@@ -25,7 +24,15 @@ class FortuneWheelController extends GetxController {
   bool? _lastSyncedSpinning;
   int? _lastSyncedCountdown;
 
-  FortuneWheelController({this.isHost = true, this.lobbyController});
+  FortuneWheelController({this.isHost = true});
+
+  LobbyController? get lobbyController {
+    try {
+      return Get.find<LobbyController>();
+    } catch (e) {
+      return null;
+    }
+  }
 
   static const int _fixedSeed = 12345;
 
@@ -48,19 +55,15 @@ class FortuneWheelController extends GetxController {
   void _syncWithLobby() {
     if (lobbyController == null || isHost) return;
 
-    // Sync wheel spinning state (only trigger once)
     if (lobbyController!.isWheelSpinning && _lastSyncedSpinning != true) {
       _lastSyncedSpinning = true;
       dev.log('Player: Received spin start command', name: 'WheelSync');
       _handleRemoteSpin();
     }
 
-    // Sync selected letter and index (only when changed and not spinning)
     if (lobbyController!.wheelSelectedIndex != null &&
-        lobbyController!.wheelSelectedIndex != _lastSyncedIndex &&
-        !lobbyController!.isWheelSpinning) {
+        lobbyController!.wheelSelectedIndex != _lastSyncedIndex) {
       _lastSyncedIndex = lobbyController!.wheelSelectedIndex;
-      _lastSyncedSpinning = false;
 
       dev.log(
         'Player: Received letter: ${lobbyController!.currentLetter} at index ${lobbyController!.wheelSelectedIndex}',
@@ -69,16 +72,19 @@ class FortuneWheelController extends GetxController {
 
       selectedIndex = lobbyController!.wheelSelectedIndex!;
       selectedAlphabet = lobbyController!.currentLetter;
-      isSpinning = false;
 
-      // Trigger the wheel to spin to this index
+      if (isSpinning) {
+        isSpinning = false;
+      }
+
       if (!wheelController.isClosed) {
         wheelController.add(selectedIndex);
       }
+
+      _lastSyncedSpinning = false;
       update();
     }
 
-    // Sync countdown state
     if (lobbyController!.isCountdownActive && !showCountdown) {
       dev.log(
         'Player: Countdown started - ${lobbyController!.countdownValue}',
@@ -106,26 +112,33 @@ class FortuneWheelController extends GetxController {
   }
 
   Future<void> _handleRemoteSpin() async {
-    if (isHost || isSpinning) return;
+    if (isHost || isSpinning || wheelController.isClosed) return;
 
     isSpinning = true;
     update();
 
-    // Play narrator audio first
     await AudioService.instance.playAudio(AudioType.narratorChooseLetter);
     await Future.delayed(const Duration(milliseconds: 500));
 
-    // Play wheel spin sound
-    await AudioService.instance.playAudio(AudioType.wheelSpin);
+    AudioService.instance.playAudio(AudioType.wheelSpin);
   }
 
   Future<void> spinWheel() async {
-    if (isSpinning || !isHost || wheelController.isClosed) return;
+    if (isSpinning ||
+        !isHost ||
+        wheelController.isClosed ||
+        showCountdown ||
+        selectedAlphabet != null) {
+      dev.log(
+        'Cannot spin: isSpinning=$isSpinning, isHost=$isHost, showCountdown=$showCountdown, selectedAlphabet=$selectedAlphabet',
+        name: 'WheelSpin',
+      );
+      return;
+    }
 
     isSpinning = true;
     update();
 
-    // Broadcast spin start to all players
     if (lobbyController != null) {
       await lobbyController!.broadcastWheelSpinStart();
     }
@@ -156,6 +169,7 @@ class FortuneWheelController extends GetxController {
   Future<void> handleSpinComplete() async {
     final letter = alphabets[selectedIndex];
     selectedAlphabet = letter;
+    isSpinning = false;
     update();
 
     await Future.delayed(const Duration(milliseconds: 300));
@@ -168,8 +182,23 @@ class FortuneWheelController extends GetxController {
     }
 
     onSpinComplete?.call(letter);
+  }
 
-    await Future.delayed(const Duration(milliseconds: 1500));
+  Future<void> triggerCountdown() async {
+    dev.log(
+      'triggerCountdown called - selectedAlphabet: $selectedAlphabet, showCountdown: $showCountdown, isHost: $isHost',
+      name: 'FortuneWheel',
+    );
+
+    if (selectedAlphabet == null || showCountdown) {
+      dev.log(
+        'Cannot trigger countdown: selectedAlphabet=$selectedAlphabet, showCountdown=$showCountdown',
+        name: 'FortuneWheel',
+      );
+      return;
+    }
+
+    await Future.delayed(const Duration(milliseconds: 500));
 
     if (isHost) {
       showCountdown = true;
@@ -195,7 +224,16 @@ class FortuneWheelController extends GetxController {
         await lobbyController!.broadcastCountdownComplete();
       }
 
-      onCountdownComplete?.call(letter);
+      dev.log(
+        'Countdown complete - calling onCountdownComplete with letter: $selectedAlphabet',
+        name: 'FortuneWheel',
+      );
+
+      if (onCountdownComplete != null) {
+        onCountdownComplete!(selectedAlphabet!);
+      } else {
+        dev.log('onCountdownComplete callback is null!', name: 'FortuneWheel');
+      }
     }
   }
 

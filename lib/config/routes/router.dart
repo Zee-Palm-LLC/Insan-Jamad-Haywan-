@@ -16,10 +16,6 @@ import 'package:insan_jamd_hawan/core/modules/main_menu/main_menu_page.dart';
 import 'package:insan_jamd_hawan/core/modules/players/player_info/player_info.dart';
 import 'package:insan_jamd_hawan/core/modules/players/player_wheel/player_wheel_view.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
-import 'package:insan_jamd_hawan/core/modules/get_started/get_started_view.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/answers_host_view.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/game_lobby_view.dart';
 import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
 typedef R = AppRouter;
@@ -40,7 +36,7 @@ class AppRouter {
       GoRoute(
         path: WaitingView.path,
         name: WaitingView.name,
-        builder: (context, state) => WaitingView(),
+        builder: (context, state) => const WaitingView(),
       ),
       GoRoute(
         path: LobbyCreationPage.path,
@@ -50,10 +46,7 @@ class AppRouter {
       GoRoute(
         path: LetterGeneratorView.path,
         name: LetterGeneratorView.name,
-        builder: (context, state) {
-          final controller = state.extra as LobbyController?;
-          return LetterGeneratorView(controller: controller);
-        },
+        builder: (context, state) => const LetterGeneratorView(),
       ),
       GoRoute(
         path: PlayerInfo.path,
@@ -67,7 +60,22 @@ class AppRouter {
         name: AnswersHostView.name,
         builder: (context, state) {
           final letter = state.pathParameters['letter'] ?? 'A';
-          return AnswersHostView(selectedAlphabet: letter);
+          final extra = state.extra as Map<String, dynamic>?;
+
+          if (extra == null) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Missing session data. Please start from lobby.'),
+              ),
+            );
+          }
+
+          return AnswersHostView(
+            selectedAlphabet: letter,
+            sessionId: extra['sessionId'] as String,
+            roundNumber: extra['roundNumber'] as int,
+            totalSeconds: extra['totalSeconds'] as int? ?? 60,
+          );
         },
       ),
       GoRoute(
@@ -105,7 +113,6 @@ class AppRouter {
           );
         },
       ),
-      // Player Pages
       GoRoute(path: '/', redirect: (context, state) => MainMenuPage.path),
       GoRoute(
         path: MainMenuPage.path,
@@ -126,26 +133,34 @@ class AppRouter {
       GoRoute(
         path: PlayerWheelView.path,
         name: PlayerWheelView.name,
-        builder: (context, state) {
-          final controller = state.extra as LobbyController?;
-          if (controller == null) {
-            return const Scaffold(body: Center(child: Text('Lobby not found')));
-          }
-          return PlayerWheelView(controller: controller);
-        },
+        builder: (context, state) => const PlayerWheelView(),
       ),
       GoRoute(
         path: PlayerAnswerView.path,
         name: PlayerAnswerView.name,
         builder: (context, state) {
           final letter = state.uri.queryParameters['letter'] ?? 'A';
-          return PlayerAnswerView(selectedLetter: letter);
+          final extra = state.extra as Map<String, dynamic>?;
+
+          if (extra == null) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Missing session data. Please start from lobby.'),
+              ),
+            );
+          }
+
+          return PlayerAnswerView(
+            selectedLetter: letter,
+            sessionId: extra['sessionId'] as String,
+            roundNumber: extra['roundNumber'] as int,
+            totalSeconds: extra['totalSeconds'] as int? ?? 60,
+          );
         },
       ),
     ],
   );
 
-  // Global redirect to check username on every navigation
   static Future<String?> _handleRedirect(
     BuildContext context,
     GoRouterState state,

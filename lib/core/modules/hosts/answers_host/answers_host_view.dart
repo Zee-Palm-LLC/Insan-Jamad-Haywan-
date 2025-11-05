@@ -14,9 +14,18 @@ import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class AnswersHostView extends StatelessWidget {
-  const AnswersHostView({super.key, required this.selectedAlphabet});
+  const AnswersHostView({
+    super.key,
+    required this.selectedAlphabet,
+    required this.sessionId,
+    required this.roundNumber,
+    this.totalSeconds = 60,
+  });
 
   final String selectedAlphabet;
+  final String sessionId;
+  final int roundNumber;
+  final int totalSeconds;
 
   static const String path = '/answers-host/:letter';
   static const String name = 'AnswersHost';
@@ -25,7 +34,12 @@ class AnswersHostView extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isDesktop = Responsive.isDesktop(context);
     return GetBuilder<AnswersHostController>(
-      init: AnswersHostController(),
+      init: AnswersHostController(
+        sessionId: sessionId,
+        roundNumber: roundNumber,
+        selectedLetter: selectedAlphabet,
+        totalSeconds: totalSeconds,
+      ),
       builder: (controller) {
         return Scaffold(
           extendBodyBehindAppBar: true,
@@ -54,30 +68,48 @@ class AnswersHostView extends StatelessWidget {
                       if (!isDesktop) SizedBox(height: 50.h),
                       GameLogo(),
                       SizedBox(height: 12.h),
-                      RoomCodeText(lobbyId: 'XY21234'),
+                      RoomCodeText(lobbyId: sessionId),
                       SizedBox(height: 20.h),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 2.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.kLightYellow,
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(color: AppColors.kGray600),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SvgPicture.asset(AppAssets.timerIcon),
-                            SizedBox(width: 8.w),
-                            Text(
-                              controller.formattedTime,
-                              style: AppTypography.kRegular19.copyWith(
-                                color: AppColors.kRed500,
-                              ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 2.h,
                             ),
-                          ],
+                            decoration: BoxDecoration(
+                              color: AppColors.kLightYellow,
+                              borderRadius: BorderRadius.circular(8.r),
+                              border: Border.all(color: AppColors.kGray600),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SvgPicture.asset(AppAssets.timerIcon),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  controller.formattedTime,
+                                  style: AppTypography.kRegular19.copyWith(
+                                    color: AppColors.kRed500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 12.h),
+                      // Timer Progress Bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4.r),
+                        child: LinearProgressIndicator(
+                          value: controller.timerProgress,
+                          backgroundColor: AppColors.kGray300,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            controller.timerColor,
+                          ),
+                          minHeight: 8.h,
                         ),
                       ),
                       SizedBox(height: 40.h),

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:insan_jamd_hawan/core/controllers/player_answer_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
@@ -14,9 +15,18 @@ import 'package:insan_jamd_hawan/core/modules/widgets/custom_paint/handdrawn_bor
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class PlayerAnswerView extends StatelessWidget {
-  const PlayerAnswerView({super.key, required this.selectedLetter});
+  const PlayerAnswerView({
+    super.key,
+    required this.selectedLetter,
+    required this.sessionId,
+    required this.roundNumber,
+    required this.totalSeconds,
+  });
 
   final String selectedLetter;
+  final String sessionId;
+  final int roundNumber;
+  final int totalSeconds;
 
   static const String path = '/player-answer';
   static const String name = 'PlayerAnswer';
@@ -25,7 +35,12 @@ class PlayerAnswerView extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isDesktop = Responsive.isDesktop(context);
     return GetBuilder<PlayerAnswerController>(
-      init: PlayerAnswerController(),
+      init: PlayerAnswerController(
+        sessionId: sessionId,
+        roundNumber: roundNumber,
+        selectedLetter: selectedLetter,
+        totalSeconds: totalSeconds,
+      ),
       builder: (controller) {
         return Scaffold(
           extendBodyBehindAppBar: true,
@@ -56,7 +71,7 @@ class PlayerAnswerView extends StatelessWidget {
                       if (!isDesktop) SizedBox(height: 50.h),
                       GameLogo(),
                       SizedBox(height: 12.h),
-                      RoomCodeText(lobbyId: 'XY21234', iSend: true),
+                      RoomCodeText(lobbyId: sessionId, iSend: true),
                       SizedBox(height: 20.h),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -73,7 +88,7 @@ class PlayerAnswerView extends StatelessWidget {
                             alignment: Alignment.bottomCenter,
                             padding: EdgeInsets.only(top: 6.h),
                             child: Text(
-                              'A',
+                              selectedLetter,
                               style: AppTypography.kRegular41.copyWith(
                                 color: AppColors.kWhite,
                                 height: 1,
@@ -106,6 +121,19 @@ class PlayerAnswerView extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
+                      SizedBox(height: 12.h),
+                      // Timer Progress Bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4.r),
+                        child: LinearProgressIndicator(
+                          value: controller.timerProgress,
+                          backgroundColor: AppColors.kGray300,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            controller.timerColor,
+                          ),
+                          minHeight: 8.h,
+                        ),
                       ),
                       SizedBox(height: 20.h),
                       Row(
@@ -149,44 +177,64 @@ class PlayerAnswerView extends StatelessWidget {
                       _buildAnswerField(
                         label: 'Name',
                         controller: controller.nameController,
+                        enabled: controller.isInputEnabled,
                       ),
                       SizedBox(height: 12.h),
                       _buildAnswerField(
                         label: 'Object',
                         controller: controller.objectController,
+                        enabled: controller.isInputEnabled,
                       ),
                       SizedBox(height: 12.h),
                       _buildAnswerField(
                         label: 'Animal',
                         controller: controller.animalController,
+                        enabled: controller.isInputEnabled,
                       ),
                       SizedBox(height: 12.h),
                       _buildAnswerField(
                         label: 'Plant',
                         controller: controller.plantController,
+                        enabled: controller.isInputEnabled,
                       ),
                       SizedBox(height: 12.h),
                       _buildAnswerField(
                         label: 'Country',
                         controller: controller.countryController,
+                        enabled: controller.isInputEnabled,
                       ),
                       SizedBox(height: 24.h),
                       Row(
                         children: [
                           Expanded(
                             child: PrimaryButton(
-                              onPressed: () => controller.stopRound(context),
-                              text: 'Stop !',
+                              onPressed:
+                                  controller.isInputEnabled &&
+                                      !controller.hasSubmitted &&
+                                      !controller.isSubmitting
+                                  ? () => controller.stopRound(context)
+                                  : null,
+                              text: controller.roundStopped
+                                  ? 'Stopped'
+                                  : 'Stop !',
                               color: AppColors.kRed500,
                             ),
                           ),
                           SizedBox(width: 12.w),
                           Expanded(
                             child: PrimaryButton(
-                              text: 'Next',
+                              text: controller.hasSubmitted
+                                  ? 'Submitted'
+                                  : controller.isSubmitting
+                                  ? 'Submitting...'
+                                  : 'Next',
                               width: double.infinity,
-                              onPressed: () =>
-                                  controller.submitAnswers(context),
+                              onPressed:
+                                  controller.isInputEnabled &&
+                                      !controller.hasSubmitted &&
+                                      !controller.isSubmitting
+                                  ? () => controller.submitAnswers(context)
+                                  : null,
                             ),
                           ),
                         ],
@@ -205,95 +253,48 @@ class PlayerAnswerView extends StatelessWidget {
   Widget _buildAnswerField({
     required String label,
     required TextEditingController controller,
+    required bool enabled,
   }) {
     return Container(
       decoration: ShapeDecoration(
-        color: AppColors.kWhite.withOpacity(0.9),
+        color: enabled
+            ? AppColors.kWhite.withOpacity(0.9)
+            : AppColors.kGray300.withOpacity(0.5),
         shape: HandStyleBorder(
-          side: BorderSide(color: AppColors.kBlack, width: 1.5),
+          side: BorderSide(
+            color: enabled ? AppColors.kBlack : AppColors.kGray500,
+            width: 1.5,
+          ),
           borderRadius: BorderRadius.circular(2.r),
           roughness: 0.5,
         ),
       ),
       child: TextField(
         controller: controller,
+        enabled: enabled,
         textAlign: TextAlign.center,
+        maxLength: 50,
+        buildCounter:
+            (_, {required currentLength, required isFocused, maxLength}) =>
+                null,
         decoration: InputDecoration(
           hintText: label,
+          hintStyle: TextStyle(
+            color: enabled ? AppColors.kGray600 : AppColors.kGray500,
+          ),
           focusedBorder: InputBorder.none,
           enabledBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
           ),
         ),
-        style: AppTypography.kRegular19.copyWith(fontSize: 16.sp),
+        style: AppTypography.kRegular19.copyWith(
+          fontSize: 16.sp,
+          color: enabled ? AppColors.kBlack : AppColors.kGray600,
+        ),
       ),
     );
-  }
-}
-
-// Controller for Player Answer View
-class PlayerAnswerController extends GetxController {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController objectController = TextEditingController();
-  final TextEditingController animalController = TextEditingController();
-  final TextEditingController plantController = TextEditingController();
-  final TextEditingController countryController = TextEditingController();
-
-  bool doublePoints = false;
-  int secondsRemaining = 0;
-  int totalSeconds = 60; // Default 60 seconds
-
-  @override
-  void onInit() {
-    super.onInit();
-    startTimer();
-  }
-
-  void startTimer() {
-    secondsRemaining = totalSeconds;
-    // Timer logic would go here - using a simple counter for now
-    // In production, you'd use a Timer or similar
-  }
-
-  String get formattedTime {
-    final minutes = secondsRemaining ~/ 60;
-    final seconds = secondsRemaining % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-  }
-
-  void toggleDoublePoints() {
-    doublePoints = !doublePoints;
-    update();
-  }
-
-  void stopRound(BuildContext context) {
-    // Handle stop round logic
-    context.pop();
-  }
-
-  void submitAnswers(BuildContext context) {
-    // Handle submit answers logic
-    // TODO: Submit answers to server
-    // final answers = {
-    //   'name': nameController.text,
-    //   'object': objectController.text,
-    //   'animal': animalController.text,
-    //   'plant': plantController.text,
-    //   'country': countryController.text,
-    //   'doublePoints': doublePoints,
-    // };
-    context.pop();
-  }
-
-  @override
-  void onClose() {
-    nameController.dispose();
-    objectController.dispose();
-    animalController.dispose();
-    plantController.dispose();
-    countryController.dispose();
-    super.onClose();
   }
 }

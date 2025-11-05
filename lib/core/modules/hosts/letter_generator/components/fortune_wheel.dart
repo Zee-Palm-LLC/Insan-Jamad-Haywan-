@@ -3,6 +3,7 @@ import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:insan_jamd_hawan/core/controllers/fortune_wheel_controller.dart';
+import 'package:insan_jamd_hawan/core/controllers/letter_generator_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 
@@ -11,11 +12,13 @@ class FortuneWheelPage extends StatelessWidget {
     super.key,
     this.onSpinComplete,
     this.onCountdownComplete,
+    this.onCountdownTrigger,
     this.isHost = true,
   });
 
   final Function(String letter)? onSpinComplete;
   final Function(String letter)? onCountdownComplete;
+  final VoidCallback? onCountdownTrigger;
   final bool isHost;
 
   final List<Color> _colors = const [
@@ -30,26 +33,40 @@ class FortuneWheelPage extends StatelessWidget {
     return _colors[index % _colors.length];
   }
 
-  LobbyController? lobbyController = Get.find<LobbyController>();
   @override
   Widget build(BuildContext context) {
     return GetBuilder<FortuneWheelController>(
-      init:
-          FortuneWheelController(
-              isHost: isHost,
-              lobbyController: lobbyController,
-            )
-            ..onSpinComplete = onSpinComplete
-            ..onCountdownComplete = onCountdownComplete,
+      init: FortuneWheelController(isHost: isHost)
+        ..onSpinComplete = onSpinComplete
+        ..onCountdownComplete = onCountdownComplete,
       builder: (controller) {
-        if (!isHost && lobbyController != null) {
-          return GetBuilder<LobbyController>(
-            init: lobbyController,
-            builder: (_) {
-              controller.syncWithLobby();
-              return _buildWheel(controller);
-            },
-          );
+        // Register controller with LetterGeneratorController if it exists (for host)
+        if (isHost) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            try {
+              final letterGenController = Get.find<LetterGeneratorController>();
+              letterGenController.setWheelController(controller);
+            } catch (e) {
+              // LetterGeneratorController not found, that's okay
+            }
+          });
+        }
+
+        if (!isHost) {
+          try {
+            return GetBuilder<LobbyController>(
+              builder: (_) {
+                // Defer sync to avoid setState during build
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  controller.syncWithLobby();
+                });
+                return _buildWheel(controller);
+              },
+            );
+          } catch (e) {
+            // LobbyController not found, show wheel anyway
+            return _buildWheel(controller);
+          }
         }
         return _buildWheel(controller);
       },
@@ -106,9 +123,19 @@ class FortuneWheelPage extends StatelessWidget {
             ),
           ),
 
-          if (isHost && !controller.isSpinning && !controller.showCountdown)
+          if (isHost &&
+              !controller.isSpinning &&
+              !controller.showCountdown &&
+              controller.selectedAlphabet == null)
             InkWell(
-              onTap: controller.spinWheel,
+              onTap: () {
+                // Double-check before spinning
+                if (!controller.isSpinning &&
+                    !controller.showCountdown &&
+                    controller.selectedAlphabet == null) {
+                  controller.spinWheel();
+                }
+              },
               child: Image.asset(AppAssets.spin),
             ),
 

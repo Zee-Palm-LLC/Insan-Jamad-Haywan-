@@ -1,39 +1,45 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
-import 'package:flutter_client_sse/flutter_client_sse.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:insan_jamd_hawan/core/data/enums/enums.dart';
 import 'package:insan_jamd_hawan/core/models/game/lobby_settings.dart';
 import 'package:insan_jamd_hawan/core/models/game/player_state_model.dart';
 import 'package:insan_jamd_hawan/core/models/lobby/lobby_model.dart';
-import 'package:insan_jamd_hawan/core/models/lobby/lobby_resource_model.dart';
+import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
-import 'package:insan_jamd_hawan/core/services/playflow/credentials.dart';
-import 'package:insan_jamd_hawan/core/services/playflow/endpoints.dart';
+import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/game_broadcast_service.dart';
+import 'package:insan_jamd_hawan/core/services/lobby_firestore_sync_service.dart';
 import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
+import 'package:insan_jamd_hawan/core/services/room_manager_service.dart';
+import 'package:insan_jamd_hawan/core/services/sse_connection_manager.dart';
 import 'package:insan_jamd_hawan/core/utils/network_call.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
-import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
-
-import '../data/enums/enums.dart';
 
 class LobbyController extends GetxController {
   final LobbyModel lobby;
+
   LobbyController({required this.lobby}) : _currentRoom = lobby;
 
   LobbyModel _currentRoom;
   LobbyModel get currentRoom => _currentRoom;
 
+  late final SSEConnectionManager _sseManager;
+  late final GameBroadcastService _broadcastService;
+  late final LobbyFirestoreSyncService _firestoreSync;
+  late final RoomManagerService _roomManager;
+
   PageController pageController = PageController();
+  final TextEditingController _answerController = TextEditingController();
+  TextEditingController get answerController => _answerController;
 
   int? _selectedMaxRounds;
-  int? get selectedMaxRounds => _selectedMaxRounds;
-
   int? _selectedTimePerRound;
+  int? get selectedMaxRounds => _selectedMaxRounds;
   int? get selectedTimePerRound => _selectedTimePerRound;
 
   void onMaxRoundChange(int? value) {
@@ -50,124 +56,65 @@ class LobbyController extends GetxController {
     }
   }
 
-  Timer? _playerHeartbeatTimer;
-  StreamSubscription<SSEModel>? _sseSubscription;
-  Timer? _reconnectTimer;
-  int _reconnectAttempts = 0;
-  static const int _maxReconnectAttempts = 10;
-  static const int _initialReconnectDelay = 2; // seconds
-  bool _isReconnecting = false;
-  bool _isConnected = false;
-
-  Duration? _serverTimeOffset;
-  Timer? _syncTimer;
-  DateTime? get serverTime {
-    if (_serverTimeOffset == null) return DateTime.now();
-    return DateTime.now().add(_serverTimeOffset!);
-  }
-
-  RoomStatus _roomStatus = RoomStatus.waiting;
-  RoomStatus get roomStatus => _roomStatus;
-  bool get isReconnecting => _isReconnecting;
-  bool get isConnected => _isConnected;
-
-  PlayflowClient playflowClient = PlayflowClient.instance;
-
-  final TextEditingController _answerController = TextEditingController();
-  TextEditingController get answerController => _answerController;
-
-  bool _actionDone = false;
-  bool get actionDone => _actionDone;
-
-  void setActionDone(bool value) {
-    _actionDone = value;
-    update();
-  }
-
-  String? _currentLetter;
-  String? get currentLetter => _currentLetter;
-
-  void setCurrentLetter(String letter) {
-    _currentLetter = letter;
-    log('Current letter set to: $letter', name: 'LetterSelection');
-    update();
-  }
-
-  // Wheel spin state
-  bool _isWheelSpinning = false;
-  bool get isWheelSpinning => _isWheelSpinning;
-
-  int? _wheelSelectedIndex;
-  int? get wheelSelectedIndex => _wheelSelectedIndex;
-
-  bool _isCountdownActive = false;
-  bool get isCountdownActive => _isCountdownActive;
-
-  int _countdownValue = 3;
-  int get countdownValue => _countdownValue;
-
   GamePhase _phase = GamePhase.waiting;
   GamePhase get phase => _phase;
-
   set phase(GamePhase newPhase) {
     if (_phase == newPhase) return;
     log('Phase Changed: $newPhase', name: 'Phase Changed');
     _phase = newPhase;
     update();
-    _onPhaseChanged(newPhase);
   }
 
-  void _onPhaseChanged(GamePhase newPhase) {
-    // Handle phase-specific logic here
-    if (newPhase == GamePhase.started) {
-      // Game started logic
-    }
-  }
+  String? _currentLetter;
+  String? get currentLetter => _currentLetter;
+  bool _isWheelSpinning = false;
+  bool get isWheelSpinning => _isWheelSpinning;
+  int? _wheelSelectedIndex;
+  int? get wheelSelectedIndex => _wheelSelectedIndex;
+  bool _isCountdownActive = false;
+  bool get isCountdownActive => _isCountdownActive;
+  int _countdownValue = 3;
+  int get countdownValue => _countdownValue;
 
-  void setRoomStatus({required RoomStatus status, LobbyModel? room}) {
-    _roomStatus = status;
+  RoomStatus _roomStatus = RoomStatus.waiting;
+  RoomStatus get roomStatus => _roomStatus;
+  bool get isConnected => _sseManager.isConnected;
+  bool get isReconnecting => _sseManager.isReconnecting;
+
+  bool _actionDone = false;
+  bool get actionDone => _actionDone;
+  void setActionDone(bool value) {
+    _actionDone = value;
     update();
-    switch (_roomStatus) {
-      case RoomStatus.connected:
-        {
-          _playerHeartbeat();
-          if (room != null) {
-            setCurrentRoom(room);
-          } else {
-            setCurrentRoom(lobby);
-          }
-        }
-        break;
-      case RoomStatus.deleted:
-        {
-          _playerHeartbeatTimer?.cancel();
-          _sseSubscription?.cancel();
-          _cancelReconnect();
-          _isConnected = false;
-          _isReconnecting = false;
-          update();
-          log('Room deleted', name: 'RoomStatus');
-          AppToaster.showToast(
-            'Lobby Deleted',
-            subTitle: 'The lobby has been deleted by the host.',
-            type: ToastificationType.error,
-          );
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (navigatorKey.currentState?.canPop() ?? false) {
-              navigatorKey.currentState!.pop();
-            }
-          });
-        }
-        break;
-      case RoomStatus.updated:
-        {
-          if (room != null) {
-            setCurrentRoom(room);
-          }
-        }
-        break;
-      default:
-    }
+  }
+
+  Timer? _playerHeartbeatTimer;
+  DateTime? get serverTime => _sseManager.serverTime;
+
+  @override
+  Future<void> onReady() async {
+    _initializeServices();
+    await _sseManager.connect();
+    _startPlayerHeartbeat();
+    super.onReady();
+  }
+
+  void _initializeServices() {
+    _sseManager = SSEConnectionManager(
+      lobbyId: lobby.id!,
+      onRoomUpdate: _handleRoomUpdate,
+      onConnectionStatusChanged: () => update(),
+    );
+
+    _broadcastService = GameBroadcastService();
+    _firestoreSync = LobbyFirestoreSyncService(sessionId: lobby.id!);
+    _roomManager = RoomManagerService();
+  }
+
+  void setCurrentLetter(String letter) {
+    _currentLetter = letter;
+    log('Current letter set to: $letter', name: 'LetterSelection');
+    update();
   }
 
   Future<void> startGame() async {
@@ -178,59 +125,42 @@ class LobbyController extends GetxController {
         type: ToastificationType.error,
       ),
       future: () async {
-        String? playerId = await AppService.getPlayerId();
-        if (playerId == null) {
-          throw Exception('Player ID is not set');
-        }
-        if (_currentRoom.settings?.status != GameStatus.started) {
-          await playflowClient.sendHearBears(lobby.id!);
-
-          final LobbyModel? updated = await playflowClient.updateGameRoom(
-            lobbyId: currentRoom.id!,
-            resource: LobbyResourceModel(
-              settings: LobbySettings(
-                settings: GameSettings(
-                  maxRounds: _selectedMaxRounds ?? 3,
-                  status: GameStatus.started,
-                  currentRound: 0,
-                ),
-              ),
-              requesterId: playerId,
-            ),
-          );
-
-          // Optimistically reflect started state immediately for host
-          if (updated != null) {
-            setCurrentRoom(updated);
-            phase = GamePhase.started;
-            log(
-              'Game started - broadcast will be sent via SSE to all players',
-              name: 'StartGame',
-            );
-          } else {
-            setCurrentRoom(
-              currentRoom.copyWith(
-                settings: GameSettings(
-                  maxRounds: _selectedMaxRounds ?? 3,
-                  status: GameStatus.started,
-                  currentRound: 0,
-                ),
-              ),
-            );
-            phase = GamePhase.started;
-          }
-
-          // Broadcast is automatically handled by SSE:
-          // When updateGameRoom is called, the server sends an SSE event
-          // to all connected players, which triggers _handleOptimizedUpdate
-          // and broadcasts the game start to all players in <1s
-        } else {
+        if (_currentRoom.settings?.status == GameStatus.started) {
           AppToaster.showToast(
             'Game already started',
             subTitle: 'The game has already started',
             type: ToastificationType.error,
           );
+          return;
         }
+
+        await PlayflowClient.instance.sendHearBears(lobby.id!);
+
+        final updated = await _broadcastService.updateGameStatus(
+          lobbyId: currentRoom.id!,
+          status: GameStatus.started,
+          maxRounds: _selectedMaxRounds ?? 3,
+          currentRound: 0,
+        );
+
+        if (updated != null) {
+          setCurrentRoom(updated);
+        } else {
+          setCurrentRoom(
+            currentRoom.copyWith(
+              settings: GameSettings(
+                maxRounds: _selectedMaxRounds ?? 3,
+                status: GameStatus.started,
+                currentRound: 0,
+              ),
+            ),
+          );
+        }
+
+        phase = GamePhase.started;
+        await _firestoreSync.updateSessionStatus(SessionStatus.started);
+
+        log('Game started - broadcast sent via SSE', name: 'StartGame');
       },
     );
   }
@@ -248,35 +178,25 @@ class LobbyController extends GetxController {
         update();
       },
       future: () async {
-        String? playerId = await AppService.getPlayerId();
-        if (playerId == null) {
-          throw Exception('Player ID is not set');
-        }
-        if (_currentRoom.settings?.status == GameStatus.started) {
-          await playflowClient.updateGameRoom(
-            lobbyId: currentRoom.id!,
-            resource: LobbyResourceModel(
-              settings: LobbySettings(
-                settings: GameSettings(
-                  status: GameStatus.waiting,
-                  currentRound: 0,
-                ),
-              ),
-              requesterId: playerId,
-            ),
-          );
-        } else {
+        if (_currentRoom.settings?.status != GameStatus.started) {
           AppToaster.showToast(
             'Game already ended',
             subTitle: 'The game has already ended',
             type: ToastificationType.error,
           );
+          return;
         }
+
+        await _broadcastService.updateGameStatus(
+          lobbyId: currentRoom.id!,
+          status: GameStatus.waiting,
+          maxRounds: 0,
+          currentRound: 0,
+        );
       },
     );
   }
 
-  /// Broadcasts wheel spin start to all players
   Future<void> broadcastWheelSpinStart() async {
     await NetworkCall.networkCall(
       onError: (e, s) => AppToaster.showToast(
@@ -285,47 +205,21 @@ class LobbyController extends GetxController {
         type: ToastificationType.error,
       ),
       future: () async {
-        String? playerId = await AppService.getPlayerId();
-        if (playerId == null) {
-          throw Exception('Player ID is not set');
-        }
-
         _isWheelSpinning = true;
         update();
 
-        final roundStatus = [
-          'wheelSpin:start',
-          'timestamp:${DateTime.now().toIso8601String()}',
-        ];
-
-        final updated = await playflowClient.updateGameRoom(
+        final updated = await _broadcastService.broadcastWheelSpinStart(
           lobbyId: currentRoom.id!,
-          resource: LobbyResourceModel(
-            settings: LobbySettings(
-              settings: GameSettings(
-                status: _currentRoom.settings?.status ?? GameStatus.started,
-                maxRounds: _currentRoom.settings?.maxRounds ?? 3,
-                currentRound: _currentRoom.settings?.currentRound ?? 1,
-                roundStatus: roundStatus,
-                scoreConfig:
-                    _currentRoom.settings?.scoreConfig ??
-                    const ScoreConfig(correctGuess: 100, fooledOther: 50),
-              ),
-            ),
-            requesterId: playerId,
-          ),
+          currentRoom: _currentRoom,
         );
 
         if (updated != null) {
           setCurrentRoom(updated);
-          log('Wheel spin start broadcast to all players', name: 'WheelSync');
         }
       },
     );
   }
 
-  /// Broadcasts the selected letter to all players
-  /// This is called by the host after the wheel spin is complete
   Future<void> broadcastSelectedLetter(String letter, int selectedIndex) async {
     await NetworkCall.networkCall(
       onError: (e, s) => AppToaster.showToast(
@@ -334,50 +228,20 @@ class LobbyController extends GetxController {
         type: ToastificationType.error,
       ),
       future: () async {
-        String? playerId = await AppService.getPlayerId();
-        if (playerId == null) {
-          throw Exception('Player ID is not set');
-        }
-
-        // Set letter locally first for immediate feedback
         setCurrentLetter(letter);
         _wheelSelectedIndex = selectedIndex;
         _isWheelSpinning = false;
         update();
 
-        // Create a round status list with the selected letter and index
-        final roundStatus = [
-          'letter:$letter',
-          'wheelIndex:$selectedIndex',
-          'wheelSpin:complete',
-          'timestamp:${DateTime.now().toIso8601String()}',
-        ];
-
-        // Broadcast via lobby settings update
-        final updated = await playflowClient.updateGameRoom(
+        final updated = await _broadcastService.broadcastSelectedLetter(
           lobbyId: currentRoom.id!,
-          resource: LobbyResourceModel(
-            settings: LobbySettings(
-              settings: GameSettings(
-                status: _currentRoom.settings?.status ?? GameStatus.started,
-                maxRounds: _currentRoom.settings?.maxRounds ?? 3,
-                currentRound: _currentRoom.settings?.currentRound ?? 1,
-                roundStatus: roundStatus,
-                scoreConfig:
-                    _currentRoom.settings?.scoreConfig ??
-                    const ScoreConfig(correctGuess: 100, fooledOther: 50),
-              ),
-            ),
-            requesterId: playerId,
-          ),
+          currentRoom: _currentRoom,
+          letter: letter,
+          selectedIndex: selectedIndex,
         );
 
         if (updated != null) {
           setCurrentRoom(updated);
-          log(
-            'Letter "$letter" broadcast to all players via SSE',
-            name: 'BroadcastLetter',
-          );
         }
       },
     );
@@ -387,79 +251,91 @@ class LobbyController extends GetxController {
     await NetworkCall.networkCall(
       onError: (e, s) => log('Failed to broadcast countdown: $e'),
       future: () async {
-        String? playerId = await AppService.getPlayerId();
-        if (playerId == null) {
-          throw Exception('Player ID is not set');
-        }
-
         _isCountdownActive = true;
         _countdownValue = value;
         update();
 
-        final roundStatus = [
-          'countdown:$value',
-          'letter:${_currentLetter ?? ""}',
-          'wheelIndex:${_wheelSelectedIndex ?? 0}',
-          'timestamp:${DateTime.now().toIso8601String()}',
-        ];
-
-        await playflowClient.updateGameRoom(
+        await _broadcastService.broadcastCountdown(
           lobbyId: currentRoom.id!,
-          resource: LobbyResourceModel(
-            settings: LobbySettings(
-              settings: GameSettings(
-                status: _currentRoom.settings?.status ?? GameStatus.started,
-                maxRounds: _currentRoom.settings?.maxRounds ?? 3,
-                currentRound: _currentRoom.settings?.currentRound ?? 1,
-                roundStatus: roundStatus,
-                scoreConfig:
-                    _currentRoom.settings?.scoreConfig ??
-                    const ScoreConfig(correctGuess: 100, fooledOther: 50),
-              ),
-            ),
-            requesterId: playerId,
-          ),
+          currentRoom: _currentRoom,
+          value: value,
+          currentLetter: _currentLetter,
+          wheelSelectedIndex: _wheelSelectedIndex,
         );
       },
     );
   }
 
-  /// Broadcasts countdown complete to all players
   Future<void> broadcastCountdownComplete() async {
     await NetworkCall.networkCall(
       onError: (e, s) => log('Failed to broadcast countdown complete: $e'),
+      future: () async {
+        _isCountdownActive = false;
+        update();
+
+        await _broadcastService.broadcastCountdownComplete(
+          lobbyId: currentRoom.id!,
+          currentRoom: _currentRoom,
+          currentLetter: _currentLetter,
+          wheelSelectedIndex: _wheelSelectedIndex,
+        );
+      },
+    );
+  }
+
+  Future<void> deleteRoom() async {
+    await NetworkCall.networkCall(
+      onComplete: (_) {
+        _cleanup();
+        log('Room deleted successfully', name: 'deleteRoom');
+        if (navigatorKey.currentState?.canPop() ?? false) {
+          navigatorKey.currentState!.pop();
+        }
+      },
+      onError: (e, s) => AppToaster.showToast(
+        'Error',
+        subTitle: e.toString(),
+        type: ToastificationType.error,
+      ),
       future: () async {
         String? playerId = await AppService.getPlayerId();
         if (playerId == null) {
           throw Exception('Player ID is not set');
         }
 
-        _isCountdownActive = false;
-        update();
+        await _roomManager.deleteLobby(lobby.id!);
+      },
+    );
+  }
 
-        final roundStatus = [
-          'countdown:complete',
-          'letter:${_currentLetter ?? ""}',
-          'wheelIndex:${_wheelSelectedIndex ?? 0}',
-          'timestamp:${DateTime.now().toIso8601String()}',
-        ];
+  Future<void> removePlayer({
+    bool isKick = true,
+    String? playerIdToKick,
+  }) async {
+    await NetworkCall.networkCall(
+      onComplete: (_) {
+        log('Player removed successfully', name: 'removePlayer');
+        String? playerId = AppService.getPlayerName();
+        String? targetPlayerId = playerIdToKick ?? playerId;
 
-        await playflowClient.updateGameRoom(
-          lobbyId: currentRoom.id!,
-          resource: LobbyResourceModel(
-            settings: LobbySettings(
-              settings: GameSettings(
-                status: _currentRoom.settings?.status ?? GameStatus.started,
-                maxRounds: _currentRoom.settings?.maxRounds ?? 3,
-                currentRound: _currentRoom.settings?.currentRound ?? 1,
-                roundStatus: roundStatus,
-                scoreConfig:
-                    _currentRoom.settings?.scoreConfig ??
-                    const ScoreConfig(correctGuess: 100, fooledOther: 50),
-              ),
-            ),
-            requesterId: playerId,
-          ),
+        if (targetPlayerId == _currentRoom.host && targetPlayerId == playerId) {
+          _cleanup();
+          if (navigatorKey.currentState?.canPop() ?? false) {
+            navigatorKey.currentState!.pop();
+          }
+        }
+      },
+      onError: (e, s) => AppToaster.showToast(
+        'Error',
+        subTitle: e.toString(),
+        type: ToastificationType.error,
+      ),
+      future: () async {
+        await _roomManager.removePlayer(
+          lobbyId: lobby.id!,
+          currentRoom: _currentRoom,
+          isKick: isKick,
+          playerIdToKick: playerIdToKick,
         );
       },
     );
@@ -473,12 +349,7 @@ class LobbyController extends GetxController {
         subTitle: 'You are no longer a member of this lobby',
         type: ToastificationType.error,
       );
-      _playerHeartbeatTimer?.cancel();
-      _sseSubscription?.cancel();
-      _cancelReconnect();
-      _isConnected = false;
-      _isReconnecting = false;
-      update();
+      _cleanup();
       Future.delayed(const Duration(milliseconds: 500), () {
         if (navigatorKey.currentState?.canPop() ?? false) {
           navigatorKey.currentState!.pop();
@@ -488,8 +359,15 @@ class LobbyController extends GetxController {
     }
 
     _currentRoom = room;
+    _updateWheelStateFromRoom(room);
+    update();
 
-    // Check for wheel state updates in roundStatus
+    if (room.settings?.status == GameStatus.started) {
+      phase = GamePhase.started;
+    }
+  }
+
+  void _updateWheelStateFromRoom(LobbyModel room) {
     if (room.settings?.roundStatus != null &&
         room.settings!.roundStatus!.isNotEmpty) {
       for (final status in room.settings!.roundStatus!) {
@@ -504,11 +382,7 @@ class LobbyController extends GetxController {
           _wheelSelectedIndex = int.tryParse(indexStr);
         } else if (status.startsWith('wheelSpin:')) {
           final spinStatus = status.substring('wheelSpin:'.length);
-          if (spinStatus == 'start') {
-            _isWheelSpinning = true;
-          } else if (spinStatus == 'complete') {
-            _isWheelSpinning = false;
-          }
+          _isWheelSpinning = spinStatus == 'start';
         } else if (status.startsWith('countdown:')) {
           final countdownStr = status.substring('countdown:'.length);
           if (countdownStr == 'complete') {
@@ -523,11 +397,44 @@ class LobbyController extends GetxController {
         }
       }
     }
+  }
 
+  void setRoomStatus({required RoomStatus status, LobbyModel? room}) {
+    _roomStatus = status;
     update();
 
-    if (room.settings?.status == GameStatus.started) {
-      phase = GamePhase.started;
+    switch (_roomStatus) {
+      case RoomStatus.connected:
+        if (room != null) {
+          setCurrentRoom(room);
+        } else {
+          setCurrentRoom(lobby);
+        }
+        break;
+
+      case RoomStatus.deleted:
+        _cleanup();
+        log('Room deleted', name: 'RoomStatus');
+        AppToaster.showToast(
+          'Lobby Deleted',
+          subTitle: 'The lobby has been deleted by the host.',
+          type: ToastificationType.error,
+        );
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (navigatorKey.currentState?.canPop() ?? false) {
+            navigatorKey.currentState!.pop();
+          }
+        });
+        break;
+
+      case RoomStatus.updated:
+        if (room != null) {
+          setCurrentRoom(room);
+        }
+        break;
+
+      default:
+        break;
     }
   }
 
@@ -536,421 +443,52 @@ class LobbyController extends GetxController {
         PlayerStateModel();
   }
 
-  Future<void> deleteRoom() async {
-    await NetworkCall.networkCall(
-      onComplete: (_) {
-        _playerHeartbeatTimer?.cancel();
-        _sseSubscription?.cancel();
-        _cancelReconnect();
-        _isConnected = false;
-        _isReconnecting = false;
-        update();
-        log('Room deleted successfully', name: 'deleteRoom');
-        if (navigatorKey.currentState?.canPop() ?? false) {
-          navigatorKey.currentState!.pop();
-        }
-      },
-      onError: (e, s) => AppToaster.showToast(
-        'Error',
-        subTitle: e.toString(),
-        type: ToastificationType.error,
-      ),
-      future: () async {
-        String? playerId = await AppService.getPlayerId();
-        if (playerId == null) {
-          AppToaster.showToast(
-            'Player ID is not set',
-            type: ToastificationType.error,
-          );
-          throw Exception('Player ID is not set');
-        }
-        _playerHeartbeatTimer?.cancel();
-        await playflowClient.deleteLobby(lobbyId: lobby.id!);
-      },
-    );
-  }
-
-  Future<void> removePlayer({
-    bool isKick = true,
-    String? playerIdToKick,
-  }) async {
-    await NetworkCall.networkCall(
-      onComplete: (_) {
-        log('Player removed successfully', name: 'removePlayer');
-        String? playerId = AppService.getPlayerName();
-        String? targetPlayerId = playerIdToKick ?? playerId;
-        if (targetPlayerId == _currentRoom.host && targetPlayerId == playerId) {
-          _playerHeartbeatTimer?.cancel();
-          _sseSubscription?.cancel();
-          _cancelReconnect();
-          _isConnected = false;
-          _isReconnecting = false;
-          update();
-          if (navigatorKey.currentState?.canPop() ?? false) {
-            navigatorKey.currentState!.pop();
-          }
-        }
-      },
-      onError: (e, s) => AppToaster.showToast(
-        'Error',
-        subTitle: e.toString(),
-        type: ToastificationType.error,
-      ),
-      future: () async {
-        String? playerId = await AppService.getPlayerId();
-        if (playerId == null) {
-          AppToaster.showToast(
-            'Player ID is not set',
-            type: ToastificationType.error,
-          );
-          throw Exception('Player ID is not set');
-        }
-
-        String? targetPlayerId = playerIdToKick ?? playerId;
-
-        // If host is leaving voluntarily and there are other players,
-        // reassign host instead of deleting the lobby.
-        if (targetPlayerId == _currentRoom.host &&
-            targetPlayerId == playerId &&
-            !isKick) {
-          final others = List<String>.from(_currentRoom.players ?? [])
-            ..removeWhere((p) => p == _currentRoom.host);
-          if (others.isNotEmpty) {
-            final newHost = others.first;
-            await playflowClient.updateGameRoom(
-              lobbyId: lobby.id!,
-              resource: LobbyResourceModel(
-                host: newHost,
-                requesterId: playerId,
-              ),
-            );
-            // Also remove the leaving player
-            await playflowClient.kickPlayer(
-              lobbyId: lobby.id!,
-              playerIdToKick: playerId,
-              isKick: false,
-            );
-            return;
-          } else {
-            // No other players; delete lobby
-            _playerHeartbeatTimer?.cancel();
-            await playflowClient.deleteLobby(lobbyId: lobby.id!);
-            return;
-          }
-        }
-
-        await playflowClient.kickPlayer(
-          lobbyId: lobby.id!,
-          playerIdToKick: targetPlayerId,
-          isKick: isKick,
-        );
-      },
-    );
-  }
-
-  @override
-  Future<void> onReady() async {
-    await _connectSSE();
-    _initTimerSync();
-    super.onReady();
-  }
-
-  void _initTimerSync() {
-    // Sync timer every 30 seconds to maintain accuracy
-    _syncTimer?.cancel();
-    _syncTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      // Re-sync with server time periodically
-      // This will be updated when we receive SSE events with timestamps
-      if (_serverTimeOffset != null) {
-        log(
-          'Timer sync maintained: offset = ${_serverTimeOffset?.inMilliseconds}ms',
-          name: 'TimerSync',
-        );
-      }
-    });
-  }
-
-  Future<void> _connectSSE() async {
-    try {
-      String? playerId = await AppService.getPlayerId();
-      if (playerId == null) {
-        log('Cannot connect SSE: Player ID is not set', name: 'SSE');
-        return;
-      }
-
-      _sseSubscription?.cancel();
-
-      await playflowClient.sendHearBears(lobby.id!);
-
-      _isReconnecting = false;
-      _reconnectAttempts = 0;
-      update();
-
-      _sseSubscription =
-          SSEClient.subscribeToSSE(
-            method: SSERequestType.GET,
-            url:
-                "${PlayflowEndpoints.lobbyHeartbeat(lobby.id!)}?lobby-config=${PlayflowCredentials.lobbyId}&player-id=$playerId",
-            header: {
-              "Content-Type": "application/json",
-              "api-key": PlayflowCredentials.apiKey,
-            },
-          ).listen(
-            handleEvent,
-            onError: _handleSSEError,
-            onDone: _handleSSEDone,
-            cancelOnError: false,
-          );
-
-      _isConnected = true;
-      update();
-      log('SSE connected successfully', name: 'SSE');
-    } catch (e, stackTrace) {
-      log(
-        'Failed to connect SSE: $e',
-        error: e,
-        stackTrace: stackTrace,
-        name: 'SSE',
-      );
-      _isConnected = false;
-      update();
-      _scheduleReconnect();
-    }
-  }
-
-  void _handleSSEError(error) {
-    log('SSE error occurred: $error', name: 'SSE', error: error);
-    _isConnected = false;
-    update();
-
-    if (_isReconnecting || _roomStatus == RoomStatus.deleted) {
-      return;
-    }
-
-    AppToaster.showToast(
-      'Connection Lost',
-      subTitle: 'Attempting to reconnect...',
-      type: ToastificationType.warning,
-    );
-
-    _scheduleReconnect();
-  }
-
-  void _handleSSEDone() {
-    log('SSE connection closed', name: 'SSE');
-    _isConnected = false;
-    update();
-
-    if (_roomStatus == RoomStatus.deleted || _isReconnecting) {
-      return;
-    }
-
-    _scheduleReconnect();
-  }
-
-  void _scheduleReconnect() {
-    if (_reconnectAttempts >= _maxReconnectAttempts) {
-      log(
-        'Max reconnect attempts reached ($_maxReconnectAttempts). Giving up.',
-        name: 'SSE',
-      );
-      _isReconnecting = false;
-      update();
-      AppToaster.showToast(
-        'Connection Failed',
-        subTitle:
-            'Unable to reconnect. Please refresh the page or rejoin the lobby.',
-        type: ToastificationType.error,
-      );
-      return;
-    }
-
-    if (_isReconnecting) {
-      return; // Already scheduled
-    }
-
-    _isReconnecting = true;
-    _reconnectAttempts++;
-    update();
-
-    int delay = (_initialReconnectDelay * (1 << (_reconnectAttempts - 1)))
-        .clamp(_initialReconnectDelay, 30);
-
-    log(
-      'Scheduling SSE reconnect attempt $_reconnectAttempts/$_maxReconnectAttempts in ${delay}s',
-      name: 'SSE',
-    );
-
-    _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(Duration(seconds: delay), () {
-      log('Attempting SSE reconnect...', name: 'SSE');
-      _connectSSE();
-    });
-  }
-
-  Future<void> _cancelReconnect() async {
-    _reconnectTimer?.cancel();
-    _reconnectTimer = null;
-    _isReconnecting = false;
-    _reconnectAttempts = 0;
-  }
-
-  void handleEvent(SSEModel event) {
-    final eventStartTime = DateTime.now();
-
-    try {
-      if (event.event == null || event.event!.isEmpty) {
-        log('SSE event received with empty event name', name: 'SSE');
-        return;
-      }
-
-      if (event.data == null || event.data!.isEmpty) {
-        log('SSE event received with empty data', name: 'SSE');
-        return;
-      }
-
-      if (_reconnectAttempts > 0) {
-        _reconnectAttempts = 0;
-        _isReconnecting = false;
-        _isConnected = true;
-        update();
-        log('SSE reconnected successfully', name: 'SSE');
-      }
-
-      String formattedEvent = event.event!.startsWith('lobby:')
-          ? event.event!.replaceAll('lobby:', '')
-          : event.event!;
-
-      // Try to parse RoomStatus safely (if it matches an enum)
-      RoomStatus? status;
-      try {
-        status = RoomStatus.values.firstWhere(
-          (e) => e.name == formattedEvent,
-          orElse: () => RoomStatus.error,
-        );
-      } catch (_) {
-        log('Unknown SSE event: $formattedEvent', name: 'SSE');
-        status = RoomStatus.error;
-      }
-
-      // Decode the JSON string safely
-      dynamic decoded;
-      try {
-        decoded = jsonDecode(event.data!);
-      } catch (e) {
-        log(
-          'Failed to parse SSE event data: $e. Data: ${event.data}',
-          name: 'SSE',
-          error: e,
-        );
-        return;
-      }
-
-      LobbyModel room;
-      if (decoded is Map<String, dynamic>) {
-        try {
-          if (decoded.containsKey('lobby')) {
-            room = LobbyModel.fromJson(decoded['lobby']);
-          } else {
-            room = LobbyModel.fromJson(decoded);
-          }
-        } catch (e) {
-          log(
-            'Failed to parse LobbyModel from SSE data: $e',
-            name: 'SSE',
-            error: e,
-          );
-          return;
-        }
-      } else {
-        log('SSE event data is not a Map: ${decoded.runtimeType}', name: 'SSE');
-        return;
-      }
-
-      // Sync server time if available (decoded is already Map<String, dynamic> at this point)
-      if (decoded.containsKey('timestamp')) {
-        try {
-          final serverTimestamp = DateTime.parse(
-            decoded['timestamp'] as String,
-          );
-          _serverTimeOffset = serverTimestamp.difference(DateTime.now());
-          log(
-            'Server time synced: offset = ${_serverTimeOffset!.inMilliseconds}ms',
-            name: 'TimerSync',
-          );
-        } catch (e) {
-          log('Failed to sync server time: $e', name: 'TimerSync');
-        }
-      }
-
-      // Optimize join/leave events for <1s latency
-      if (status == RoomStatus.updated) {
-        _handleOptimizedUpdate(eventStartTime, room);
-      } else {
-        setRoomStatus(status: status, room: room);
-      }
-
-      // Measure and log latency for critical events
-      final latency = DateTime.now().difference(eventStartTime);
-      if (latency.inMilliseconds > 100) {
-        log(
-          'SSE event latency: ${latency.inMilliseconds}ms for event: $formattedEvent',
-          name: 'SSE',
-        );
-      }
-    } catch (e, stackTrace) {
-      log(
-        'Error handling SSE event: $e',
-        name: 'SSE',
-        error: e,
-        stackTrace: stackTrace,
-      );
+  void _handleRoomUpdate(
+    RoomStatus status,
+    LobbyModel? room,
+    DateTime eventTime,
+  ) {
+    if (status == RoomStatus.updated && room != null) {
+      _handleOptimizedUpdate(eventTime, room);
+    } else {
+      setRoomStatus(status: status, room: room);
     }
   }
 
   void _handleOptimizedUpdate(DateTime eventStartTime, LobbyModel newRoom) {
-    // Get previous player list for comparison
     final previousPlayers = Set<String>.from(_currentRoom.players ?? []);
     final newPlayers = Set<String>.from(newRoom.players ?? []);
-
-    // Detect join/leave events immediately
     final joinedPlayers = newPlayers.difference(previousPlayers);
     final leftPlayers = previousPlayers.difference(newPlayers);
 
-    // Check if game started
     final gameStarted =
         newRoom.settings?.status == GameStatus.started &&
         _currentRoom.settings?.status != GameStatus.started;
 
-    // Play "pop" sound on player join
     if (joinedPlayers.isNotEmpty) {
       AudioService.instance.playAudio(AudioType.playerJoinPop);
     }
-
-    // Play "whoosh+chime" sound on game start
     if (gameStarted) {
       AudioService.instance.playAudio(AudioType.gameStartWhoosh);
     }
 
-    // Immediate UI update for join/leave (<1s requirement)
     _currentRoom = newRoom;
-    update(); // Immediate UI refresh
+    update();
 
-    // Log join/leave events with latency
     if (joinedPlayers.isNotEmpty || leftPlayers.isNotEmpty) {
       final latency = DateTime.now().difference(eventStartTime);
       log(
         'Join/Leave detected - Joined: $joinedPlayers, Left: $leftPlayers, Latency: ${latency.inMilliseconds}ms',
         name: 'SSE',
       );
+
+      _firestoreSync.syncJoinedPlayers(joinedPlayers, lobby.host!);
+      _firestoreSync.syncLeftPlayers(leftPlayers);
     }
 
-    // Broadcast game start notification
     if (gameStarted) {
       log('Game started broadcast received', name: 'SSE');
       phase = GamePhase.started;
-
-      // Show notification to user
       AppToaster.showToast(
         'Game Started!',
         subTitle: 'The game has begun',
@@ -958,28 +496,61 @@ class LobbyController extends GetxController {
       );
     }
 
-    // Update room status after immediate UI update
     setRoomStatus(status: RoomStatus.updated, room: newRoom);
   }
 
-  void _playerHeartbeat() async {
+  void _startPlayerHeartbeat() {
     _playerHeartbeatTimer?.cancel();
     _playerHeartbeatTimer = Timer.periodic(const Duration(seconds: 10), (
-      timer,
+      _,
     ) async {
-      await playflowClient.sendHearBears(lobby.id!);
+      await PlayflowClient.instance.sendHearBears(lobby.id!);
+      // Also update Firestore heartbeat to keep isOnline true
+      final playerId = await AppService.getPlayerId();
+      if (playerId != null && lobby.id != null) {
+        try {
+          await FirebaseFirestoreService.instance.updatePlayerHeartbeat(
+            lobby.id!,
+            playerId,
+          );
+        } catch (e) {
+          // Silently fail - heartbeat update is not critical
+          log('Heartbeat Firestore update failed: $e', name: 'LobbyHeartbeat');
+        }
+      }
     });
+  }
+
+  void _cleanup() {
+    _playerHeartbeatTimer?.cancel();
+    _sseManager.cancelReconnect();
+    _markPlayerOffline();
+    update();
+  }
+
+  Future<void> _markPlayerOffline() async {
+    try {
+      final playerId = await AppService.getPlayerId();
+      if (playerId != null && lobby.id != null) {
+        await _firestoreSync.markPlayerLeft(playerId);
+        log('Player marked as offline in Firestore', name: 'LobbyCleanup');
+      }
+    } catch (e, s) {
+      log(
+        'Error marking player as offline: $e',
+        name: 'LobbyCleanup',
+        error: e,
+        stackTrace: s,
+      );
+    }
   }
 
   @override
   void onClose() {
     _playerHeartbeatTimer?.cancel();
-    _sseSubscription?.cancel();
-    _syncTimer?.cancel();
-    _cancelReconnect();
-    answerController.dispose();
-    _isConnected = false;
-    _isReconnecting = false;
+    _sseManager.dispose();
+    _answerController.dispose();
+    _markPlayerOffline();
     super.onClose();
   }
 }

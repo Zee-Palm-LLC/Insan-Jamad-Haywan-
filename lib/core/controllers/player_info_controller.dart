@@ -11,6 +11,25 @@ class PlayerInfoController extends GetxController {
   bool isLoading = false;
 
   @override
+  void onInit() {
+    super.onInit();
+    _loadSavedProfileInfo();
+  }
+
+  Future<void> _loadSavedProfileInfo() async {
+    final savedUsername = await AppService.getPlayerId();
+    if (savedUsername != null && savedUsername.isNotEmpty) {
+      usernameController.text = savedUsername;
+    }
+
+    final savedImagePath = await AppService.getProfileImage();
+    if (savedImagePath != null && savedImagePath.isNotEmpty) {
+      profileImagePath = savedImagePath;
+      update();
+    }
+  }
+
+  @override
   void onClose() {
     usernameController.dispose();
     super.onClose();
@@ -38,10 +57,8 @@ class PlayerInfoController extends GetxController {
     update();
 
     try {
-      // Save username to local storage (username = playerId)
       await AppService.setPlayerId(username);
 
-      // Save profile image path if provided
       if (profileImagePath != null) {
         await AppService.setProfileImage(profileImagePath!);
       }
@@ -56,7 +73,6 @@ class PlayerInfoController extends GetxController {
           ),
         );
 
-        // Navigate to main menu
         context.go('/main-menu');
       }
     } catch (e) {

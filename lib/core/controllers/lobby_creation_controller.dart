@@ -7,9 +7,15 @@ import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/models/lobby/lobby_config_model.dart';
 import 'package:insan_jamd_hawan/core/models/lobby/lobby_model.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
+import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/game_player_service.dart';
 import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
 import 'package:insan_jamd_hawan/core/utils/network_call.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
+import 'package:insan_jamd_hawan/core/models/session/game_session_model.dart';
+import 'package:insan_jamd_hawan/core/models/session/game_config_model.dart';
+import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
+import 'package:insan_jamd_hawan/core/models/session/player_participation_model.dart';
 
 class LobbyCreationController extends GetxController {
   final lobbyNameController = TextEditingController();
@@ -177,7 +183,15 @@ class LobbyCreationController extends GetxController {
           name: 'LobbyCreation',
         );
 
-        // Optimistically ensure host appears in players
+        await GamePlayerService.instance.syncLocalPlayerToFirestore();
+        await _createFirestoreSession(
+          sessionId: lobby.id!,
+          hostId: playerId,
+          maxPlayers: int.tryParse(maxPlayers) ?? 4,
+          maxRounds: int.tryParse(maxRounds) ?? 3,
+          timerPerRound: int.tryParse(timerPerRound) ?? 60,
+        );
+
         final List<String> initialPlayers = List<String>.from(
           lobby.players ?? [],
         );
@@ -194,6 +208,87 @@ class LobbyCreationController extends GetxController {
         }
       },
     );
+  }
+
+  Future<void> _createFirestoreSession({
+    required String sessionId,
+    required String hostId,
+    required int maxPlayers,
+    required int maxRounds,
+    required int timerPerRound,
+  }) async {
+    try {
+      final now = DateTime.now();
+      final gameConfig = GameConfigModel(
+        maxRounds: maxRounds,
+        defaultTimePerRound: timerPerRound,
+        timePerRoundVariations: [30, 45, 60, 90],
+        scoreConfig: ScoreConfigModel(correctGuess: 100, fooledOther: 50),
+      );
+
+      final session = GameSessionModel(
+        sessionId: sessionId,
+        lobbyId: sessionId,
+        roomId: null,
+        gameType: 'insan_jamd_hawan',
+        status: SessionStatus.waiting,
+        config: gameConfig,
+        hostId: hostId,
+        hostName: hostId, // Use hostId as name for now
+        actualDuration: DurationStatsModel(
+          totalGameTime: null,
+          averageRoundTime: null,
+          longestRound: null,
+          shortestRound: null,
+        ),
+        startedAt: null,
+        endedAt: null,
+        createdAt: now,
+        lastUpdated: now,
+      );
+
+      await FirebaseFirestoreService.instance.createSession(session);
+
+      // Create initial player participation for host
+      final hostParticipation = PlayerParticipationModel(
+        playerId: hostId,
+        playerName: hostId,
+        playerAvatar: null,
+        joinedAt: now,
+        leftAt: null,
+        status: PlayerStatus.active,
+        disconnectedAt: null,
+        reconnectedAt: null,
+        roundParticipation: {},
+        totalTimeInGame: null,
+        averageTimePerRound: null,
+        totalScore: 0,
+        scoresByRound: {},
+        roundsPlayed: 0,
+        roundsCompleted: 0,
+        averageScorePerRound: null,
+        finalRank: null,
+        lastHeartbeat: now,
+        isOnline: true,
+      );
+
+      await FirebaseFirestoreService.instance.addPlayer(
+        sessionId,
+        hostParticipation,
+      );
+
+      developer.log(
+        'Firestore session created: $sessionId',
+        name: 'LobbyCreation',
+      );
+    } catch (e, s) {
+      developer.log(
+        'Error creating Firestore session: $e',
+        name: 'LobbyCreation',
+        error: e,
+        stackTrace: s,
+      );
+    }
   }
 
   @override
