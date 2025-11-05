@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
+import 'package:insan_jamd_hawan/core/modules/get_started/get_started_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/answers_host_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/player_answer_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/create_lobby/create_lobby_view.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_round_view.dart';
-
+import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/game_lobby_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/waiting_view/waiting_view.dart';
 import 'package:insan_jamd_hawan/core/modules/main_menu/main_menu_page.dart';
 import 'package:insan_jamd_hawan/core/modules/players/player_info/player_info.dart';
 import 'package:insan_jamd_hawan/core/modules/players/player_wheel/player_wheel_view.dart';
@@ -16,6 +20,7 @@ import 'package:insan_jamd_hawan/core/modules/get_started/get_started_view.dart'
 import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/answers_host_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/game_lobby_view.dart';
+import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
 typedef R = AppRouter;
 
@@ -24,13 +29,23 @@ class AppRouter {
 
   static final _router = GoRouter(
     navigatorKey: navigatorKey,
-    initialLocation: GetStartedView.path, // Start at player info
+    initialLocation: GetStartedView.path,
     redirect: _handleRedirect,
     routes: [
       GoRoute(
         path: GetStartedView.path,
         name: GetStartedView.name,
         builder: (context, state) => const GetStartedView(),
+      ),
+      GoRoute(
+        path: WaitingView.path,
+        name: WaitingView.name,
+        builder: (context, state) => WaitingView(),
+      ),
+      GoRoute(
+        path: LobbyCreationPage.path,
+        name: LobbyCreationPage.name,
+        builder: (context, state) => const LobbyCreationPage(),
       ),
       GoRoute(
         path: LetterGeneratorView.path,
@@ -98,11 +113,6 @@ class AppRouter {
         builder: (context, state) => const MainMenuPage(),
       ),
       GoRoute(
-        path: LobbyCreationPage.path,
-        name: LobbyCreationPage.name,
-        builder: (context, state) => const LobbyCreationPage(),
-      ),
-      GoRoute(
         path: '/lobby/:id',
         name: 'GameLobby',
         builder: (context, state) {
@@ -124,6 +134,14 @@ class AppRouter {
           return PlayerWheelView(controller: controller);
         },
       ),
+      GoRoute(
+        path: PlayerAnswerView.path,
+        name: PlayerAnswerView.name,
+        builder: (context, state) {
+          final letter = state.uri.queryParameters['letter'] ?? 'A';
+          return PlayerAnswerView(selectedLetter: letter);
+        },
+      ),
     ],
   );
 
@@ -140,19 +158,16 @@ class AppRouter {
 
     final isOnPlayerInfo = state.matchedLocation == PlayerInfo.path;
 
-    // If no username and not on player-info page, redirect to player-info
     if (!hasUsername && !isOnPlayerInfo) {
       print('[Router] No username found, redirecting to player-info');
       return PlayerInfo.path;
     }
 
-    // If has username and on player-info page, redirect to main menu
     if (hasUsername && isOnPlayerInfo) {
       print('[Router] Username exists, redirecting to main menu');
       return MainMenuPage.path;
     }
 
-    // No redirect needed
     return null;
   }
 }

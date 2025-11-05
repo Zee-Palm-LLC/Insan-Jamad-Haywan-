@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
 import 'package:flutter_client_sse/flutter_client_sse.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
-import 'package:insan_jamd_hawan/app.dart';
 import 'package:insan_jamd_hawan/core/models/game/lobby_settings.dart';
 import 'package:insan_jamd_hawan/core/models/game/player_state_model.dart';
 import 'package:insan_jamd_hawan/core/models/lobby/lobby_model.dart';
@@ -18,6 +17,7 @@ import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
 import 'package:insan_jamd_hawan/core/utils/network_call.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
 import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
+import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
 import '../data/enums/enums.dart';
 
