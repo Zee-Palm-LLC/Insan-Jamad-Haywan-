@@ -10,6 +10,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_round_view
 
 import 'package:insan_jamd_hawan/core/modules/main_menu/main_menu_page.dart';
 import 'package:insan_jamd_hawan/core/modules/players/player_info/player_info.dart';
+import 'package:insan_jamd_hawan/core/modules/players/player_wheel/player_wheel_view.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/modules/get_started/get_started_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/answers_host_view.dart';
@@ -110,6 +111,17 @@ class AppRouter {
             return const Scaffold(body: Center(child: Text('Lobby not found')));
           }
           return GameLobbyView(controller: controller);
+        },
+      ),
+      GoRoute(
+        path: PlayerWheelView.path,
+        name: PlayerWheelView.name,
+        builder: (context, state) {
+          final controller = state.extra as LobbyController?;
+          if (controller == null) {
+            return const Scaffold(body: Center(child: Text('Lobby not found')));
+          }
+          return PlayerWheelView(controller: controller);
         },
       ),
     ],

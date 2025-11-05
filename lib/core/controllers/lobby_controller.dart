@@ -93,6 +93,19 @@ class LobbyController extends GetxController {
     update();
   }
 
+  // Wheel spin state
+  bool _isWheelSpinning = false;
+  bool get isWheelSpinning => _isWheelSpinning;
+
+  int? _wheelSelectedIndex;
+  int? get wheelSelectedIndex => _wheelSelectedIndex;
+
+  bool _isCountdownActive = false;
+  bool get isCountdownActive => _isCountdownActive;
+
+  int _countdownValue = 3;
+  int get countdownValue => _countdownValue;
+
   GamePhase _phase = GamePhase.waiting;
   GamePhase get phase => _phase;
 
@@ -263,9 +276,57 @@ class LobbyController extends GetxController {
     );
   }
 
+  /// Broadcasts wheel spin start to all players
+  Future<void> broadcastWheelSpinStart() async {
+    await NetworkCall.networkCall(
+      onError: (e, s) => AppToaster.showToast(
+        'Error',
+        subTitle: 'Failed to broadcast spin start: ${e.toString()}',
+        type: ToastificationType.error,
+      ),
+      future: () async {
+        String? playerId = await AppService.getPlayerId();
+        if (playerId == null) {
+          throw Exception('Player ID is not set');
+        }
+
+        _isWheelSpinning = true;
+        update();
+
+        final roundStatus = [
+          'wheelSpin:start',
+          'timestamp:${DateTime.now().toIso8601String()}',
+        ];
+
+        final updated = await playflowClient.updateGameRoom(
+          lobbyId: currentRoom.id!,
+          resource: LobbyResourceModel(
+            settings: LobbySettings(
+              settings: GameSettings(
+                status: _currentRoom.settings?.status ?? GameStatus.started,
+                maxRounds: _currentRoom.settings?.maxRounds ?? 3,
+                currentRound: _currentRoom.settings?.currentRound ?? 1,
+                roundStatus: roundStatus,
+                scoreConfig:
+                    _currentRoom.settings?.scoreConfig ??
+                    const ScoreConfig(correctGuess: 100, fooledOther: 50),
+              ),
+            ),
+            requesterId: playerId,
+          ),
+        );
+
+        if (updated != null) {
+          setCurrentRoom(updated);
+          log('Wheel spin start broadcast to all players', name: 'WheelSync');
+        }
+      },
+    );
+  }
+
   /// Broadcasts the selected letter to all players
   /// This is called by the host after the wheel spin is complete
-  Future<void> broadcastSelectedLetter(String letter) async {
+  Future<void> broadcastSelectedLetter(String letter, int selectedIndex) async {
     await NetworkCall.networkCall(
       onError: (e, s) => AppToaster.showToast(
         'Error',
@@ -280,10 +341,15 @@ class LobbyController extends GetxController {
 
         // Set letter locally first for immediate feedback
         setCurrentLetter(letter);
+        _wheelSelectedIndex = selectedIndex;
+        _isWheelSpinning = false;
+        update();
 
-        // Create a round status list with the selected letter
+        // Create a round status list with the selected letter and index
         final roundStatus = [
           'letter:$letter',
+          'wheelIndex:$selectedIndex',
+          'wheelSpin:complete',
           'timestamp:${DateTime.now().toIso8601String()}',
         ];
 
@@ -317,6 +383,88 @@ class LobbyController extends GetxController {
     );
   }
 
+  Future<void> broadcastCountdown(int value) async {
+    await NetworkCall.networkCall(
+      onError: (e, s) => log('Failed to broadcast countdown: $e'),
+      future: () async {
+        String? playerId = await AppService.getPlayerId();
+        if (playerId == null) {
+          throw Exception('Player ID is not set');
+        }
+
+        _isCountdownActive = true;
+        _countdownValue = value;
+        update();
+
+        final roundStatus = [
+          'countdown:$value',
+          'letter:${_currentLetter ?? ""}',
+          'wheelIndex:${_wheelSelectedIndex ?? 0}',
+          'timestamp:${DateTime.now().toIso8601String()}',
+        ];
+
+        await playflowClient.updateGameRoom(
+          lobbyId: currentRoom.id!,
+          resource: LobbyResourceModel(
+            settings: LobbySettings(
+              settings: GameSettings(
+                status: _currentRoom.settings?.status ?? GameStatus.started,
+                maxRounds: _currentRoom.settings?.maxRounds ?? 3,
+                currentRound: _currentRoom.settings?.currentRound ?? 1,
+                roundStatus: roundStatus,
+                scoreConfig:
+                    _currentRoom.settings?.scoreConfig ??
+                    const ScoreConfig(correctGuess: 100, fooledOther: 50),
+              ),
+            ),
+            requesterId: playerId,
+          ),
+        );
+      },
+    );
+  }
+
+  /// Broadcasts countdown complete to all players
+  Future<void> broadcastCountdownComplete() async {
+    await NetworkCall.networkCall(
+      onError: (e, s) => log('Failed to broadcast countdown complete: $e'),
+      future: () async {
+        String? playerId = await AppService.getPlayerId();
+        if (playerId == null) {
+          throw Exception('Player ID is not set');
+        }
+
+        _isCountdownActive = false;
+        update();
+
+        final roundStatus = [
+          'countdown:complete',
+          'letter:${_currentLetter ?? ""}',
+          'wheelIndex:${_wheelSelectedIndex ?? 0}',
+          'timestamp:${DateTime.now().toIso8601String()}',
+        ];
+
+        await playflowClient.updateGameRoom(
+          lobbyId: currentRoom.id!,
+          resource: LobbyResourceModel(
+            settings: LobbySettings(
+              settings: GameSettings(
+                status: _currentRoom.settings?.status ?? GameStatus.started,
+                maxRounds: _currentRoom.settings?.maxRounds ?? 3,
+                currentRound: _currentRoom.settings?.currentRound ?? 1,
+                roundStatus: roundStatus,
+                scoreConfig:
+                    _currentRoom.settings?.scoreConfig ??
+                    const ScoreConfig(correctGuess: 100, fooledOther: 50),
+              ),
+            ),
+            requesterId: playerId,
+          ),
+        );
+      },
+    );
+  }
+
   void setCurrentRoom(LobbyModel room) {
     String? playerId = AppService.getPlayerName();
     if (room.players?.contains(playerId) == false) {
@@ -341,7 +489,7 @@ class LobbyController extends GetxController {
 
     _currentRoom = room;
 
-    // Check for letter updates in roundStatus
+    // Check for wheel state updates in roundStatus
     if (room.settings?.roundStatus != null &&
         room.settings!.roundStatus!.isNotEmpty) {
       for (final status in room.settings!.roundStatus!) {
@@ -350,6 +498,27 @@ class LobbyController extends GetxController {
           if (_currentLetter != letter) {
             _currentLetter = letter;
             log('Received letter update: $letter', name: 'LetterSync');
+          }
+        } else if (status.startsWith('wheelIndex:')) {
+          final indexStr = status.substring('wheelIndex:'.length);
+          _wheelSelectedIndex = int.tryParse(indexStr);
+        } else if (status.startsWith('wheelSpin:')) {
+          final spinStatus = status.substring('wheelSpin:'.length);
+          if (spinStatus == 'start') {
+            _isWheelSpinning = true;
+          } else if (spinStatus == 'complete') {
+            _isWheelSpinning = false;
+          }
+        } else if (status.startsWith('countdown:')) {
+          final countdownStr = status.substring('countdown:'.length);
+          if (countdownStr == 'complete') {
+            _isCountdownActive = false;
+          } else {
+            final value = int.tryParse(countdownStr);
+            if (value != null) {
+              _isCountdownActive = true;
+              _countdownValue = value;
+            }
           }
         }
       }

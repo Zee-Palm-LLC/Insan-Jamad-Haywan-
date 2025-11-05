@@ -12,11 +12,7 @@ class LetterGeneratorController extends GetxController {
   Future<void> handleSpinComplete(String letter) async {
     selectedLetter = letter;
     update();
-
-    // Broadcast letter to all players if we have a lobby controller
-    if (lobbyController != null) {
-      await lobbyController!.broadcastSelectedLetter(letter);
-    }
+    // Broadcasting is now handled by FortuneWheelController
   }
 
   void handleCountdownComplete(String letter) {
