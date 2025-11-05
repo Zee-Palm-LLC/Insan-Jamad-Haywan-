@@ -28,74 +28,78 @@ class LetterGeneratorView extends StatelessWidget {
       builder: (letterController) {
         return Scaffold(
           extendBodyBehindAppBar: true,
-          appBar: AppBar(
-            leading: Padding(
-              padding: EdgeInsets.all(10.h),
-              child: CustomIconButton(
-                icon: AppAssets.backIcon,
-                onTap: () => context.pop(),
-              ),
-            ),
-            actions: [
-              CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-              SizedBox(width: 16.w),
-            ],
-          ),
+          appBar: isDesktop
+              ? null
+              : AppBar(
+                  leading: Padding(
+                    padding: EdgeInsets.all(10.h),
+                    child: CustomIconButton(
+                      icon: AppAssets.backIcon,
+                      onTap: () => context.pop(),
+                    ),
+                  ),
+                  actions: [
+                    CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+                    SizedBox(width: 16.w),
+                  ],
+                ),
           body: SingleChildScrollView(
             padding: EdgeInsets.all(16.h),
-            child: DesktopWrapper(
-              child: Column(
-                children: [
-                  if (!isDesktop) SizedBox(height: 50.h),
-                  GameLogo(),
-                  SizedBox(height: 12.h),
-                  GetBuilder<LobbyController>(
-                    init: controller,
-                    builder: (lobbyController) {
-                      return RoomCodeText(
-                        iSend: true,
-                        lobbyId:
-                            lobbyController.currentRoom.inviteCode ?? 'XYZ124',
-                      );
-                    },
-                  ),
-                  SizedBox(height: 50.h),
-                  FortuneWheelPage(
-                    isHost: true,
-                    onSpinComplete: letterController.handleSpinComplete,
-                    onCountdownComplete:
-                        letterController.handleCountdownComplete,
-                  ),
-                  if (letterController.selectedLetter != null) ...[
-                    if (isDesktop) SizedBox(height: 30.h),
-                    Container(
-                      padding: EdgeInsets.all(16.h),
-                      decoration: BoxDecoration(
-                        color: AppColors.kGreen100,
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: AppColors.kPrimary, width: 2),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Selected Letter',
-                            style: AppTypography.kBold16.copyWith(
-                              color: AppColors.kGray600,
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
-                          Text(
-                            letterController.selectedLetter!,
-                            style: AppTypography.kBold24.copyWith(
-                              fontSize: 48.sp,
-                              color: AppColors.kPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
+            child: Center(
+              child: DesktopWrapper(
+                child: Column(
+                  children: [
+                    if (!isDesktop) SizedBox(height: 50.h),
+                    GameLogo(),
+                    SizedBox(height: 12.h),
+                    GetBuilder<LobbyController>(
+                      init: controller,
+                      builder: (lobbyController) {
+                        return RoomCodeText(
+                          iSend: true,
+                          lobbyId:
+                              lobbyController.currentRoom.inviteCode ?? 'XYZ124',
+                        );
+                      },
                     ),
+                    SizedBox(height: 50.h),
+                    FortuneWheelPage(
+                      isHost: true,
+                      onSpinComplete: letterController.handleSpinComplete,
+                      onCountdownComplete:
+                          letterController.handleCountdownComplete,
+                    ),
+                    if (letterController.selectedLetter != null) ...[
+                      if (isDesktop) SizedBox(height: 30.h),
+                      Container(
+                        padding: EdgeInsets.all(16.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.kGreen100,
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(color: AppColors.kPrimary, width: 2),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Selected Letter',
+                              style: AppTypography.kBold16.copyWith(
+                                color: AppColors.kGray600,
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              letterController.selectedLetter!,
+                              style: AppTypography.kBold24.copyWith(
+                                fontSize: 48.sp,
+                                color: AppColors.kPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),

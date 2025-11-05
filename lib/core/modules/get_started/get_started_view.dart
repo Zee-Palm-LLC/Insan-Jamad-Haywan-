@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_bg.dart';
+import 'package:insan_jamd_hawan/core/modules/players/player_info/player_info.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
-import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
-import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
-import 'package:insan_jamd_hawan/core/modules/players/player_info/player_info.dart';
 
 class GetStartedView extends StatelessWidget {
   const GetStartedView({super.key});

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/controllers/fortune_wheel_controller.dart';
+import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 
 class FortuneWheelPage extends StatelessWidget {
   const FortuneWheelPage({
