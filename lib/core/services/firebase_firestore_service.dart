@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:insan_jamd_hawan/core/models/session/game_player_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/game_session_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/game_summary_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
@@ -80,6 +81,12 @@ class FirebaseFirestoreService {
 
   DocumentReference _summaryDoc(String sessionId) =>
       _sessionDoc(sessionId).collection('summary').doc('data');
+
+  CollectionReference get _gamePlayersCollection =>
+      _gameDoc.collection('game_players');
+
+  DocumentReference _gamePlayerDoc(String playerId) =>
+      _gamePlayersCollection.doc(playerId);
 
   CollectionReference get gameResults => _firestore
       .collection('insan_jamd_hawan_results')
@@ -436,6 +443,49 @@ class FirebaseFirestoreService {
       if (!doc.exists) return null;
       return GameSummaryModel.fromFirestore(doc);
     });
+  }
+
+  Future<void> saveGamePlayer(GamePlayerModel player) async {
+    await _gamePlayerDoc(player.playerId).set(player.toJson());
+  }
+
+  Future<GamePlayerModel?> getGamePlayer(String playerId) async {
+    final doc = await _gamePlayerDoc(playerId).get();
+    if (!doc.exists) return null;
+    return GamePlayerModel.fromFirestore(doc);
+  }
+
+  Future<void> updateGamePlayerLastActive(String playerId) async {
+    await _gamePlayerDoc(playerId).update({'lastActive': Timestamp.now()});
+  }
+
+  Future<void> updateGamePlayerImage(String playerId, String? imagePath) async {
+    await _gamePlayerDoc(
+      playerId,
+    ).update({'profileImage': imagePath, 'lastActive': Timestamp.now()});
+  }
+
+  Future<bool> gamePlayerExists(String playerId) async {
+    final doc = await _gamePlayerDoc(playerId).get();
+    return doc.exists;
+  }
+
+  Future<GamePlayerModel> getOrCreateGamePlayer({
+    required String username,
+    String? profileImage,
+  }) async {
+    final existing = await getGamePlayer(username);
+    if (existing != null) {
+      await updateGamePlayerLastActive(username);
+      return existing.updateLastActive();
+    }
+
+    final newPlayer = GamePlayerModel.fromUsername(
+      username: username,
+      profileImage: profileImage,
+    );
+    await saveGamePlayer(newPlayer);
+    return newPlayer;
   }
 
   Future<void> deleteSessionWithSubcollections(String sessionId) async {

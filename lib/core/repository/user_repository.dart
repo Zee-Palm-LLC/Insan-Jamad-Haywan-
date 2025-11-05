@@ -1,4 +1,4 @@
-import 'package:insan_jamd_hawan/core/db/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/core/models/user/user_model.dart';
 import 'package:insan_jamd_hawan/core/services/cache/storage_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/stored_keys.dart';

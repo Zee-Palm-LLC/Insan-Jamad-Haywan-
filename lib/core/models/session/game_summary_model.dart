@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Game summary model
 class GameSummaryModel {
   final List<PlayerSummary> players;
   final List<RoundSummary> rounds;
