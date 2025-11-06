@@ -5,15 +5,23 @@ import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 
 class FortuneWheelController extends GetxController {
   late List<String> alphabets;
-  final StreamController<int> wheelController = StreamController<int>();
+  StreamController<int>? _wheelController;
+  Stream<int>? _wheelStream;
   int selectedIndex = 0;
   String? selectedAlphabet;
   bool isSpinning = false;
   bool showCountdown = false;
   int countdownValue = 3;
+  bool _isDisposed = false;
 
   Function(String letter)? onSpinComplete;
   Function(String letter)? onCountdownComplete;
+
+  Stream<int> get wheelControllerStream {
+    _wheelController ??= StreamController<int>.broadcast();
+    _wheelStream ??= _wheelController!.stream;
+    return _wheelStream!;
+  }
 
   @override
   void onInit() {
@@ -21,59 +29,79 @@ class FortuneWheelController extends GetxController {
     // Generate alphabets and shuffle them randomly each time
     alphabets = List.generate(26, (i) => String.fromCharCode(65 + i));
     alphabets.shuffle(Random());
+    // Initialize stream controller
+    _wheelController ??= StreamController<int>.broadcast();
+    _wheelStream ??= _wheelController!.stream;
   }
 
   Future<void> spinWheel() async {
-    if (isSpinning) return;
+    if (isSpinning || _isDisposed) return;
+    if (_wheelController == null || _wheelController!.isClosed) return;
 
     isSpinning = true;
     update();
 
-    await AudioService.instance.playAudio(AudioType.narratorChooseLetter);
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      await AudioService.instance.playAudio(AudioType.narratorChooseLetter);
+      if (_isDisposed) return;
 
-    final randomIndex = Random().nextInt(alphabets.length);
-    selectedIndex = randomIndex;
-    update();
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (_isDisposed) return;
 
-    AudioService.instance.playAudio(AudioType.wheelSpin);
-    wheelController.add(randomIndex);
+      final randomIndex = Random().nextInt(alphabets.length);
+      selectedIndex = randomIndex;
+      update();
+
+      if (_isDisposed || _wheelController == null || _wheelController!.isClosed) {
+        isSpinning = false;
+        update();
+        return;
+      }
+
+      AudioService.instance.playAudio(AudioType.wheelSpin);
+      _wheelController!.add(randomIndex);
+    } catch (e) {
+      // Reset state if error occurs
+      isSpinning = false;
+      update();
+    }
   }
 
   Future<void> handleSpinComplete() async {
-    final letter = alphabets[selectedIndex];
-    selectedAlphabet = letter;
-    update();
+    if (_isDisposed) return;
 
-    await Future.delayed(const Duration(milliseconds: 300));
-    await AudioService.instance.playAudio(AudioType.narratorTheLetterIs);
-
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    onSpinComplete?.call(letter);
-
-    await Future.delayed(const Duration(milliseconds: 1500));
-
-    showCountdown = true;
-    countdownValue = 3;
-    update();
-
-    for (int i = 3; i > 0; i--) {
-      countdownValue = i;
+    try {
+      final letter = alphabets[selectedIndex];
+      selectedAlphabet = letter;
+      isSpinning = false;
       update();
-      await AudioService.instance.playAudio(AudioType.countdown);
-      await Future.delayed(const Duration(seconds: 1));
+
+      if (_isDisposed) return;
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (_isDisposed) return;
+      await AudioService.instance.playAudio(AudioType.narratorTheLetterIs);
+
+      if (_isDisposed) return;
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      if (_isDisposed) return;
+      onSpinComplete?.call(letter);
+
+      // Note: Countdown logic removed as per UI requirements
+      // If you need it, uncomment and add disposal checks
+    } catch (e) {
+      // Reset state if error occurs
+      isSpinning = false;
+      update();
     }
-
-    showCountdown = false;
-    update();
-
-    onCountdownComplete?.call(letter);
   }
 
   @override
   void onClose() {
-    wheelController.close();
+    _isDisposed = true;
+    _wheelController?.close();
+    _wheelController = null;
+    _wheelStream = null;
     super.onClose();
   }
 }

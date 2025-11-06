@@ -33,17 +33,14 @@ class AnimatedPlayerTileState extends State<AnimatedPlayerTile>
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-
     _offsetAnimation = Tween<Offset>(
       begin: const Offset(-0.5, 0),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
-
     _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
 
     _controller.forward();

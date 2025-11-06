@@ -9,6 +9,8 @@ import 'package:insan_jamd_hawan/core/modules/main_menu/components/join_lobby_di
 import 'package:insan_jamd_hawan/core/modules/main_menu/components/menu_button.dart';
 import 'package:insan_jamd_hawan/core/modules/main_menu/components/player_tile.dart';
 import 'package:insan_jamd_hawan/core/modules/main_menu/main_menu_controller.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/animations/dialog_animation.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/animations/page_animation.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
@@ -50,40 +52,71 @@ class MainMenuPage extends StatelessWidget {
                   child: Column(
                     children: [
                       if (!isDesktop) SizedBox(height: 50.h),
-                      GameLogo(),
+                      PageAnimation(
+                        delay: const Duration(milliseconds: 100),
+                        duration: const Duration(milliseconds: 600),
+                        curve: Curves.easeOut,
+                        startScale: 0.9,
+                        child: GameLogo(),
+                      ),
                       SizedBox(height: 48.h),
-                      PlayerTile(
-                        name: controller.playerName,
-                        onTap: controller.showChangeNameDialog,
+                      PageAnimation(
+                        delay: const Duration(milliseconds: 200),
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOut,
+                        startScale: 0.95,
+                        child: PlayerTile(
+                          name: controller.playerName,
+                          onTap: controller.showChangeNameDialog,
+                        ),
                       ),
                       SizedBox(height: 32.h),
-                      Text(
-                        'Enter into the lobby to start the game...',
-                        style: AppTypography.kBold21.copyWith(height: 1.2),
+                      PageAnimation(
+                        delay: const Duration(milliseconds: 300),
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOut,
+                        startScale: 0.98,
+                        child: Text(
+                          'Enter into the lobby to start the game...',
+                          style: AppTypography.kBold21.copyWith(height: 1.2),
+                        ),
                       ),
                       SizedBox(height: 14.h),
+                      // Buttons with staggered animation
                       Row(
                         children: [
                           Expanded(
-                            child: MenuButton(
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => JoinLobbyDialog(),
-                                );
-                              },
-                              icon: AppAssets.joinLobby,
-                              name: 'Join Lobby',
+                            child: PageAnimation(
+                              delay: const Duration(milliseconds: 400),
+                              duration: const Duration(milliseconds: 500),
+                              curve: Curves.easeOut,
+                              startScale: 0.95,
+                              child: MenuButton(
+                                onTap: () {
+                                  DialogAnimation.show(
+                                    context: context,
+                                    dialog: const JoinLobbyDialog(),
+                                  );
+                                },
+                                icon: AppAssets.joinLobby,
+                                name: 'Join Lobby',
+                              ),
                             ),
                           ),
                           SizedBox(width: 14.w),
                           Expanded(
-                            child: MenuButton(
-                              onTap: () {
-                                context.push('/create-lobby');
-                              },
-                              icon: AppAssets.createLobby,
-                              name: 'Create Lobby',
+                            child: PageAnimation(
+                              delay: const Duration(milliseconds: 500),
+                              duration: const Duration(milliseconds: 500),
+                              curve: Curves.easeOut,
+                              startScale: 0.95,
+                              child: MenuButton(
+                                onTap: () {
+                                  context.push('/create-lobby');
+                                },
+                                icon: AppAssets.createLobby,
+                                name: 'Create Lobby',
+                              ),
                             ),
                           ),
                         ],

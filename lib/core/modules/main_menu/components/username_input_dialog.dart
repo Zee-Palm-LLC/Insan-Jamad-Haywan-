@@ -3,15 +3,16 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/modules/main_menu/components/username_input_controller.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/animations/dialog_animation.dart';
 
 class UsernameInputDialog extends StatelessWidget {
   const UsernameInputDialog({super.key});
 
   static Future<String?> show(BuildContext context) {
-    return showDialog<String>(
+    return DialogAnimation.show<String>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const UsernameInputDialog(),
+      dialog: const UsernameInputDialog(),
     );
   }
 

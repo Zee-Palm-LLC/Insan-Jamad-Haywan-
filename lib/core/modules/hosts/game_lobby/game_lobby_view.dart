@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
-import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_bg.dart';
@@ -14,6 +13,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_gene
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
+import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class GameLobbyView extends StatelessWidget {
@@ -108,9 +108,7 @@ class GameLobbyView extends StatelessWidget {
                             PrimaryButton(
                               text: 'Start !',
                               width: 209.w,
-                              onPressed: players.length < 2
-                                  ? null // Disable button if less than 2 players
-                                  : () {
+                              onPressed: () {
                                       context.push(
                                         LetterGeneratorView.path,
                                         extra: controller,

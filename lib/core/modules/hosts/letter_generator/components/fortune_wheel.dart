@@ -4,8 +4,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:insan_jamd_hawan/core/controllers/fortune_wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/animations/confetti_animation.dart';
 
-class FortuneWheelPage extends StatelessWidget {
+class FortuneWheelPage extends StatefulWidget {
   const FortuneWheelPage({
     super.key,
     this.onSpinComplete,
@@ -16,6 +17,26 @@ class FortuneWheelPage extends StatelessWidget {
   final Function(String letter)? onSpinComplete;
   final Function(String letter)? onCountdownComplete;
   final bool isHost;
+
+  @override
+  State<FortuneWheelPage> createState() => _FortuneWheelPageState();
+}
+
+class _FortuneWheelPageState extends State<FortuneWheelPage> {
+  bool _showSpinButton = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Show spin button after 1 second
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _showSpinButton = true;
+        });
+      }
+    });
+  }
 
   final List<Color> _colors = const [
     Color(0xFFFCF0DA),
@@ -33,8 +54,8 @@ class FortuneWheelPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<FortuneWheelController>(
       init: FortuneWheelController()
-        ..onSpinComplete = onSpinComplete
-        ..onCountdownComplete = onCountdownComplete,
+        ..onSpinComplete = widget.onSpinComplete
+        ..onCountdownComplete = widget.onCountdownComplete,
       builder: (controller) {
         return SizedBox(
           height: 320.h,
@@ -42,6 +63,14 @@ class FortuneWheelPage extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
+              Container(
+                height: 320.h,
+                width: 320.h,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.kWhite,
+                ),
+              ),
               Container(
                 height: 320.h,
                 width: 320.h,
@@ -56,8 +85,9 @@ class FortuneWheelPage extends StatelessWidget {
                   ],
                 ),
                 child: FortuneWheel(
-                  selected: controller.wheelController.stream,
+                  selected: controller.wheelControllerStream,
                   indicators: <FortuneIndicator>[],
+                  animateFirst: false,
                   onAnimationEnd: controller.handleSpinComplete,
                   physics: CircularPanPhysics(
                     duration: const Duration(milliseconds: 2500),
@@ -67,123 +97,81 @@ class FortuneWheelPage extends StatelessWidget {
                     for (int i = 0; i < controller.alphabets.length; i++)
                       FortuneItem(
                         style: FortuneItemStyle(
-                          color: _getColorForIndex(i),
-                          borderWidth: 1,
+                          color:
+                              controller.selectedAlphabet != null &&
+                                  controller.alphabets[i] !=
+                                      controller.selectedAlphabet
+                              ? _getColorForIndex(i).withValues(alpha: 0.1)
+                              : _getColorForIndex(i),
+                          borderWidth: 0,
                         ),
                         child: Container(
                           width: double.maxFinite,
                           alignment: Alignment.centerRight,
                           padding: EdgeInsets.only(right: 10.w),
-                          color: _getColorForIndex(i),
+                          color:
+                              controller.selectedAlphabet != null &&
+                                  controller.alphabets[i] !=
+                                      controller.selectedAlphabet
+                              ? _getColorForIndex(i).withValues(alpha: 0.1)
+                              : _getColorForIndex(i),
                           child: Text(
                             controller.alphabets[i],
-                            style: AppTypography.kRegular19,
+                            style: AppTypography.kRegular19.copyWith(
+                              color:
+                                  controller.selectedAlphabet != null &&
+                                      controller.alphabets[i] !=
+                                          controller.selectedAlphabet
+                                  ? AppColors.kBlack.withValues(alpha: 0.1)
+                                  : AppColors.kBlack,
+                            ),
                           ),
                         ),
                       ),
                   ],
                 ),
               ),
-
-              if (isHost && !controller.isSpinning && !controller.showCountdown)
+              if (widget.isHost &&
+                  _showSpinButton &&
+                  controller.selectedAlphabet == null)
                 InkWell(
-                  onTap: controller.spinWheel,
-                  child: Image.asset(AppAssets.spin),
-                ),
-
-              if (controller.selectedAlphabet != null &&
-                  !controller.showCountdown)
-                Positioned(
-                  bottom: -50.h,
-                  child: AnimatedOpacity(
-                    opacity: controller.isSpinning ? 0.0 : 1.0,
-                    duration: const Duration(milliseconds: 500),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 24.w,
-                        vertical: 12.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.kPrimary,
-                        borderRadius: BorderRadius.circular(12.r),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 8,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        'Letter: ${controller.selectedAlphabet}',
-                        style: AppTypography.kBold24.copyWith(
-                          color: AppColors.kWhite,
-                        ),
-                      ),
-                    ),
+                  onTap: controller.isSpinning ? null : controller.spinWheel,
+                  child: Opacity(
+                    opacity: controller.isSpinning ? 0.5 : 1.0,
+                    child: Image.asset(AppAssets.spin),
                   ),
                 ),
 
-              if (controller.showCountdown)
+              if (controller.selectedAlphabet != null) ...[
+                ConfettiAnimation(
+                  key: ValueKey(controller.selectedAlphabet),
+                  enabled: controller.selectedAlphabet != null,
+                  duration: const Duration(seconds: 3),
+                ),
                 Container(
-                  height: 320.h,
-                  width: 320.h,
+                  width: 61.w,
+                  height: 61.w,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.black.withValues(alpha: 0.7),
+                    color: AppColors.kPrimary,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ],
                   ),
                   child: Center(
-                    child: AnimatedScale(
-                      scale: 1.0,
-                      duration: const Duration(milliseconds: 300),
-                      child: Text(
-                        '${controller.countdownValue}',
-                        style: AppTypography.kRegular41.copyWith(
-                          fontSize: 80.sp,
-                          color: AppColors.kWhite,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    child: Text(
+                      controller.selectedAlphabet!,
+                      style: AppTypography.kBold24.copyWith(
+                        color: AppColors.kWhite,
                       ),
                     ),
                   ),
                 ),
-
-              if (controller.isSpinning && !controller.showCountdown)
-                Positioned(
-                  top: -40.h,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 8.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.kOrange,
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 16.w,
-                          height: 16.w,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.kWhite,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          'Spinning...',
-                          style: AppTypography.kBold16.copyWith(
-                            color: AppColors.kWhite,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              ],
             ],
           ),
         );

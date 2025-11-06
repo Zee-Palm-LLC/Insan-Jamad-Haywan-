@@ -7,6 +7,7 @@ import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/rounds_selector_card.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/time_selector_card.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/animations/page_animation.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
@@ -53,17 +54,34 @@ class LobbyCreationPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (!isDesktop) SizedBox(height: 50.h),
-                      GameLogo(),
+                      PageAnimation(
+                        delay: const Duration(milliseconds: 100),
+                        duration: const Duration(milliseconds: 600),
+                        curve: Curves.easeOut,
+                        startScale: 0.9,
+                        child: GameLogo(),
+                      ),
                       SizedBox(height: 12.h),
-                      Text(
-                        'Create New Lobby',
-                        style: AppTypography.kBold24,
-                        textAlign: TextAlign.center,
+                      PageAnimation(
+                        delay: const Duration(milliseconds: 200),
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOut,
+                        startScale: 0.95,
+                        child: Text(
+                          'Create New Lobby',
+                          style: AppTypography.kBold24,
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                       SizedBox(height: 34.h),
 
                       // Settings Card
-                      Container(
+                      PageAnimation(
+                        delay: const Duration(milliseconds: 300),
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOut,
+                        startScale: 0.95,
+                        child: Container(
                         decoration: BoxDecoration(
                           color: AppColors.kGreen100,
                           borderRadius: BorderRadius.circular(12.r),
@@ -91,24 +109,15 @@ class LobbyCreationPage extends StatelessWidget {
                                   ),
                                   SizedBox(height: 12.h),
                                   TextField(
+                                    cursorColor: AppColors.kPrimary,
                                     controller: controller.lobbyNameController,
                                     enabled: !controller.isLoading,
                                     decoration: InputDecoration(
                                       hintText: 'Enter lobby name',
-                                      filled: true,
-                                      fillColor: AppColors.kGreen100,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          12.r,
-                                        ),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 16.w,
-                                        vertical: 16.h,
-                                      ),
                                     ),
-                                    style: AppTypography.kRegular19,
+                                    style: AppTypography.kRegular19.copyWith(
+                                      fontSize: 16.sp,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -122,7 +131,10 @@ class LobbyCreationPage extends StatelessWidget {
                                 color: AppColors.kWhite,
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
-                              padding: EdgeInsets.symmetric(horizontal: 12.w,vertical: 5.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 5.h,
+                              ),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -155,10 +167,7 @@ class LobbyCreationPage extends StatelessWidget {
                                 ],
                               ),
                             ),
-
                             SizedBox(height: 18.h),
-
-                            // Number of Rounds
                             Row(
                               children: [
                                 Text(
@@ -190,8 +199,6 @@ class LobbyCreationPage extends StatelessWidget {
                               height: 16.h,
                             ),
                             SizedBox(height: 10.h),
-
-                            // Time per Round
                             Text(
                               'Time per round',
                               style: AppTypography.kBold21,
@@ -216,11 +223,17 @@ class LobbyCreationPage extends StatelessWidget {
                           ],
                         ),
                       ),
+                      ),
 
                       SizedBox(height: 20.h),
 
                       // Create Button
-                      PrimaryButton(
+                      PageAnimation(
+                        delay: const Duration(milliseconds: 400),
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOut,
+                        startScale: 0.95,
+                        child: PrimaryButton(
                         text: controller.isLoading
                             ? 'Creating...'
                             : 'Create Lobby',
@@ -228,6 +241,7 @@ class LobbyCreationPage extends StatelessWidget {
                         onPressed: controller.isLoading
                             ? () {}
                             : () => controller.createLobby(context),
+                      ),
                       ),
                     ],
                   ),

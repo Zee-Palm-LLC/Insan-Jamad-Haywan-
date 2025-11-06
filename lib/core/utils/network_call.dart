@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/animations/dialog_animation.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
 import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
@@ -49,12 +50,10 @@ class NetworkCall<T> {
     }
 
     // Show loading indicator
-    showDialog(
+    DialogAnimation.show(
       context: navigatorKey.currentContext!,
       barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const Center(child: CircularProgressIndicator());
-      },
+      dialog: const Center(child: CircularProgressIndicator()),
     );
 
     try {

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_colors.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_typography.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/custom_paint/rough_border.dart';
 
 class AppTheme {
   static ThemeData get gameLobbyTheme => ThemeData(
@@ -22,19 +23,22 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Color(0xFFFFFCF4),
-      contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+      contentPadding: EdgeInsets.symmetric(vertical: 12.h,horizontal: 12.w),
       hintStyle: AppTypography.kRegular19.copyWith(fontSize: 16.sp),
-      border: OutlineInputBorder(
+      border: RoughInputBorder(
         borderRadius: BorderRadius.circular(8.r),
         borderSide: BorderSide(width: 1.w, color: AppColors.kGray600),
+        roughness: 0.8,
       ),
-      enabledBorder: OutlineInputBorder(
+      enabledBorder: RoughInputBorder(
         borderRadius: BorderRadius.circular(8.r),
         borderSide: BorderSide(width: 1.5.w, color: AppColors.kGray600),
+        roughness: 0.8,
       ),
-      focusedBorder: OutlineInputBorder(
+      focusedBorder: RoughInputBorder(
         borderRadius: BorderRadius.circular(8.r),
         borderSide: BorderSide(width: 1.5.w, color: AppColors.kGray600),
+        roughness: 0.8,
       ),
     ),
   );

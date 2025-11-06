@@ -12,6 +12,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/custom_paint/rough_border.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class PlayerInfo extends StatelessWidget {
@@ -26,9 +27,12 @@ class PlayerInfo extends StatelessWidget {
       child: Container(
         width: 120.w,
         height: 120.w,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.kGray600, width: 2.w),
+        decoration: ShapeDecoration(
+          shape: RoughCircleBorder.all(
+            color: AppColors.kGray600,
+            width: 2.w,
+            roughness: 0.8,
+          ),
           color: AppColors.kGreen100,
         ),
         child: controller.profileImagePath != null
@@ -129,10 +133,12 @@ class PlayerInfo extends StatelessWidget {
                       SizedBox(height: 32.h),
                       TextField(
                         controller: controller.usernameController,
+                        style: AppTypography.kRegular19.copyWith(fontSize: 16.sp),
                         enabled: !controller.isLoading,
                         textAlign: TextAlign.center,
                         decoration: InputDecoration(
                           hintText: 'Enter your username',
+                          
                         ),
                       ),
                       SizedBox(height: 20.h),
