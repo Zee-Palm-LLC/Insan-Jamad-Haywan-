@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:insan_jamd_hawan/core/controllers/player_list_card_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_colors.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_typography.dart';
 import 'package:insan_jamd_hawan/core/data/helpers/color_helpers.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/animated_player_tile.dart';
-import 'package:insan_jamd_hawan/core/controllers/player_list_card_controller.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/rounds_selector_card.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/time_selector_card.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/custom_paint/hand_drawn_divider.dart';
@@ -35,9 +35,9 @@ class PlayerListCard extends StatelessWidget {
     return GetBuilder<PlayerListCardController>(
       init: PlayerListCardController()..initializePlayers(players),
       builder: (controller) {
-        // Update players when they change
-        if (controller.joinedPlayers.isNotEmpty &&
-            players.length != controller.joinedPlayers.length) {
+        final playersSet = players.toSet();
+        final joinedPlayersSet = controller.joinedPlayers.toSet();
+        if (playersSet != joinedPlayersSet) {
           controller.updatePlayers(players);
         }
 
@@ -66,6 +66,9 @@ class PlayerListCard extends StatelessWidget {
                       i++
                     ) ...[
                       AnimatedPlayerTile(
+                        key: ValueKey(
+                          controller.joinedPlayers[i],
+                        ), // Use name as key to prevent re-animation
                         index: i + 1,
                         name: controller.joinedPlayers[i],
                         imagePath:

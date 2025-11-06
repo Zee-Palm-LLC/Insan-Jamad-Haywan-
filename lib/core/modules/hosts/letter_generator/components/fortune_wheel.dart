@@ -7,8 +7,9 @@ import 'package:insan_jamd_hawan/core/controllers/letter_generator_controller.da
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/data/helpers/color_helpers.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/animations/confetti_animation.dart';
 
-class FortuneWheelPage extends StatelessWidget {
+class FortuneWheelPage extends StatefulWidget {
   const FortuneWheelPage({
     super.key,
     this.onSpinComplete,
@@ -23,13 +24,45 @@ class FortuneWheelPage extends StatelessWidget {
   final bool isHost;
 
   @override
+  State<FortuneWheelPage> createState() => _FortuneWheelPageState();
+}
+
+class _FortuneWheelPageState extends State<FortuneWheelPage> {
+  bool _showSpinButton = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Show spin button after 1 second
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _showSpinButton = true;
+        });
+      }
+    });
+  }
+
+  final List<Color> _colors = const [
+    Color(0xFFFCF0DA),
+    Color(0xFFBED6E2),
+    Color(0xFF449F50),
+    Color(0xFFF66F6C),
+    Color(0xFFFFD767),
+  ];
+
+  Color _getColorForIndex(int index) {
+    return _colors[index % _colors.length];
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GetBuilder<FortuneWheelController>(
-      init: FortuneWheelController(isHost: isHost)
-        ..onSpinComplete = onSpinComplete
-        ..onCountdownComplete = onCountdownComplete,
+      init: FortuneWheelController(isHost: widget.isHost)
+        ..onSpinComplete = widget.onSpinComplete
+        ..onCountdownComplete = widget.onCountdownComplete,
       builder: (controller) {
-        if (isHost) {
+        if (widget.isHost) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             try {
               final letterGenController = Get.find<LetterGeneratorController>();
@@ -38,7 +71,7 @@ class FortuneWheelPage extends StatelessWidget {
           });
         }
 
-        if (!isHost) {
+        if (!widget.isHost) {
           try {
             return GetBuilder<LobbyController>(
               builder: (_) {
@@ -67,6 +100,14 @@ class FortuneWheelPage extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
+          Container(
+            height: 320.h,
+            width: 320.h,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.kWhite,
+            ),
+          ),
           Opacity(
             opacity: isLetterSelected ? 0.3 : 1.0,
             child: Container(
@@ -83,8 +124,9 @@ class FortuneWheelPage extends StatelessWidget {
                 ],
               ),
               child: FortuneWheel(
-                selected: controller.wheelController.stream,
+                selected: controller.wheelControllerStream,
                 indicators: <FortuneIndicator>[],
+                animateFirst: false,
                 onAnimationEnd: controller.handleSpinComplete,
                 physics: CircularPanPhysics(
                   duration: const Duration(milliseconds: 2500),
@@ -94,17 +136,34 @@ class FortuneWheelPage extends StatelessWidget {
                   for (int i = 0; i < controller.alphabets.length; i++)
                     FortuneItem(
                       style: FortuneItemStyle(
-                        color: ColorHelpers.getFortuneWheelColor(i),
-                        borderWidth: 1,
+                        color:
+                            controller.selectedAlphabet != null &&
+                                controller.alphabets[i] !=
+                                    controller.selectedAlphabet
+                            ? _getColorForIndex(i).withValues(alpha: 0.1)
+                            : ColorHelpers.getFortuneWheelColor(i),
+                        borderWidth: 0,
                       ),
                       child: Container(
                         width: double.maxFinite,
                         alignment: Alignment.centerRight,
                         padding: EdgeInsets.only(right: 10.w),
-                        color: ColorHelpers.getFortuneWheelColor(i),
+                        color:
+                            controller.selectedAlphabet != null &&
+                                controller.alphabets[i] !=
+                                    controller.selectedAlphabet
+                            ? _getColorForIndex(i).withValues(alpha: 0.1)
+                            : ColorHelpers.getFortuneWheelColor(i),
                         child: Text(
                           controller.alphabets[i],
-                          style: AppTypography.kRegular19,
+                          style: AppTypography.kRegular19.copyWith(
+                            color:
+                                controller.selectedAlphabet != null &&
+                                    controller.alphabets[i] !=
+                                        controller.selectedAlphabet
+                                ? AppColors.kBlack.withValues(alpha: 0.1)
+                                : AppColors.kBlack,
+                          ),
                         ),
                       ),
                     ),
@@ -112,20 +171,24 @@ class FortuneWheelPage extends StatelessWidget {
               ),
             ),
           ),
-
-          if (isHost &&
-              !controller.isSpinning &&
-              !controller.showCountdown &&
+          if (widget.isHost &&
+              _showSpinButton &&
+              controller.selectedAlphabet == null &&
               controller.selectedAlphabet == null)
             InkWell(
-              onTap: () {
-                if (!controller.isSpinning &&
-                    !controller.showCountdown &&
-                    controller.selectedAlphabet == null) {
-                  controller.spinWheel();
-                }
-              },
-              child: Image.asset(AppAssets.spin),
+              onTap: controller.isSpinning
+                  ? null
+                  : () {
+                      if (!controller.isSpinning &&
+                          !controller.showCountdown &&
+                          controller.selectedAlphabet == null) {
+                        controller.spinWheel();
+                      }
+                    },
+              child: Opacity(
+                opacity: controller.isSpinning ? 0.5 : 1.0,
+                child: Image.asset(AppAssets.spin),
+              ),
             ),
 
           if (isLetterSelected)

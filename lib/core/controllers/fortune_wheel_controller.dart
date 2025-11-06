@@ -6,6 +6,8 @@ import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 
 class FortuneWheelController extends GetxController {
+  StreamController<int>? _wheelController;
+  Stream<int>? _wheelStream;
   late List<String> alphabets;
   final StreamController<int> wheelController =
       StreamController<int>.broadcast();
@@ -16,6 +18,7 @@ class FortuneWheelController extends GetxController {
   int countdownValue = 3;
 
   final bool isHost;
+  bool _isDisposed = false;
 
   Function(String letter)? onSpinComplete;
   Function(String letter)? onCountdownComplete;
@@ -35,6 +38,12 @@ class FortuneWheelController extends GetxController {
   }
 
   static const int _fixedSeed = 12345;
+
+  Stream<int> get wheelControllerStream {
+    _wheelController ??= StreamController<int>.broadcast();
+    _wheelStream ??= _wheelController!.stream;
+    return _wheelStream!;
+  }
 
   @override
   void onInit() {
@@ -117,10 +126,17 @@ class FortuneWheelController extends GetxController {
     isSpinning = true;
     update();
 
-    await AudioService.instance.playAudio(AudioType.narratorChooseLetter);
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      await AudioService.instance.playAudio(AudioType.narratorChooseLetter);
+      if (_isDisposed) return;
 
-    AudioService.instance.playAudio(AudioType.wheelSpin);
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (_isDisposed) return;
+
+      AudioService.instance.playAudio(AudioType.wheelSpin);
+    } catch (e) {
+      dev.log('Error playing audio: $e', name: 'WheelSpin');
+    }
   }
 
   Future<void> spinWheel() async {
@@ -151,10 +167,16 @@ class FortuneWheelController extends GetxController {
     selectedIndex = randomIndex;
     update();
 
+    if (_isDisposed || _wheelController == null || _wheelController!.isClosed) {
+      isSpinning = false;
+      update();
+      return;
+    }
+
     AudioService.instance.playAudio(AudioType.wheelSpin);
 
     if (!wheelController.isClosed) {
-      wheelController.add(selectedIndex);
+      _wheelController!.add(selectedIndex);
     }
   }
 
@@ -168,21 +190,34 @@ class FortuneWheelController extends GetxController {
   }
 
   Future<void> handleSpinComplete() async {
-    final letter = alphabets[selectedIndex];
-    selectedAlphabet = letter;
-    isSpinning = false;
-    update();
+    if (_isDisposed) return;
 
-    await Future.delayed(const Duration(milliseconds: 300));
-    await AudioService.instance.playAudio(AudioType.narratorTheLetterIs);
+    try {
+      final letter = alphabets[selectedIndex];
+      selectedAlphabet = letter;
+      isSpinning = false;
+      update();
 
-    await Future.delayed(const Duration(milliseconds: 800));
+      if (_isDisposed) return;
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (_isDisposed) return;
+      await AudioService.instance.playAudio(AudioType.narratorTheLetterIs);
 
-    if (isHost && lobbyController != null) {
-      await lobbyController!.broadcastSelectedLetter(letter, selectedIndex);
+      if (_isDisposed) return;
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      if (isHost && lobbyController != null) {
+        await lobbyController!.broadcastSelectedLetter(letter, selectedIndex);
+      }
+
+      if (_isDisposed) return;
+      onSpinComplete?.call(letter);
+    } catch (e) {
+      dev.log('Error in handleSpinComplete: $e', name: 'WheelSpin');
+      // Reset state if error occurs
+      isSpinning = false;
+      update();
     }
-
-    onSpinComplete?.call(letter);
   }
 
   Future<void> triggerCountdown() async {
@@ -242,7 +277,10 @@ class FortuneWheelController extends GetxController {
 
   @override
   void onClose() {
-    wheelController.close();
+    _isDisposed = true;
+    _wheelController?.close();
+    _wheelController = null;
+    _wheelStream = null;
     super.onClose();
   }
 }

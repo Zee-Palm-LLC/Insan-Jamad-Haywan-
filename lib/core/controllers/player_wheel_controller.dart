@@ -26,8 +26,16 @@ class PlayerWheelController extends GetxController {
   void handleCountdownComplete(String letter) {
     log('Player: Countdown complete for letter "$letter"', name: 'PlayerWheel');
 
-    if (selectedLetter != null && lobbyController != null) {
-      final sessionId = lobbyController!.lobby.id!;
+    // Use the letter parameter passed from FortuneWheelController
+    selectedLetter = letter;
+
+    if (lobbyController != null && letter.isNotEmpty) {
+      final sessionId = lobbyController!.lobby.id;
+      if (sessionId == null) {
+        log('Session ID is null, cannot navigate', name: 'PlayerWheel');
+        return;
+      }
+
       final roundNumber =
           (lobbyController!.currentRoom.settings?.currentRound ?? 0) + 1;
       final totalSeconds = lobbyController!.selectedTimePerRound ?? 60;
@@ -37,16 +45,16 @@ class PlayerWheelController extends GetxController {
           final context = navigatorKey.currentContext;
           if (context != null && context.mounted) {
             GoRouter.of(context).go(
-              '${PlayerAnswerView.path}?letter=$selectedLetter',
+              '${PlayerAnswerView.path}?letter=$letter',
               extra: {
                 'sessionId': sessionId,
                 'roundNumber': roundNumber,
-                'selectedLetter': selectedLetter,
+                'selectedLetter': letter,
                 'totalSeconds': totalSeconds,
               },
             );
             log(
-              'Navigation successful to PlayerAnswerView',
+              'Navigation successful to PlayerAnswerView with letter: $letter',
               name: 'PlayerWheel',
             );
           } else {
@@ -64,6 +72,11 @@ class PlayerWheelController extends GetxController {
           );
         }
       });
+    } else {
+      log(
+        'Cannot navigate: lobbyController=${lobbyController != null}, letter=$letter',
+        name: 'PlayerWheel',
+      );
     }
   }
 }
