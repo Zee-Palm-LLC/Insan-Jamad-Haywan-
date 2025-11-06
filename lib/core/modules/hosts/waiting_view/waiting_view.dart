@@ -27,11 +27,9 @@ class WaitingView extends StatelessWidget {
     return GetBuilder<WaitingViewController>(
       init: WaitingViewController(),
       builder: (waitingController) {
-        // Listen to LobbyController updates and sync waiting controller
         try {
           return GetBuilder<LobbyController>(
             builder: (_) {
-              // Defer sync to avoid setState during build
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 waitingController.syncWithLobby();
               });
@@ -39,7 +37,6 @@ class WaitingView extends StatelessWidget {
             },
           );
         } catch (e) {
-          // LobbyController not found, show waiting view anyway
           return _buildScaffold(waitingController, isDesktop);
         }
       },
@@ -55,164 +52,151 @@ class WaitingView extends StatelessWidget {
   Widget _buildScaffold(WaitingViewController controller, bool isDesktop) {
     return GetBuilder<WaitingViewController>(
       builder: (_) {
-        return Scaffold(
-          appBar: isDesktop
-              ? null
-              : AppBar(
-                  leading: Padding(
-                    padding: EdgeInsets.all(10.h),
-                    child: CustomIconButton(
-                      icon: AppAssets.backIcon,
-                      onTap: () => Get.context?.pop(),
-                    ),
+        return PopScope(
+          canPop: false,
+          child: Scaffold(
+            appBar: isDesktop
+                ? null
+                : AppBar(
+                    automaticallyImplyLeading: false,
+                    actions: [
+                      CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+                      SizedBox(width: 16.w),
+                    ],
                   ),
-                  actions: [
-                    CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-                    SizedBox(width: 16.w),
-                  ],
-                ),
-          body: AnimatedBg(
-            showHorizontalLines: true,
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16.h),
-              child: Center(
-                child: DesktopWrapper(
-                  child: Column(
-                    children: [
-                      if (!isDesktop) SizedBox(height: 50.h),
-                      GameLogo(),
-                      SizedBox(height: 12.h),
-                      RoomCodeText(lobbyId: controller.lobbyCode, iSend: true),
-                      SizedBox(height: 34.h),
-                      // Player Avatar with Countdown Overlay
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            height: 238.h,
-                            width: 238.h,
-                            decoration: BoxDecoration(
-                              color: AppColors.kGray300,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.kPrimary),
-                            ),
-                            child: controller.playerAvatar != null
-                                ? ClipOval(
-                                    child: kIsWeb
-                                        ? (controller.playerAvatar!.startsWith(
-                                                    'blob:',
-                                                  ) ||
-                                                  controller.playerAvatar!
-                                                      .startsWith('data:') ||
-                                                  controller.playerAvatar!
-                                                      .startsWith('http://') ||
-                                                  controller.playerAvatar!
-                                                      .startsWith('https://'))
-                                              ? Image.network(
-                                                  controller.playerAvatar!,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder:
-                                                      (
-                                                        context,
-                                                        error,
-                                                        stackTrace,
-                                                      ) {
-                                                        return _buildPlaceholder();
-                                                      },
-                                                )
-                                              : _buildPlaceholder()
-                                        : Image.file(
-                                            File(controller.playerAvatar!),
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                                  return _buildPlaceholder();
-                                                },
-                                          ),
-                                  )
-                                : _buildPlaceholder(),
-                          ),
-                          // Countdown Overlay
-                          if (controller.isCountdownActive)
+            body: AnimatedBg(
+              showHorizontalLines: true,
+              child: Padding(
+                padding: EdgeInsets.all(16.h),
+                child: Center(
+                  child: DesktopWrapper(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (!isDesktop) SizedBox(height: 50.h),
+                        GameLogo(),
+                        SizedBox(height: 12.h),
+                        RoomCodeText(
+                          lobbyId: controller.lobbyCode,
+                          iSend: true,
+                        ),
+                        SizedBox(height: 40.h),
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
                             Container(
                               height: 238.h,
                               width: 238.h,
                               decoration: BoxDecoration(
+                                color: AppColors.kGray300,
                                 shape: BoxShape.circle,
-                                color: Colors.black.withOpacity(0.7),
+                                border: Border.all(color: AppColors.kPrimary),
                               ),
-                              child: Center(
-                                child: AnimatedScale(
-                                  scale: 1.0,
-                                  duration: const Duration(milliseconds: 300),
-                                  child: Text(
-                                    '${controller.countdownValue}',
-                                    style: AppTypography.kRegular41.copyWith(
-                                      fontSize: 80.sp,
-                                      color: AppColors.kWhite,
-                                      fontWeight: FontWeight.bold,
+                              child: controller.playerAvatar != null
+                                  ? ClipOval(
+                                      child: kIsWeb
+                                          ? (controller.playerAvatar!
+                                                        .startsWith('blob:') ||
+                                                    controller.playerAvatar!
+                                                        .startsWith('data:') ||
+                                                    controller.playerAvatar!
+                                                        .startsWith(
+                                                          'http://',
+                                                        ) ||
+                                                    controller.playerAvatar!
+                                                        .startsWith('https://'))
+                                                ? Image.network(
+                                                    controller.playerAvatar!,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) {
+                                                          return _buildPlaceholder();
+                                                        },
+                                                  )
+                                                : _buildPlaceholder()
+                                          : Image.file(
+                                              File(controller.playerAvatar!),
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                    return _buildPlaceholder();
+                                                  },
+                                            ),
+                                    )
+                                  : _buildPlaceholder(),
+                            ),
+                            if (controller.isCountdownActive)
+                              Container(
+                                height: 238.h,
+                                width: 238.h,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.black.withOpacity(0.7),
+                                ),
+                                child: Center(
+                                  child: AnimatedScale(
+                                    scale: 1.0,
+                                    duration: const Duration(milliseconds: 300),
+                                    child: Text(
+                                      '${controller.countdownValue}',
+                                      style: AppTypography.kRegular41.copyWith(
+                                        fontSize: 80.sp,
+                                        color: AppColors.kWhite,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
+                          ],
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          controller.playerName,
+                          style: AppTypography.kBold24.copyWith(
+                            fontSize: 34.sp,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Text(
+                          controller.isCountdownActive
+                              ? 'Get ready!'
+                              : controller.selectedLetter != null
+                              ? 'Letter selected: ${controller.selectedLetter}!'
+                              : 'You are in! Wait for host to start game...',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.kBold24.copyWith(
+                            height: 1.2,
+                            color: AppColors.kPrimary,
+                            fontSize: 28.sp,
+                          ),
+                        ),
+                        SizedBox(height: 40.h),
+                        if (!controller.isCountdownActive)
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 32.w,
+                              vertical: 14.h,
                             ),
-                        ],
-                      ),
-                      SizedBox(height: 16.h),
-                      Text(
-                        controller.playerName,
-                        style: AppTypography.kBold24.copyWith(fontSize: 34.sp),
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        controller.isCountdownActive
-                            ? 'Get ready!'
-                            : controller.selectedLetter != null
-                            ? 'Letter selected: ${controller.selectedLetter}!'
-                            : 'You are in! Wait for host to start game...',
-                        textAlign: TextAlign.center,
-                        style: AppTypography.kBold24.copyWith(
-                          height: 1.2,
-                          color: AppColors.kPrimary,
-                        ),
-                      ),
-                      SizedBox(height: 10.h),
-                      // Loading indicator when not countdown
-                      if (!controller.isCountdownActive)
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 24.w,
-                            vertical: 12.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.kGreen100,
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: AppColors.kPrimary),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: 20.w,
-                                height: 20.w,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.kPrimary,
-                                  ),
-                                ),
+                            decoration: BoxDecoration(
+                              color: AppColors.kPrimary,
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Text(
+                              'Loading.',
+                              style: AppTypography.kBold24.copyWith(
+                                color: AppColors.kWhite,
+                                fontSize: 18.sp,
                               ),
-                              SizedBox(width: 12.w),
-                              Text(
-                                'Waiting...',
-                                style: AppTypography.kBold16.copyWith(
-                                  color: AppColors.kPrimary,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                    ],
+                        if (isDesktop) SizedBox(height: 50.h),
+                      ],
+                    ),
                   ),
                 ),
               ),

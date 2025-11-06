@@ -6,9 +6,10 @@ import 'package:insan_jamd_hawan/core/controllers/fortune_wheel_controller.dart'
 import 'package:insan_jamd_hawan/core/controllers/letter_generator_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/core/data/helpers/color_helpers.dart';
 
 class FortuneWheelPage extends StatelessWidget {
-  FortuneWheelPage({
+  const FortuneWheelPage({
     super.key,
     this.onSpinComplete,
     this.onCountdownComplete,
@@ -21,18 +22,6 @@ class FortuneWheelPage extends StatelessWidget {
   final VoidCallback? onCountdownTrigger;
   final bool isHost;
 
-  final List<Color> _colors = const [
-    Color(0xFFFCF0DA),
-    Color(0xFFBED6E2),
-    Color(0xFF449F50),
-    Color(0xFFF66F6C),
-    Color(0xFFFFD767),
-  ];
-
-  Color _getColorForIndex(int index) {
-    return _colors[index % _colors.length];
-  }
-
   @override
   Widget build(BuildContext context) {
     return GetBuilder<FortuneWheelController>(
@@ -40,15 +29,12 @@ class FortuneWheelPage extends StatelessWidget {
         ..onSpinComplete = onSpinComplete
         ..onCountdownComplete = onCountdownComplete,
       builder: (controller) {
-        // Register controller with LetterGeneratorController if it exists (for host)
         if (isHost) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             try {
               final letterGenController = Get.find<LetterGeneratorController>();
               letterGenController.setWheelController(controller);
-            } catch (e) {
-              // LetterGeneratorController not found, that's okay
-            }
+            } catch (e) {}
           });
         }
 
@@ -56,7 +42,6 @@ class FortuneWheelPage extends StatelessWidget {
           try {
             return GetBuilder<LobbyController>(
               builder: (_) {
-                // Defer sync to avoid setState during build
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   controller.syncWithLobby();
                 });
@@ -64,7 +49,6 @@ class FortuneWheelPage extends StatelessWidget {
               },
             );
           } catch (e) {
-            // LobbyController not found, show wheel anyway
             return _buildWheel(controller);
           }
         }
@@ -74,52 +58,58 @@ class FortuneWheelPage extends StatelessWidget {
   }
 
   Widget _buildWheel(FortuneWheelController controller) {
+    final bool isLetterSelected =
+        controller.selectedAlphabet != null && !controller.showCountdown;
+
     return SizedBox(
       height: 320.h,
       width: 320.h,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Container(
-            height: 320.h,
-            width: 320.h,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.kGray300.withValues(alpha: 0.1),
-                  blurRadius: 5,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: FortuneWheel(
-              selected: controller.wheelController.stream,
-              indicators: <FortuneIndicator>[],
-              onAnimationEnd: controller.handleSpinComplete,
-              physics: CircularPanPhysics(
-                duration: const Duration(milliseconds: 2500),
-                curve: Curves.decelerate,
+          Opacity(
+            opacity: isLetterSelected ? 0.3 : 1.0,
+            child: Container(
+              height: 320.h,
+              width: 320.h,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.kGray300.withValues(alpha: 0.1),
+                    blurRadius: 5,
+                    spreadRadius: 2,
+                  ),
+                ],
               ),
-              items: [
-                for (int i = 0; i < controller.alphabets.length; i++)
-                  FortuneItem(
-                    style: FortuneItemStyle(
-                      color: _getColorForIndex(i),
-                      borderWidth: 1,
-                    ),
-                    child: Container(
-                      width: double.maxFinite,
-                      alignment: Alignment.centerRight,
-                      padding: EdgeInsets.only(right: 10.w),
-                      color: _getColorForIndex(i),
-                      child: Text(
-                        controller.alphabets[i],
-                        style: AppTypography.kRegular19,
+              child: FortuneWheel(
+                selected: controller.wheelController.stream,
+                indicators: <FortuneIndicator>[],
+                onAnimationEnd: controller.handleSpinComplete,
+                physics: CircularPanPhysics(
+                  duration: const Duration(milliseconds: 2500),
+                  curve: Curves.decelerate,
+                ),
+                items: [
+                  for (int i = 0; i < controller.alphabets.length; i++)
+                    FortuneItem(
+                      style: FortuneItemStyle(
+                        color: ColorHelpers.getFortuneWheelColor(i),
+                        borderWidth: 1,
+                      ),
+                      child: Container(
+                        width: double.maxFinite,
+                        alignment: Alignment.centerRight,
+                        padding: EdgeInsets.only(right: 10.w),
+                        color: ColorHelpers.getFortuneWheelColor(i),
+                        child: Text(
+                          controller.alphabets[i],
+                          style: AppTypography.kRegular19,
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -129,7 +119,6 @@ class FortuneWheelPage extends StatelessWidget {
               controller.selectedAlphabet == null)
             InkWell(
               onTap: () {
-                // Double-check before spinning
                 if (!controller.isSpinning &&
                     !controller.showCountdown &&
                     controller.selectedAlphabet == null) {
@@ -139,33 +128,28 @@ class FortuneWheelPage extends StatelessWidget {
               child: Image.asset(AppAssets.spin),
             ),
 
-          if (controller.selectedAlphabet != null && !controller.showCountdown)
-            Positioned(
-              bottom: -50.h,
-              child: AnimatedOpacity(
-                opacity: controller.isSpinning ? 0.0 : 1.0,
-                duration: const Duration(milliseconds: 500),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 24.w,
-                    vertical: 12.h,
+          if (isLetterSelected)
+            Container(
+              height: 120.h,
+              width: 120.h,
+              decoration: BoxDecoration(
+                color: AppColors.kPrimary,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.kPrimary.withValues(alpha: 0.5),
+                    blurRadius: 20,
+                    spreadRadius: 5,
                   ),
-                  decoration: BoxDecoration(
-                    color: AppColors.kPrimary,
-                    borderRadius: BorderRadius.circular(12.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    'Letter: ${controller.selectedAlphabet}',
-                    style: AppTypography.kBold24.copyWith(
-                      color: AppColors.kWhite,
-                    ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  controller.selectedAlphabet!,
+                  style: AppTypography.kBold24.copyWith(
+                    fontSize: 60.sp,
+                    color: AppColors.kWhite,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -195,7 +179,9 @@ class FortuneWheelPage extends StatelessWidget {
               ),
             ),
 
-          if (controller.isSpinning && !controller.showCountdown)
+          if (controller.isSpinning &&
+              !controller.showCountdown &&
+              controller.selectedAlphabet == null)
             Positioned(
               top: -40.h,
               child: Container(

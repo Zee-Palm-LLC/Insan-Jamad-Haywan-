@@ -1,8 +1,11 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
+import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/core/services/image_picker_service.dart';
+import 'package:insan_jamd_hawan/core/utils/toastification.dart';
 
 class PlayerInfoController extends GetxController {
   final TextEditingController usernameController = TextEditingController();
@@ -47,10 +50,39 @@ class PlayerInfoController extends GetxController {
     final username = usernameController.text.trim();
 
     if (username.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your username')),
+      AppToaster.showToast(
+        'Please enter your username',
+        type: ToastificationType.error,
       );
       return;
+    }
+
+    if (username.length < 2) {
+      AppToaster.showToast(
+        'Name must be at least 2 characters',
+        type: ToastificationType.error,
+      );
+      return;
+    }
+
+    try {
+      final currentPlayerId = await AppService.getPlayerId();
+      final isDuplicate = await _checkDuplicateName(username, currentPlayerId);
+
+      if (isDuplicate) {
+        AppToaster.showToast(
+          'Name Already Taken',
+          subTitle:
+              'This name is already in use. Please choose a different name.',
+          type: ToastificationType.error,
+        );
+        return;
+      }
+    } catch (e) {
+      developer.log(
+        'Error checking duplicate name: $e',
+        name: 'PlayerInfoController',
+      );
     }
 
     isLoading = true;
@@ -66,11 +98,10 @@ class PlayerInfoController extends GetxController {
       if (context.mounted) {
         isLoading = false;
         update();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Player info saved successfully'),
-            backgroundColor: Colors.green,
-          ),
+        AppToaster.showToast(
+          'Success',
+          subTitle: 'Player info saved successfully',
+          type: ToastificationType.success,
         );
 
         context.go('/main-menu');
@@ -79,13 +110,32 @@ class PlayerInfoController extends GetxController {
       if (context.mounted) {
         isLoading = false;
         update();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving player info: $e'),
-            backgroundColor: Colors.red,
-          ),
+        AppToaster.showToast(
+          'Error',
+          subTitle: 'Failed to save player info: $e',
+          type: ToastificationType.error,
         );
       }
+    }
+  }
+
+  Future<bool> _checkDuplicateName(
+    String username,
+    String? currentPlayerId,
+  ) async {
+    try {
+      final exists = await FirebaseFirestoreService.instance.gamePlayerExists(
+        username,
+      );
+
+      if (exists && username != currentPlayerId) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      print('Error checking duplicate name: $e');
+      return false;
     }
   }
 }

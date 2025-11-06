@@ -23,39 +23,87 @@ class PlayerWheelView extends StatelessWidget {
     return GetBuilder<PlayerWheelController>(
       init: PlayerWheelController(),
       builder: (wheelController) {
-        return Scaffold(
-          extendBodyBehindAppBar: true,
-          body: LobbyBg(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16.h),
-              child: Center(
-                child: DesktopWrapper(
-                  child: Column(
-                    children: [
-                      if (!isDesktop) SizedBox(height: 50.h),
-                      GameLogo(),
-                      SizedBox(height: 12.h),
-                      GetBuilder<LobbyController>(
-                        builder: (lobbyController) {
-                          return RoomCodeText(
-                            iSend: false,
-                            lobbyId:
-                                lobbyController.currentRoom.inviteCode ??
-                                'XYZ124',
-                          );
-                        },
-                      ),
-                      SizedBox(height: 50.h),
-                      // Display "Waiting for host to spin the wheel" or the wheel
-                      GetBuilder<LobbyController>(
-                        builder: (lobbyController) {
-                          if (!lobbyController.isWheelSpinning &&
-                              lobbyController.currentLetter == null) {
+        return PopScope(
+          canPop: false,
+          child: Scaffold(
+            extendBodyBehindAppBar: true,
+            body: LobbyBg(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16.h),
+                child: Center(
+                  child: DesktopWrapper(
+                    child: Column(
+                      children: [
+                        if (!isDesktop) SizedBox(height: 50.h),
+                        GameLogo(),
+                        SizedBox(height: 12.h),
+                        GetBuilder<LobbyController>(
+                          builder: (lobbyController) {
+                            return RoomCodeText(
+                              iSend: false,
+                              lobbyId:
+                                  lobbyController.currentRoom.inviteCode ??
+                                  'XYZ124',
+                            );
+                          },
+                        ),
+                        SizedBox(height: 50.h),
+                        // Display "Waiting for host to spin the wheel" or the wheel
+                        GetBuilder<LobbyController>(
+                          builder: (lobbyController) {
+                            if (!lobbyController.isWheelSpinning &&
+                                lobbyController.currentLetter == null) {
+                              return Container(
+                                padding: EdgeInsets.all(24.h),
+                                decoration: BoxDecoration(
+                                  color: AppColors.kLightYellow,
+                                  borderRadius: BorderRadius.circular(16.r),
+                                  border: Border.all(
+                                    color: AppColors.kPrimary,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.hourglass_empty,
+                                      size: 48.sp,
+                                      color: AppColors.kPrimary,
+                                    ),
+                                    SizedBox(height: 16.h),
+                                    Text(
+                                      'Waiting for host to spin the wheel...',
+                                      textAlign: TextAlign.center,
+                                      style: AppTypography.kBold16.copyWith(
+                                        color: AppColors.kGray600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            return FortuneWheelPage(
+                              isHost: false,
+                              onSpinComplete:
+                                  wheelController.handleSpinComplete,
+                              onCountdownComplete:
+                                  wheelController.handleCountdownComplete,
+                            );
+                          },
+                        ),
+                        SizedBox(height: 30.h),
+                        // Show selected letter if available
+                        GetBuilder<LobbyController>(
+                          builder: (lobbyController) {
+                            if (lobbyController.currentLetter == null) {
+                              return const SizedBox.shrink();
+                            }
                             return Container(
-                              padding: EdgeInsets.all(24.h),
+                              padding: EdgeInsets.all(16.h),
                               decoration: BoxDecoration(
-                                color: AppColors.kLightYellow,
-                                borderRadius: BorderRadius.circular(16.r),
+                                color: AppColors.kGreen100,
+                                borderRadius: BorderRadius.circular(12.r),
                                 border: Border.all(
                                   color: AppColors.kPrimary,
                                   width: 2,
@@ -63,72 +111,28 @@ class PlayerWheelView extends StatelessWidget {
                               ),
                               child: Column(
                                 children: [
-                                  Icon(
-                                    Icons.hourglass_empty,
-                                    size: 48.sp,
-                                    color: AppColors.kPrimary,
-                                  ),
-                                  SizedBox(height: 16.h),
                                   Text(
-                                    'Waiting for host to spin the wheel...',
-                                    textAlign: TextAlign.center,
+                                    'Selected Letter',
                                     style: AppTypography.kBold16.copyWith(
                                       color: AppColors.kGray600,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    lobbyController.currentLetter!,
+                                    style: AppTypography.kBold24.copyWith(
+                                      fontSize: 48.sp,
+                                      color: AppColors.kPrimary,
                                     ),
                                   ),
                                 ],
                               ),
                             );
-                          }
-
-                          return FortuneWheelPage(
-                            isHost: false,
-                            onSpinComplete: wheelController.handleSpinComplete,
-                            onCountdownComplete:
-                                wheelController.handleCountdownComplete,
-                          );
-                        },
-                      ),
-                      SizedBox(height: 30.h),
-                      // Show selected letter if available
-                      GetBuilder<LobbyController>(
-                        builder: (lobbyController) {
-                          if (lobbyController.currentLetter == null) {
-                            return const SizedBox.shrink();
-                          }
-                          return Container(
-                            padding: EdgeInsets.all(16.h),
-                            decoration: BoxDecoration(
-                              color: AppColors.kGreen100,
-                              borderRadius: BorderRadius.circular(12.r),
-                              border: Border.all(
-                                color: AppColors.kPrimary,
-                                width: 2,
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Selected Letter',
-                                  style: AppTypography.kBold16.copyWith(
-                                    color: AppColors.kGray600,
-                                  ),
-                                ),
-                                SizedBox(height: 8.h),
-                                Text(
-                                  lobbyController.currentLetter!,
-                                  style: AppTypography.kBold24.copyWith(
-                                    fontSize: 48.sp,
-                                    color: AppColors.kPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                      if (isDesktop) SizedBox(height: 50.h),
-                    ],
+                          },
+                        ),
+                        if (isDesktop) SizedBox(height: 50.h),
+                      ],
+                    ),
                   ),
                 ),
               ),

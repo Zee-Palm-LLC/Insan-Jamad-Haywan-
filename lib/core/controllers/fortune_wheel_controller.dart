@@ -146,6 +146,7 @@ class FortuneWheelController extends GetxController {
     await AudioService.instance.playAudio(AudioType.narratorChooseLetter);
     await Future.delayed(const Duration(milliseconds: 500));
 
+    // Randomly select a letter
     final randomIndex = Random().nextInt(alphabets.length);
     selectedIndex = randomIndex;
     update();
@@ -153,7 +154,7 @@ class FortuneWheelController extends GetxController {
     AudioService.instance.playAudio(AudioType.wheelSpin);
 
     if (!wheelController.isClosed) {
-      wheelController.add(randomIndex);
+      wheelController.add(selectedIndex);
     }
   }
 
@@ -201,6 +202,8 @@ class FortuneWheelController extends GetxController {
     await Future.delayed(const Duration(milliseconds: 500));
 
     if (isHost) {
+      // Ensure spinning is false before starting countdown
+      isSpinning = false;
       showCountdown = true;
       countdownValue = 3;
       update();

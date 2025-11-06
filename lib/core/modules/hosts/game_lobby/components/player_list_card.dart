@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_colors.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_typography.dart';
+import 'package:insan_jamd_hawan/core/data/helpers/color_helpers.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/animated_player_tile.dart';
 import 'package:insan_jamd_hawan/core/controllers/player_list_card_controller.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/rounds_selector_card.dart';
@@ -28,16 +29,6 @@ class PlayerListCard extends StatelessWidget {
   final Function(int?) onRoundSelected;
   final Function(int) onTimeSelected;
   final Function(String)? onKickPlayer;
-
-  Color _getPlayerColor(int index) {
-    final colors = [
-      AppColors.kPrimary,
-      AppColors.kBlue,
-      AppColors.kOrange,
-      AppColors.kRed500,
-    ];
-    return colors[index % colors.length];
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +70,7 @@ class PlayerListCard extends StatelessWidget {
                         name: controller.joinedPlayers[i],
                         imagePath:
                             '', // No longer used - showing initials instead
-                        color: _getPlayerColor(i),
+                        color: ColorHelpers.getPlayerColor(i),
                         isHost: controller.joinedPlayers[i] == hostId,
                         onKick:
                             onKickPlayer != null &&

@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/player_answer_view.dart';
+import 'package:insan_jamd_hawan/core/modules/players/player_answers/player_answer_view.dart';
 import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
 class PlayerWheelController extends GetxController {
