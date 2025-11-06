@@ -68,3 +68,32 @@ enum GameCategory {
     );
   }
 }
+
+enum AnswerEvaluationStatus {
+  correct,
+  incorrect,
+  unclear,
+  duplicate;
+
+  String toJson() => name;
+
+  static AnswerEvaluationStatus fromJson(String json) {
+    return AnswerEvaluationStatus.values.firstWhere(
+      (e) => e.name == json,
+      orElse: () => AnswerEvaluationStatus.incorrect,
+    );
+  }
+
+  int get points {
+    switch (this) {
+      case AnswerEvaluationStatus.correct:
+        return 10;
+      case AnswerEvaluationStatus.incorrect:
+        return 0;
+      case AnswerEvaluationStatus.unclear:
+        return 0;
+      case AnswerEvaluationStatus.duplicate:
+        return 5;
+    }
+  }
+}

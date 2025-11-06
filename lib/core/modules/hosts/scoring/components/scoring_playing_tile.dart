@@ -114,11 +114,11 @@ class ScoringPlayerTileState extends State<ScoringPlayingTile>
             Container(
               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.5.h),
               decoration: BoxDecoration(
-                color: AppColors.kPrimary,
+                color: widget.color,
                 borderRadius: BorderRadius.circular(5.r),
               ),
               child: Text(
-                'Apple',
+                widget.answer,
                 style: AppTypography.kRegular19.copyWith(
                   fontSize: 14.sp,
                   color: AppColors.kWhite,
@@ -127,8 +127,12 @@ class ScoringPlayerTileState extends State<ScoringPlayingTile>
             ),
             SizedBox(width: 5.w),
             Text(
-              '+5',
-              style: AppTypography.kBold16.copyWith(color: AppColors.kPrimary),
+              widget.points > 0 ? '+${widget.points}' : '${widget.points}',
+              style: AppTypography.kBold16.copyWith(
+                color: widget.points > 0
+                    ? AppColors.kPrimary
+                    : AppColors.kGray500,
+              ),
             ),
           ],
         ),

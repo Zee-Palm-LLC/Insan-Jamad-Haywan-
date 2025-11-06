@@ -83,7 +83,21 @@ class AppRouter {
         name: ScoringView.name,
         builder: (context, state) {
           final letter = state.pathParameters['letter'] ?? 'A';
-          return ScoringView(selectedAlphabet: letter);
+          final extra = state.extra as Map<String, dynamic>?;
+
+          if (extra == null) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Missing session data. Please start from lobby.'),
+              ),
+            );
+          }
+
+          return ScoringView(
+            selectedAlphabet: letter,
+            sessionId: extra['sessionId'] as String,
+            roundNumber: extra['roundNumber'] as int,
+          );
         },
       ),
       GoRoute(
@@ -91,7 +105,21 @@ class AppRouter {
         name: VotingView.name,
         builder: (context, state) {
           final letter = state.pathParameters['letter'] ?? 'A';
-          return VotingView(selectedAlphabet: letter);
+          final extra = state.extra as Map<String, dynamic>?;
+
+          if (extra == null) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Missing session data. Please start from lobby.'),
+              ),
+            );
+          }
+
+          return VotingView(
+            selectedAlphabet: letter,
+            sessionId: extra['sessionId'] as String,
+            roundNumber: extra['roundNumber'] as int,
+          );
         },
       ),
       GoRoute(

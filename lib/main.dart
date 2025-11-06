@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/cache/storage_service.dart';
+import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/openai/openai_client.dart';
 import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_theme.dart';
 import 'package:insan_jamd_hawan/firebase_options.dart';
@@ -19,25 +21,35 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(defaultOverlay);
   await StorageService.instance.init();
 
-  // Initialize Firebase
   insanJamdHawanFirebaseApp = await Firebase.initializeApp(
     name: 'mash-platform',
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Sign in anonymously for Firestore access
   await _signInAnonymously();
+
+  FirebaseFirestoreService.initialize(app: insanJamdHawanFirebaseApp);
+
+  try {
+    OpenAIClient.instance.initialize();
+    developer.log('OpenAI client initialized successfully', name: 'main');
+  } catch (e, stackTrace) {
+    developer.log(
+      'Failed to initialize OpenAI client: $e',
+      name: 'main',
+      error: e,
+      stackTrace: stackTrace,
+    );
+  }
 
   await _cleanupExistingLobby();
   runApp(const InsanJamdHawan());
 }
 
-/// Sign in anonymously to Firebase Auth for Firestore permissions
 Future<void> _signInAnonymously() async {
   try {
     final auth = FirebaseAuth.instanceFor(app: insanJamdHawanFirebaseApp);
 
-    // Check if already signed in
     if (auth.currentUser != null) {
       developer.log(
         'Already signed in as: ${auth.currentUser!.uid}',
@@ -46,7 +58,6 @@ Future<void> _signInAnonymously() async {
       return;
     }
 
-    // Sign in anonymously
     final userCredential = await auth.signInAnonymously();
     developer.log(
       'Signed in anonymously: ${userCredential.user?.uid}',
@@ -59,7 +70,6 @@ Future<void> _signInAnonymously() async {
       stackTrace: stackTrace,
       name: 'FirebaseAuth',
     );
-    // Don't throw - app can still work without Firestore
   }
 }
 
@@ -92,7 +102,6 @@ Future<void> _cleanupExistingLobby() async {
         }
       }
     } catch (e) {
-      // If getGameRoom fails (404, etc.), player is not in a lobby - that's fine
       if (kDebugMode) {
         developer.log(
           'Player not in any lobby or error checking: $e',
@@ -107,6 +116,5 @@ Future<void> _cleanupExistingLobby() async {
       stackTrace: stackTrace,
       name: 'cleanupLobby',
     );
-    // Don't throw - cleanup failure shouldn't prevent app startup
   }
 }

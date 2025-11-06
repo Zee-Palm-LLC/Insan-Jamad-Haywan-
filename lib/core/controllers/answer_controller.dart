@@ -5,14 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
+import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
 import 'package:insan_jamd_hawan/core/services/answer_submission_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
+import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/core/services/player_answer_tracker_service.dart';
 import 'package:insan_jamd_hawan/core/services/round_status_monitor_service.dart';
 import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
@@ -26,6 +29,7 @@ class AnswerController extends GetxController {
   // Services
   final AnswerSubmissionService _submissionService = AnswerSubmissionService();
   final RoundStatusMonitorService _statusMonitor = RoundStatusMonitorService();
+  final FirebaseFirestoreService _firestore = FirebaseFirestoreService.instance;
   PlayerAnswerTrackerService? _answerTracker;
 
   // Timer state
@@ -84,15 +88,15 @@ class AnswerController extends GetxController {
   }
 
   void _initializeServices() {
-    // Initialize timer
-    _startTimer();
-
     // Initialize round status monitor
     _statusMonitor.startListening(
       sessionId: sessionId,
       roundNumber: roundNumber,
       onCompleted: _handleRoundCompleted,
+      onVoting: _handleVotingRequired,
     );
+    // Initialize timer
+    _startTimer();
 
     // Initialize answer tracker (host view only)
     if (isHostView) {
@@ -324,13 +328,33 @@ class AnswerController extends GetxController {
       update();
 
       await Future.delayed(const Duration(milliseconds: 500));
-      _navigateToScoring();
+
+      final round = await _firestore.getRound(sessionId, roundNumber);
+      if (round != null && round.status == RoundStatus.voting) {
+        _handleVotingRequired(round.selectedLetter);
+      } else {
+        _navigateToScoring();
+      }
     } catch (e, s) {
       developer.log(
         'Error in auto-submit and navigate: $e',
         name: 'AnswerController',
         error: e,
         stackTrace: s,
+      );
+    }
+  }
+
+  void _handleVotingRequired(String selectedLetter) {
+    final context = navigatorKey.currentContext;
+    if (context != null && context.mounted) {
+      developer.log(
+        'Navigating to voting screen - Round $roundNumber, Letter: $selectedLetter',
+        name: 'AnswerController',
+      );
+      context.push(
+        VotingView.path.replaceAll(':letter', selectedLetter),
+        extra: {'sessionId': sessionId, 'roundNumber': roundNumber},
       );
     }
   }
@@ -342,7 +366,10 @@ class AnswerController extends GetxController {
         'Navigating to scoring screen - Round $roundNumber, Letter: $selectedLetter',
         name: 'AnswerController',
       );
-      context.push(ScoringView.path.replaceAll(':letter', selectedLetter));
+      context.push(
+        ScoringView.path.replaceAll(':letter', selectedLetter),
+        extra: {'sessionId': sessionId, 'roundNumber': roundNumber},
+      );
     }
   }
 

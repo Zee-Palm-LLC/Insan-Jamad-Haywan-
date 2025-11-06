@@ -14,9 +14,16 @@ import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class ScoringView extends StatelessWidget {
-  const ScoringView({super.key, required this.selectedAlphabet});
+  const ScoringView({
+    super.key,
+    required this.selectedAlphabet,
+    required this.sessionId,
+    required this.roundNumber,
+  });
 
   final String selectedAlphabet;
+  final String sessionId;
+  final int roundNumber;
 
   static const String path = '/scoring/:letter';
   static const String name = 'Scoring';
@@ -25,7 +32,11 @@ class ScoringView extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isDesktop = Responsive.isDesktop(context);
     return GetBuilder<ScoringController>(
-      init: ScoringController(),
+      init: ScoringController(
+        sessionId: sessionId,
+        roundNumber: roundNumber,
+        selectedLetter: selectedAlphabet,
+      ),
       builder: (controller) {
         return PopScope(
           canPop: false,
@@ -98,114 +109,80 @@ class ScoringView extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: 10.h),
-                              Text(
-                                'Fruit',
-                                style: AppTypography.kRegular24.copyWith(
-                                  height: 1,
-                                ),
-                              ),
-                              SizedBox(height: 12.h),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: AppColors.kWhite,
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                padding: EdgeInsets.all(16.h),
-                                child: Column(
-                                  children: [
-                                    for (
-                                      int i = 0;
-                                      i < controller.shownFruitAnswers.length;
-                                      i++
-                                    ) ...[
-                                      ScoringPlayingTile(
-                                        imagePath: controller.getPlayerAvatar(
-                                          controller
-                                                  .shownFruitAnswers[i]['name']
-                                              as String,
+                              ...[
+                                    'Name',
+                                    'Object',
+                                    'Animal',
+                                    'Plant',
+                                    'Country',
+                                  ]
+                                  .where(
+                                    (category) =>
+                                        controller.hasCategoryAnswers(category),
+                                  )
+                                  .map((category) {
+                                    final answers = controller
+                                        .getCategoryAnswers(category);
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          category,
+                                          style: AppTypography.kRegular24
+                                              .copyWith(height: 1),
                                         ),
-                                        name:
-                                            controller
-                                                    .shownFruitAnswers[i]['name']
-                                                as String,
-                                        answer:
-                                            controller
-                                                    .shownFruitAnswers[i]['answer']
-                                                as String,
-                                        points:
-                                            controller
-                                                    .shownFruitAnswers[i]['points']
-                                                as int,
-                                        color:
-                                            controller
-                                                    .shownFruitAnswers[i]['color']
-                                                as Color,
-                                        index: i + 1,
-                                      ),
-                                      if (i !=
-                                          controller.shownFruitAnswers.length -
-                                              1)
-                                        Divider(
-                                          color: AppColors.kGray300,
-                                          thickness: 1,
-                                          height: 16.h,
+                                        SizedBox(height: 12.h),
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: AppColors.kWhite,
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
+                                          ),
+                                          padding: EdgeInsets.all(16.h),
+                                          child: Column(
+                                            children: [
+                                              for (
+                                                int i = 0;
+                                                i < answers.length;
+                                                i++
+                                              ) ...[
+                                                ScoringPlayingTile(
+                                                  imagePath: controller
+                                                      .getPlayerAvatar(
+                                                        answers[i]['name']
+                                                            as String,
+                                                      ),
+                                                  name:
+                                                      answers[i]['name']
+                                                          as String,
+                                                  answer:
+                                                      answers[i]['answer']
+                                                          as String,
+                                                  points:
+                                                      answers[i]['points']
+                                                          as int,
+                                                  color:
+                                                      answers[i]['color']
+                                                          as Color,
+                                                  index: i + 1,
+                                                ),
+                                                if (i != answers.length - 1)
+                                                  Divider(
+                                                    color: AppColors.kGray300,
+                                                    thickness: 1,
+                                                    height: 16.h,
+                                                  ),
+                                              ],
+                                            ],
+                                          ),
                                         ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 20.h),
-                              Text('Animals', style: AppTypography.kRegular24),
-                              SizedBox(height: 12.h),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: AppColors.kWhite,
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                padding: EdgeInsets.all(16.h),
-                                child: Column(
-                                  children: [
-                                    for (
-                                      int i = 0;
-                                      i < controller.shownAnimalAnswers.length;
-                                      i++
-                                    ) ...[
-                                      ScoringPlayingTile(
-                                        imagePath: controller.getPlayerAvatar(
-                                          controller
-                                                  .shownAnimalAnswers[i]['name']
-                                              as String,
-                                        ),
-                                        name:
-                                            controller
-                                                    .shownAnimalAnswers[i]['name']
-                                                as String,
-                                        answer:
-                                            controller
-                                                    .shownAnimalAnswers[i]['answer']
-                                                as String,
-                                        points:
-                                            controller
-                                                    .shownAnimalAnswers[i]['points']
-                                                as int,
-                                        color:
-                                            controller
-                                                    .shownAnimalAnswers[i]['color']
-                                                as Color,
-                                        index: i + 1,
-                                      ),
-                                      if (i !=
-                                          controller.shownAnimalAnswers.length -
-                                              1)
-                                        Divider(
-                                          color: AppColors.kGray300,
-                                          thickness: 1,
-                                          height: 16.h,
-                                        ),
-                                    ],
-                                  ],
-                                ),
-                              ),
+                                        SizedBox(height: 20.h),
+                                      ],
+                                    );
+                                  })
+                                  .toList(),
                             ],
                           ),
                         ),

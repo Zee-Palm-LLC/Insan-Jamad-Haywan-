@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
 
 /// Player answer model for a round
 class PlayerAnswerModel {
@@ -144,17 +145,31 @@ class ScoringResult {
 class CategoryScore {
   final bool isCorrect;
   final int points;
+  final AnswerEvaluationStatus status;
 
-  CategoryScore({required this.isCorrect, required this.points});
+  CategoryScore({
+    required this.isCorrect,
+    required this.points,
+    this.status = AnswerEvaluationStatus.incorrect,
+  });
 
   Map<String, dynamic> toJson() {
-    return {'isCorrect': isCorrect, 'points': points};
+    return {
+      'isCorrect': isCorrect,
+      'points': points,
+      'status': status.toJson(),
+    };
   }
 
   factory CategoryScore.fromJson(Map<String, dynamic> json) {
     return CategoryScore(
       isCorrect: json['isCorrect'] as bool,
       points: json['points'] as int,
+      status: json['status'] != null
+          ? AnswerEvaluationStatus.fromJson(json['status'] as String)
+          : (json['isCorrect'] as bool
+                ? AnswerEvaluationStatus.correct
+                : AnswerEvaluationStatus.incorrect),
     );
   }
 }

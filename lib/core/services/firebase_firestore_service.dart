@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:insan_jamd_hawan/core/models/session/ambiguous_answer_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/game_player_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/game_session_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/game_summary_model.dart';
@@ -78,6 +79,20 @@ class FirebaseFirestoreService {
     String roundNumber,
     String playerId,
   ) => _votesCollection(sessionId, roundNumber).doc(playerId);
+
+  CollectionReference _ambiguousAnswersCollection(
+    String sessionId,
+    String roundNumber,
+  ) => _roundDoc(sessionId, roundNumber).collection('ambiguous_answers');
+
+  DocumentReference _ambiguousAnswerDoc(
+    String sessionId,
+    String roundNumber,
+    String ambiguousAnswerId,
+  ) => _ambiguousAnswersCollection(
+    sessionId,
+    roundNumber,
+  ).doc(ambiguousAnswerId);
 
   DocumentReference _summaryDoc(String sessionId) =>
       _sessionDoc(sessionId).collection('summary').doc('data');
@@ -486,6 +501,93 @@ class FirebaseFirestoreService {
     );
     await saveGamePlayer(newPlayer);
     return newPlayer;
+  }
+
+  Future<void> createAmbiguousAnswer(
+    AmbiguousAnswerModel ambiguousAnswer,
+  ) async {
+    await _ambiguousAnswerDoc(
+      ambiguousAnswer.sessionId,
+      ambiguousAnswer.roundNumber.toString(),
+      ambiguousAnswer.id,
+    ).set(ambiguousAnswer.toJson());
+  }
+
+  Future<AmbiguousAnswerModel?> getAmbiguousAnswer(
+    String sessionId,
+    int roundNumber,
+    String ambiguousAnswerId,
+  ) async {
+    final doc = await _ambiguousAnswerDoc(
+      sessionId,
+      roundNumber.toString(),
+      ambiguousAnswerId,
+    ).get();
+    if (!doc.exists) return null;
+    return AmbiguousAnswerModel.fromFirestore(doc);
+  }
+
+  Future<List<AmbiguousAnswerModel>> getAllAmbiguousAnswers(
+    String sessionId,
+    int roundNumber,
+  ) async {
+    final snapshot = await _ambiguousAnswersCollection(
+      sessionId,
+      roundNumber.toString(),
+    ).get();
+    return snapshot.docs
+        .map((doc) => AmbiguousAnswerModel.fromFirestore(doc))
+        .toList();
+  }
+
+  Future<void> updateAmbiguousAnswerVote(
+    String sessionId,
+    int roundNumber,
+    String ambiguousAnswerId,
+    String voterId,
+    bool isCorrect,
+    int correctVotes,
+    int incorrectVotes,
+  ) async {
+    await _ambiguousAnswerDoc(
+      sessionId,
+      roundNumber.toString(),
+      ambiguousAnswerId,
+    ).update({
+      'votes.$voterId': isCorrect,
+      'correctVotes': correctVotes,
+      'incorrectVotes': incorrectVotes,
+    });
+  }
+
+  Future<void> completeAmbiguousAnswerVoting(
+    String sessionId,
+    int roundNumber,
+    String ambiguousAnswerId,
+    bool finalDecision,
+  ) async {
+    await _ambiguousAnswerDoc(
+      sessionId,
+      roundNumber.toString(),
+      ambiguousAnswerId,
+    ).update({
+      'status': VotingStatus.completed.toJson(),
+      'finalDecision': finalDecision,
+    });
+  }
+
+  Stream<List<AmbiguousAnswerModel>> listenToAmbiguousAnswers(
+    String sessionId,
+    int roundNumber,
+  ) {
+    return _ambiguousAnswersCollection(
+      sessionId,
+      roundNumber.toString(),
+    ).snapshots().map(
+      (snapshot) => snapshot.docs
+          .map((doc) => AmbiguousAnswerModel.fromFirestore(doc))
+          .toList(),
+    );
   }
 
   Future<void> deleteSessionWithSubcollections(String sessionId) async {

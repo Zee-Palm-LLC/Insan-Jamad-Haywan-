@@ -47,3 +47,4 @@ app.*.map.json
 # FVM Version Cache
 .fvm/
 /lib/core/services/playflow/credentials.dart
+/lib/core/services/openai/openai_credentials.dart
