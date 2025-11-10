@@ -33,6 +33,7 @@ class AnswerController extends GetxController {
   bool isSubmitting = false;
   bool isEvaluating = false;
   StreamSubscription<int>? _submissionCountSubscription;
+  StreamSubscription<int>? _timerSubscription;
 
   bool doublePoints = false;
   int secondsRemaining = 0;
@@ -48,13 +49,56 @@ class AnswerController extends GetxController {
     secondsRemaining = totalSeconds;
   }
 
+  void startTimerSync() {
+    _timerSubscription?.cancel();
+    final sessionId = lobbyController.lobby.id ?? "";
+    final currentRound = wheelController.currentRound;
+
+    if (sessionId.isEmpty || currentRound == 0) {
+      log(
+        "Cannot start timer sync: sessionId=$sessionId, currentRound=$currentRound",
+        name: 'AnswerController',
+      );
+      return;
+    }
+
+    log(
+      "Starting timer sync for sessionId=$sessionId, round=$currentRound",
+      name: 'AnswerController',
+    );
+
+    _timerSubscription = _db
+        .streamRoundRemainingTime(sessionId, currentRound)
+        .listen(
+          (remainingSeconds) {
+            secondsRemaining = remainingSeconds;
+            totalSeconds = remainingSeconds > 0
+                ? remainingSeconds
+                : totalSeconds;
+            update();
+
+            log(
+              "Timer updated: remaining=$remainingSeconds, total=$totalSeconds",
+              name: 'AnswerController',
+            );
+          },
+          onError: (error) {
+            log(
+              "Error in timer sync stream: $error",
+              name: 'AnswerController',
+              error: error,
+            );
+          },
+        );
+  }
+
   String get formattedTime {
     final minutes = secondsRemaining ~/ 60;
     final seconds = secondsRemaining % 60;
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
-  void autoSubmit() {
+  Future<void> autoSubmit() async {
     //listen the new document in the rounds / 1/ players & answers (answers is not empty)
     // await submitAnswers();
     //  if (wheelController.currentRound ==
@@ -138,6 +182,7 @@ class AnswerController extends GetxController {
   @override
   void onClose() {
     _submissionCountSubscription?.cancel();
+    _timerSubscription?.cancel();
     nameController.dispose();
     objectController.dispose();
     animalController.dispose();
@@ -258,6 +303,7 @@ class AnswerController extends GetxController {
 
   void restController() {
     _submissionCountSubscription?.cancel();
+    _timerSubscription?.cancel();
     nameController.clear();
     objectController.clear();
     animalController.clear();

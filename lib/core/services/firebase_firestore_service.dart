@@ -847,18 +847,58 @@ class FirebaseFirestoreService {
     int roundNumber,
   ) {
     try {
-      var data =  _answersCollection(
-        sessionId,
-        roundNumber.toString(),
-      ).snapshots().map((answersSnapshot) {
-        final submittedPlayerIds = answersSnapshot.docs.toSet();
-        return submittedPlayerIds.length;
-      });
+      var data = _answersCollection(sessionId, roundNumber.toString())
+          .snapshots()
+          .map((answersSnapshot) {
+            final submittedPlayerIds = answersSnapshot.docs.toSet();
+            return submittedPlayerIds.length;
+          });
       log("This is the data that we have ${data.length}");
       return data;
     } catch (e) {
       log('Error streaming count of players who submitted answers: $e');
       rethrow;
     }
+  }
+
+  Stream<int> streamRoundRemainingTime(String sessionId, int roundNumber) {
+    return _roundDoc(sessionId, roundNumber.toString()).snapshots().map((
+      snapshot,
+    ) {
+      if (!snapshot.exists) {
+        return 0;
+      }
+
+      final data = snapshot.data() as Map<String, dynamic>?;
+      if (data == null) {
+        return 0;
+      }
+
+      final timeConfig = data['timeConfig'] as Map<String, dynamic>?;
+      if (timeConfig == null) {
+        return 0;
+      }
+
+      final scheduledEndAt = timeConfig['scheduledEndAt'];
+      if (scheduledEndAt == null) {
+        return 0;
+      }
+
+      DateTime endTime;
+      if (scheduledEndAt is Timestamp) {
+        endTime = scheduledEndAt.toDate();
+      } else if (scheduledEndAt is DateTime) {
+        endTime = scheduledEndAt;
+      } else {
+        return 0;
+      }
+
+      final now = DateTime.now();
+      final difference = endTime.difference(now);
+      final remainingSeconds = difference.inSeconds;
+
+      // Return 0 if time has expired, otherwise return remaining seconds
+      return remainingSeconds > 0 ? remainingSeconds : 0;
+    });
   }
 }

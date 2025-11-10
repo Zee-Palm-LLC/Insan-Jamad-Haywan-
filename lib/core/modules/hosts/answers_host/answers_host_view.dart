@@ -7,7 +7,6 @@ import 'package:insan_jamd_hawan/core/controllers/answer_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
-import 'package:insan_jamd_hawan/core/data/helpers/wheel_helper.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
@@ -162,13 +161,7 @@ class _AnswersHostViewState extends State<AnswersHostView>
                             SvgPicture.asset(AppAssets.timerIcon),
                             SizedBox(width: 8.w),
                             Text(
-                              WheelHelper.formattedTime(
-                                minutes: 0,
-                                seconds:
-                                    (lobbyController.selectedTimePerRound ?? 0)
-                                        .toDouble() %
-                                    60.0,
-                              ),
+                              controller.formattedTime,
                               style: AppTypography.kRegular19.copyWith(
                                 color: AppColors.kRed500,
                               ),
