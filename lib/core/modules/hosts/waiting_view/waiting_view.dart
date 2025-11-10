@@ -33,11 +33,11 @@ class WaitingView extends StatelessWidget {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 waitingController.syncWithLobby();
               });
-              return _buildScaffold(waitingController, isDesktop);
+              return _buildScaffold(isDesktop);
             },
           );
         } catch (e) {
-          return _buildScaffold(waitingController, isDesktop);
+          return _buildScaffold(isDesktop);
         }
       },
     );
@@ -49,9 +49,9 @@ class WaitingView extends StatelessWidget {
     );
   }
 
-  Widget _buildScaffold(WaitingViewController controller, bool isDesktop) {
+  Widget _buildScaffold(bool isDesktop) {
     return GetBuilder<WaitingViewController>(
-      builder: (_) {
+      builder: (controller) {
         return PopScope(
           canPop: false,
           child: Scaffold(

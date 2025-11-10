@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:insan_jamd_hawan/core/models/session/ambiguous_answer_model.dart';
@@ -56,6 +58,13 @@ class FirebaseFirestoreService {
 
   CollectionReference _roundsCollection(String sessionId) =>
       _sessionDoc(sessionId).collection('rounds');
+
+  CollectionReference _rawRoundsCollections(String sessionId) => _firestore
+      .collection('games')
+      .doc(gameId)
+      .collection('sessions')
+      .doc(sessionId)
+      .collection('rounds');
 
   DocumentReference _roundDoc(String sessionId, String roundNumber) =>
       _roundsCollection(sessionId).doc(roundNumber);
@@ -618,5 +627,238 @@ class FirebaseFirestoreService {
     batch.delete(_sessionDoc(sessionId));
 
     await batch.commit();
+  }
+
+  Future<RoundModel> addNewRound({
+    required String sessionId,
+    required String selectedLetter,
+    required int allocatedTime,
+    required List<RoundParticipant> participants,
+    required int wheelIndex,
+  }) async {
+    try {
+      final previousRoundsSnapshot = await _rawRoundsCollections(
+        sessionId,
+      ).get();
+      final previousRoundsCount = previousRoundsSnapshot.size;
+      final round = RoundModel(
+        roundNumber: previousRoundsCount + 1,
+        status: RoundStatus.pending,
+        stats: RoundStatsModel(),
+        wheelIndex: wheelIndex,
+        wheelSpinTimestamp: DateTime.now(),
+        selectedLetter: selectedLetter,
+        participants: participants,
+        timeConfig: RoundTimeConfig(
+          allocatedTime: allocatedTime,
+          startedAt: DateTime.now(),
+          scheduledEndAt: DateTime.now().add(Duration(seconds: allocatedTime)),
+        ),
+      );
+      await createRound(sessionId, round);
+      await _sessionDoc(
+        sessionId,
+      ).update({'config.currentRound': previousRoundsCount + 1});
+      log("New round created successfully");
+      return round;
+    } on Exception catch (e) {
+      log("Error while creating round $e");
+      rethrow;
+    }
+  }
+
+  Future<void> submitAnswers(String sessionId, PlayerAnswerModel answer) async {
+    try {
+      final sessionSnapshot = await _sessionDoc(sessionId).get();
+      final sessionData = sessionSnapshot.data() as Map<String, dynamic>?;
+      if (sessionData == null) {
+        throw Exception('Session not found');
+      }
+      final roundNumber = ((sessionData['config'] ?? {})['currentRound']) ?? 0;
+      // Use currentRoundData if needed
+
+      await _answerDoc(
+        sessionId,
+        roundNumber.toString(),
+        answer.playerId,
+      ).set(answer.toJson());
+    } on Exception catch (e) {
+      log("Error while setting answers $e");
+      rethrow;
+    }
+  }
+
+  //update currentSeletedLetter;
+
+  Future<void> updateCurrentSelectedLetter(
+    String sessionId,
+    String letter,
+  ) async {
+    try {
+      await _sessionDoc(
+        sessionId,
+      ).update({'config.currentSelectedLetter': letter});
+    } on Exception catch (e) {
+      log("Error while setting the letter in config.currentSelectedLetter");
+      throw Exception("Error $e");
+    }
+  }
+
+  Stream<SessionStatus?> getSessionStatusStream(String sessionId) {
+    return _sessionDoc(sessionId).snapshots().map((snap) {
+      final data = snap.data() as Map<String, dynamic>?;
+      if (data == null) return null;
+
+      final statusString = (data['status'] ?? data['config']?['status'])
+          ?.toString();
+      if (statusString == null) return null;
+
+      return SessionStatus.values.firstWhere(
+        (e) => e.toString() == 'SessionStatus.$statusString',
+        orElse: () => SessionStatus.waiting,
+      );
+    });
+  }
+
+  Stream<String?> streamCurrentSelectedLetter(String sessionId) {
+    return _sessionDoc(sessionId).snapshots().map((snapshot) {
+      final data = snapshot.data() as Map<String, dynamic>?;
+      if (data == null) return null;
+      final letter =
+          (data['config'] as Map<String, dynamic>?)?['currentSelectedLetter'];
+      return letter as String?;
+    });
+  }
+
+  Stream<bool> streamStartCounting(String sessionId) {
+    return _sessionDoc(sessionId).snapshots().map((snapshot) {
+      final data = snapshot.data() as Map<String, dynamic>?;
+      if (data == null) return false;
+      final startCounting =
+          (data['config'] as Map<String, dynamic>?)?['startCounting'];
+      return startCounting == true;
+    });
+  }
+
+  Future<void> updateStartCounting(String sessionId, bool startCounting) async {
+    try {
+      await _sessionDoc(
+        sessionId,
+      ).update({'config.startCounting': startCounting});
+    } on Exception catch (e) {
+      log("Error while updating startCounting $e");
+      throw Exception("Error $e");
+    }
+  }
+
+  Future<void> updateRoundedStatus(
+    String sessionId,
+    int roundNumber,
+    //complete
+    //pending
+    //started
+    String status,
+  ) async {
+    try {
+      await _sessionDoc(sessionId).set({
+        'roundStatus_${roundNumber.toString()}': status,
+      }, SetOptions(merge: true));
+    } on Exception catch (e) {
+      log("Error while updating round status $e");
+      throw Exception("Error $e");
+    }
+  }
+
+  Stream<Map<String, String>?> streamRoundStatus(String sessionId) {
+    return _sessionDoc(sessionId).snapshots().map((snapshot) {
+      final data = snapshot.data() as Map<String, dynamic>?;
+      log("This is the data that we get in the stream ${data}");
+      if (data == null) return null;
+
+      final Map<String, String> roundStatusMap = {};
+
+      data.forEach((key, value) {
+        if (key.startsWith('roundStatus_')) {
+          if (value is String) {
+            final roundNumber = key.substring('roundStatus_'.length);
+            roundStatusMap[roundNumber] = value;
+          }
+        }
+      });
+
+      return roundStatusMap.isNotEmpty ? roundStatusMap : null;
+    });
+  }
+
+  Stream<int?> streamCurrentRound(String sessionId) {
+    return _sessionDoc(sessionId).snapshots().map((snapshot) {
+      final data = snapshot.data() as Map<String, dynamic>?;
+      if (data == null) return null;
+      final currentRound =
+          (data['config'] as Map<String, dynamic>?)?['currentRound'];
+      if (currentRound is int) return currentRound;
+      if (currentRound is String) {
+        return int.tryParse(currentRound);
+      }
+      return null;
+    });
+  }
+
+  Stream<List<PlayerAnswerModel>> streamAllAnswersForTheRound(
+    String sessionId,
+    int roundNumber,
+  ) {
+    try {
+      return _sessionDoc(sessionId)
+          .collection('rounds')
+          .doc(roundNumber.toString())
+          .collection('answers')
+          .snapshots()
+          .map((snapshot) {
+            var data = snapshot.docs
+                .map((doc) => PlayerAnswerModel.fromJson(doc.data()))
+                .toList();
+            log(
+              "This is the data that we get from the firebase for the round $roundNumber $data",
+            );
+            return data;
+          });
+    } catch (e) {
+      log('Error getting all player answers: $e');
+      rethrow;
+    }
+  }
+
+  Stream<Map<String, dynamic>?> streamSessionConfig(String sessionId) {
+    return _sessionDoc(sessionId).snapshots().map((snapshot) {
+      final data = snapshot.data() as Map<String, dynamic>?;
+      if (data == null) return null;
+      final config = data['config'];
+      if (config is Map<String, dynamic>) return config;
+      if (config is Map) {
+        return Map<String, dynamic>.from(config);
+      }
+      return null;
+    });
+  }
+
+  Stream<int> streamCountOfPlayersWhoSubmittedAnswers(
+    String sessionId,
+    int roundNumber,
+  ) {
+    try {
+      var data =  _answersCollection(
+        sessionId,
+        roundNumber.toString(),
+      ).snapshots().map((answersSnapshot) {
+        final submittedPlayerIds = answersSnapshot.docs.toSet();
+        return submittedPlayerIds.length;
+      });
+      log("This is the data that we have ${data.length}");
+      return data;
+    } catch (e) {
+      log('Error streaming count of players who submitted answers: $e');
+      rethrow;
+    }
   }
 }

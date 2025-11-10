@@ -63,6 +63,7 @@ class InsanJamdHawan extends StatelessWidget {
                   child: ToastificationWrapper(
                     child: MaterialApp.router(
                       title: 'INSAN JAMD HAWAN',
+                    
                       scrollBehavior: ScrollBehavior().copyWith(
                         overscroll: false,
                       ),
@@ -74,6 +75,7 @@ class InsanJamdHawan extends StatelessWidget {
                           child: child!,
                         );
                       },
+                      
                       debugShowCheckedModeBanner: false,
                       theme: AppTheme.gameLobbyTheme,
                       routerConfig: AppRouter.router,

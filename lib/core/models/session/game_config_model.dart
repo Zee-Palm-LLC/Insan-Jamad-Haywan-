@@ -1,15 +1,22 @@
-/// Configuration for a game session
 class GameConfigModel {
   final int maxRounds;
+  final int currentRound;
   final int defaultTimePerRound;
   final List<int> timePerRoundVariations;
   final ScoreConfigModel scoreConfig;
+  final String? currentSelectedLetter;
+  final bool? startCounting;
+  final Map<String, String>? roundStatus;
 
   GameConfigModel({
     required this.maxRounds,
     required this.defaultTimePerRound,
     required this.timePerRoundVariations,
     required this.scoreConfig,
+    required this.currentRound,
+    this.currentSelectedLetter,
+    this.startCounting,
+    this.roundStatus
   });
 
   Map<String, dynamic> toJson() {
@@ -18,6 +25,10 @@ class GameConfigModel {
       'defaultTimePerRound': defaultTimePerRound,
       'timePerRoundVariations': timePerRoundVariations,
       'scoreConfig': scoreConfig.toJson(),
+      'currentRound': currentRound,
+      'currentSelectedLetter': currentSelectedLetter,
+      'startCounting': startCounting,
+      'roundStatus': roundStatus?.map((key, value) => MapEntry(key, value)),
     };
   }
 
@@ -30,9 +41,14 @@ class GameConfigModel {
               ?.map((e) => e as int)
               .toList() ??
           [30, 45, 60, 90],
+      currentRound: json['currentRound'] as int? ?? 0,
+      currentSelectedLetter: json['currentSelectedLetter'] as String?,
+      startCounting: json['startCounting'] as bool? ?? false,
+      roundStatus: json['roundStatus'] as Map<String, String>?,
       scoreConfig: ScoreConfigModel.fromJson(
         json['scoreConfig'] as Map<String, dynamic>? ?? {},
       ),
+
     );
   }
 
@@ -41,6 +57,7 @@ class GameConfigModel {
     int? defaultTimePerRound,
     List<int>? timePerRoundVariations,
     ScoreConfigModel? scoreConfig,
+    int? currentRound,
   }) {
     return GameConfigModel(
       maxRounds: maxRounds ?? this.maxRounds,
@@ -48,6 +65,7 @@ class GameConfigModel {
       timePerRoundVariations:
           timePerRoundVariations ?? this.timePerRoundVariations,
       scoreConfig: scoreConfig ?? this.scoreConfig,
+      currentRound: currentRound ?? this.currentRound,
     );
   }
 }

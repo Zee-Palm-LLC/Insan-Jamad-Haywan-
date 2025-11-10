@@ -222,6 +222,7 @@ class LobbyCreationController extends GetxController {
       final gameConfig = GameConfigModel(
         maxRounds: maxRounds,
         defaultTimePerRound: timerPerRound,
+        currentRound: 0,
         timePerRoundVariations: [30, 45, 60, 90],
         scoreConfig: ScoreConfigModel(correctGuess: 100, fooledOther: 50),
       );

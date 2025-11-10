@@ -117,7 +117,7 @@ class LobbyController extends GetxController {
     update();
   }
 
-  Future<void> startGame() async {
+  Future<void> startGame({Function? onSuccess}) async {
     await NetworkCall.networkCall(
       onError: (e, s) => AppToaster.showToast(
         'Error',
@@ -135,6 +135,11 @@ class LobbyController extends GetxController {
         }
 
         await PlayflowClient.instance.sendHearBears(lobby.id!);
+        FirebaseFirestoreService.instance
+            .getSessionStatusStream(lobby.id!)
+            .listen((event) {
+              onSuccess?.call();
+            });
 
         final updated = await _broadcastService.updateGameStatus(
           lobbyId: currentRoom.id!,

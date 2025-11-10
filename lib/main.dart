@@ -17,6 +17,26 @@ import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 late FirebaseApp insanJamdHawanFirebaseApp;
 
 void main() async {
+  FlutterError.onError = (details) {
+    developer.log(
+      '[APP ERROR] ${details.exceptionAsString()}',
+      name: 'FlutterError',
+      stackTrace: details.stack,
+      error: details.exception,
+    );
+  };
+
+  // global error catching for Dart (non-Flutter framework errors)
+  PlatformDispatcher.instance.onError = (error, stack) {
+    developer.log(
+      '[APP ERROR] Uncaught error: $error',
+      name: 'PlatformDispatcher',
+      error: error,
+      stackTrace: stack,
+    );
+    return true;
+  };
+
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(defaultOverlay);
   await StorageService.instance.init();
@@ -26,23 +46,51 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await _signInAnonymously();
+  try {
+    await _signInAnonymously();
+  } catch (e, stackTrace) {
+    developer.log(
+      '[APP ERROR] Error: $e during _signInAnonymously',
+      name: 'SplashScreen',  // likely during app start
+      error: e,
+      stackTrace: stackTrace,
+    );
+  }
 
-  FirebaseFirestoreService.initialize(app: insanJamdHawanFirebaseApp);
+  try {
+    FirebaseFirestoreService.initialize(app: insanJamdHawanFirebaseApp);
+  } catch (e, stackTrace) {
+    developer.log(
+      '[APP ERROR] Error: $e during FirebaseFirestoreService.initialize',
+      name: 'main/FirebaseInitializer',
+      error: e,
+      stackTrace: stackTrace,
+    );
+  }
 
   try {
     OpenAIClient.instance.initialize();
     developer.log('OpenAI client initialized successfully', name: 'main');
   } catch (e, stackTrace) {
     developer.log(
-      'Failed to initialize OpenAI client: $e',
-      name: 'main',
+      '[APP ERROR] Failed to initialize OpenAI client: $e',
+      name: 'main (OpenAIClient)',
       error: e,
       stackTrace: stackTrace,
     );
   }
 
-  await _cleanupExistingLobby();
+  try {
+    await _cleanupExistingLobby();
+  } catch (e, stackTrace) {
+    developer.log(
+      '[APP ERROR] Error: $e during _cleanupExistingLobby',
+      name: 'main/LobbyCleanup',
+      error: e,
+      stackTrace: stackTrace,
+    );
+  }
+
   runApp(const InsanJamdHawan());
 }
 
@@ -65,11 +113,12 @@ Future<void> _signInAnonymously() async {
     );
   } catch (e, stackTrace) {
     developer.log(
-      'Error signing in anonymously: $e',
+      '[APP ERROR] Error signing in anonymously: $e',
       error: e,
       stackTrace: stackTrace,
-      name: 'FirebaseAuth',
+      name: 'FirebaseAuth (SplashScreen)',
     );
+    rethrow;
   }
 }
 
@@ -111,10 +160,11 @@ Future<void> _cleanupExistingLobby() async {
     }
   } catch (e, stackTrace) {
     developer.log(
-      'Error during lobby cleanup: $e',
+      '[APP ERROR] Error during lobby cleanup: $e',
       error: e,
       stackTrace: stackTrace,
-      name: 'cleanupLobby',
+      name: 'cleanupLobby (LobbyStartupScreen)',
     );
+    rethrow;
   }
 }

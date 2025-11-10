@@ -14,7 +14,6 @@ import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/waiting_view/waiting_view.dart';
 import 'package:insan_jamd_hawan/core/modules/main_menu/main_menu_page.dart';
 import 'package:insan_jamd_hawan/core/modules/players/player_info/player_info.dart';
-import 'package:insan_jamd_hawan/core/modules/players/player_wheel/player_wheel_view.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
@@ -70,12 +69,7 @@ class AppRouter {
             );
           }
 
-          return AnswersHostView(
-            selectedAlphabet: letter,
-            sessionId: extra['sessionId'] as String,
-            roundNumber: extra['roundNumber'] as int,
-            totalSeconds: extra['totalSeconds'] as int? ?? 60,
-          );
+          return AnswersHostView();
         },
       ),
       GoRoute(
@@ -93,11 +87,7 @@ class AppRouter {
             );
           }
 
-          return ScoringView(
-            selectedAlphabet: letter,
-            sessionId: extra['sessionId'] as String,
-            roundNumber: extra['roundNumber'] as int,
-          );
+          return ScoringView(selectedAlphabet: letter);
         },
       ),
       GoRoute(
@@ -158,11 +148,11 @@ class AppRouter {
           return GameLobbyView(controller: controller);
         },
       ),
-      GoRoute(
-        path: PlayerWheelView.path,
-        name: PlayerWheelView.name,
-        builder: (context, state) => const PlayerWheelView(),
-      ),
+      // GoRoute(
+      //   path: FortuneWheelPage.path,
+      //   name: FortuneWheelPage.name,
+      //   builder: (context, state) => const LetterGeneratorView(),
+      // ),
       GoRoute(
         path: PlayerAnswerView.path,
         name: PlayerAnswerView.name,
@@ -178,12 +168,7 @@ class AppRouter {
             );
           }
 
-          return PlayerAnswerView(
-            selectedLetter: letter,
-            sessionId: extra['sessionId'] as String,
-            roundNumber: extra['roundNumber'] as int,
-            totalSeconds: extra['totalSeconds'] as int? ?? 60,
-          );
+          return PlayerAnswerView(selectedLetter: letter);
         },
       ),
     ],
