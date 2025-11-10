@@ -1,28 +1,188 @@
+import 'dart:developer';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
+import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
+import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/components/final_scoreboard_list.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/components/final_scoreboard_podium.dart';
+import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 
 class ScoreboardController extends GetxController {
+  // Regular scoreboard data
   final List<Map<String, dynamic>> shownPlayers = [];
 
-  final List<Map<String, dynamic>> _players = [
-    {'name': 'Sophia', 'totalPoints': 1250, 'pointsGained': 23, 'rank': 1},
-    {'name': 'Ethan', 'totalPoints': 654, 'pointsGained': 22, 'rank': 2},
-    {'name': 'Carter', 'totalPoints': 432, 'pointsGained': 19, 'rank': 3},
-    {'name': 'Ethan', 'totalPoints': 654, 'pointsGained': 22, 'rank': 4},
-    {'name': 'Carter', 'totalPoints': 432, 'pointsGained': 19, 'rank': 5},
-    {'name': 'Liam John', 'totalPoints': 580, 'pointsGained': 27, 'rank': 6},
-  ];
+  // Final scoreboard data
+  List<PodiumPlayer> podiumPlayers = [];
+  List<ScoreboardListPlayer> listPlayers = [];
+
+  bool isLoading = true;
+  String? error;
+  bool isFinalRound = false;
+
+  LobbyController get lobbyController => Get.find<LobbyController>();
+  WheelController get wheelController => Get.find<WheelController>();
+  FirebaseFirestoreService get _firestore => FirebaseFirestoreService.instance;
 
   @override
   void onInit() {
     super.onInit();
-    _simulateAppearing();
+    isFinalRound =
+        wheelController.maxRoundSelectedByTheHost ==
+        wheelController.currentRound;
+    loadScoreboardData();
   }
 
-  Future<void> _simulateAppearing() async {
-    for (final player in _players) {
-      await Future.delayed(const Duration(milliseconds: 700));
+  Future<void> loadScoreboardData() async {
+    try {
+      isLoading = true;
+      error = null;
+      update();
+
+      final sessionId = lobbyController.lobby.id;
+      if (sessionId == null || sessionId.isEmpty) {
+        throw Exception('Session ID is not available');
+      }
+
+      final players = await _firestore.getLeaderboard(sessionId);
+
+      if (isFinalRound) {
+        await _loadFinalRoundData(sessionId, players);
+      } else {
+        await _loadRegularRoundData(sessionId, players);
+      }
+
+      isLoading = false;
+      update();
+    } catch (e, stackTrace) {
+      log(
+        'Error loading scoreboard data: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      error = e.toString();
+      isLoading = false;
+      update();
+    }
+  }
+
+  Future<void> _loadRegularRoundData(String sessionId, List players) async {
+    final currentRound = wheelController.currentRound;
+
+    final roundAnswers = await _firestore.getAllAnswers(
+      sessionId,
+      currentRound,
+    );
+
+    final roundScoresMap = <String, int>{};
+    for (final answer in roundAnswers) {
+      roundScoresMap[answer.playerId] = answer.scoring?.roundScore ?? 0;
+    }
+
+    final List<Map<String, dynamic>> playersData = [];
+    for (int i = 0; i < players.length; i++) {
+      final player = players[i];
+      final rank = i + 1;
+      final pointsGained = roundScoresMap[player.playerId] ?? 0;
+
+      playersData.add({
+        'playerId': player.playerId,
+        'name': player.playerName,
+        'avatarUrl':
+            player.playerAvatar ??
+            'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170',
+        'totalPoints': player.totalScore,
+        'pointsGained': pointsGained,
+        'rank': rank,
+      });
+    }
+
+    shownPlayers.clear();
+    for (final player in playersData) {
+      await Future.delayed(const Duration(milliseconds: 300));
       shownPlayers.add(player);
       update();
     }
+  }
+
+  Future<void> _loadFinalRoundData(String sessionId, List players) async {
+    final allRounds = await _firestore.getAllRounds(sessionId);
+
+    final totalPointsGainedMap = <String, int>{};
+    for (final round in allRounds) {
+      final roundAnswers = await _firestore.getAllAnswers(
+        sessionId,
+        round.roundNumber,
+      );
+      for (final answer in roundAnswers) {
+        final roundScore = answer.scoring?.roundScore ?? 0;
+        totalPointsGainedMap[answer.playerId] =
+            (totalPointsGainedMap[answer.playerId] ?? 0) + roundScore;
+      }
+    }
+
+    podiumPlayers = [];
+    for (int i = 0; i < players.length && i < 3; i++) {
+      final player = players[i];
+      final totalPointsGained = totalPointsGainedMap[player.playerId] ?? 0;
+
+      String badge;
+      Color color;
+      Color textColor;
+
+      if (i == 0) {
+        badge = AppAssets.firstBadge;
+        color = AppColors.kPrimary;
+        textColor = AppColors.kWhite;
+      } else if (i == 1) {
+        badge = AppAssets.secondBadge;
+        color = const Color(0xFFFED643);
+        textColor = AppColors.kBlack;
+      } else {
+        badge = AppAssets.thirdBadge;
+        color = const Color(0xFFBED6E2);
+        textColor = AppColors.kBlack;
+      }
+
+      podiumPlayers.add(
+        PodiumPlayer(
+          rank: i + 1,
+          name: player.playerName,
+          score:
+              '+${totalPointsGained.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+          avatarUrl:
+              player.playerAvatar ??
+              'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170',
+          color: color,
+          badge: badge,
+          textColor: textColor,
+        ),
+      );
+    }
+
+    listPlayers = [];
+    for (int i = 3; i < players.length; i++) {
+      final player = players[i];
+      final totalPointsGained = totalPointsGainedMap[player.playerId] ?? 0;
+
+      listPlayers.add(
+        ScoreboardListPlayer(
+          rank: '${i + 1}th',
+          name: player.playerName,
+          totalPoints: '${player.totalScore} pts',
+          pointsGained: '+$totalPointsGained',
+          avatarUrl:
+              player.playerAvatar ??
+              'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170',
+        ),
+      );
+    }
+  }
+
+  String getPositionText(int rank) {
+    if (rank == 1) return '1st';
+    if (rank == 2) return '2nd';
+    if (rank == 3) return '3rd';
+    return '${rank}th';
   }
 }

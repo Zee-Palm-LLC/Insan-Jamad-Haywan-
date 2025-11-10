@@ -7,7 +7,7 @@ import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/final_round_scoreboard.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/animations/progress_dialog.dart';
 import 'package:insan_jamd_hawan/core/services/answer_evaluation_service.dart';
@@ -87,8 +87,6 @@ class AnswerController extends GetxController {
               "Timer updated: remaining=$remainingSeconds, total=$totalSeconds, endTime=$_roundEndTime",
               name: 'AnswerController',
             );
-
-            // Start periodic timer for real-time countdown
             _startPeriodicTimer();
           },
           onError: (error) {
@@ -138,17 +136,31 @@ class AnswerController extends GetxController {
   Future<void> autoSubmit() async {
     //listen the new document in the rounds / 1/ players & answers (answers is not empty)
     await submitAnswers(onSuccess: () {});
+    String selectedLetter = wheelController.selectedLetter ?? "A";
+    try {
+      final round = await _db.getRound(
+        lobbyController.lobby.id ?? "",
+        wheelController.currentRound,
+      );
+      if (round != null && round.selectedLetter.isNotEmpty) {
+        selectedLetter = round.selectedLetter;
+      }
+    } catch (e) {
+      log(
+        'Error getting round letter in autoSubmit, using fallback: $e',
+        name: 'AnswerController',
+      );
+    }
+
     if (wheelController.currentRound ==
         wheelController.maxRoundSelectedByTheHost) {
-      navigatorKey.currentContext?.push(ScoreboardView.path);
+      // Navigate to final round scoreboard for final round (final round is the last round)
+      navigatorKey.currentContext?.push(FinalRoundScoreboard.path);
       return;
     }
     navigatorKey.currentContext?.push(
-      ScoringView.path.replaceAll(
-        ":letter",
-        wheelController.selectedLetter ?? "A",
-      ),
-      extra: {"selectedAlphabet": wheelController.selectedLetter ?? "A"},
+      ScoringView.path.replaceAll(":letter", selectedLetter),
+      extra: {"selectedAlphabet": selectedLetter},
     );
   }
 
@@ -254,7 +266,23 @@ class AnswerController extends GetxController {
 
             isEvaluating = true;
             final currentRound = wheelController.currentRound;
-            final selectedLetter = wheelController.selectedLetter ?? "A";
+
+            String selectedLetter = wheelController.selectedLetter ?? "A";
+            try {
+              final round = await _db.getRound(
+                Get.find<LobbyController>().lobby.id ?? "",
+                currentRound,
+              );
+              if (round != null && round.selectedLetter.isNotEmpty) {
+                selectedLetter = round.selectedLetter;
+              }
+            } catch (e) {
+              log(
+                'Error getting round letter, using fallback: $e',
+                name: 'AnswerController',
+              );
+            }
+
             final context = navigatorKey.currentContext;
 
             // Show progress dialog with selected letter
@@ -289,13 +317,6 @@ class AnswerController extends GetxController {
                 AppToaster.showToast(
                   "Answer evaluation completed successfully",
                 );
-
-                // Check if this is the last round
-                if (Get.find<WheelController>().currentRound ==
-                    Get.find<WheelController>().maxRoundSelectedByTheHost) {
-                  context.pushNamed(ScoreboardView.name);
-                  return;
-                }
               } else {
                 AppToaster.showToast(
                   "Navigation context is not available",

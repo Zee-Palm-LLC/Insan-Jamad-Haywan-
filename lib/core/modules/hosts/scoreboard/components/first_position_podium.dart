@@ -54,8 +54,18 @@ class PositionPodium extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(100.r),
               child: Image.network(
-                'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170',
+                image,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: AppColors.kGray300,
+                    child: Icon(
+                      Icons.person,
+                      size: 30.sp,
+                      color: AppColors.kGray600,
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -65,7 +75,7 @@ class PositionPodium extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Sophia',
+                  name,
                   style: AppTypography.kBold16.copyWith(
                     height: 1.2,
                     color: isFirst ? AppColors.kWhite : AppColors.kRed500,

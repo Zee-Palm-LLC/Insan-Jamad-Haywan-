@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -13,17 +14,16 @@ import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/final_round_scoreboard.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/components/scoring_playing_tile.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
-import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
-import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
-class ScoringView extends StatelessWidget {
+class ScoringView extends StatefulWidget {
   const ScoringView({super.key, required this.selectedAlphabet});
 
   final String selectedAlphabet;
@@ -31,8 +31,41 @@ class ScoringView extends StatelessWidget {
   static const String path = '/scoring/:letter';
   static const String name = 'Scoring';
 
+  @override
+  State<ScoringView> createState() => _ScoringViewState();
+}
+
+class _ScoringViewState extends State<ScoringView> {
   LobbyController get lobbyController => Get.find<LobbyController>();
   WheelController get wheelController => Get.find<WheelController>();
+  Timer? _navigationTimer;
+  bool _hasNavigated = false;
+
+  @override
+  void dispose() {
+    _navigationTimer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleNavigation() {
+    if (_hasNavigated) return;
+
+    _navigationTimer?.cancel();
+    _navigationTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted && !_hasNavigated) {
+        _hasNavigated = true;
+        final bool isFinalRound =
+            wheelController.maxRoundSelectedByTheHost ==
+            wheelController.currentRound;
+
+        if (isFinalRound) {
+          context.pushReplacement(FinalRoundScoreboard.path);
+        } else {
+          context.pushReplacement(ScoreboardView.path);
+        }
+      }
+    });
+  }
 
   List<Widget> _buildCategoryAnswers(
     List<PlayerAnswerModel> currentRoundPlayersAnswers,
@@ -130,6 +163,10 @@ class ScoringView extends StatelessWidget {
             "This is the player length ${allPlayers?.length} and answered players: ${answeredPlayers.length}",
           );
           if (answeredPlayers.length >= (allPlayers?.length ?? 0)) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _scheduleNavigation();
+            });
+
             return GetBuilder<AnswerController>(
               builder: (controller) {
                 return Scaffold(
@@ -190,7 +227,7 @@ class ScoringView extends StatelessWidget {
                                       alignment: Alignment.bottomCenter,
                                       padding: EdgeInsets.only(top: 6.h),
                                       child: Text(
-                                        selectedAlphabet,
+                                        widget.selectedAlphabet,
                                         style: AppTypography.kRegular41
                                             .copyWith(
                                               color: AppColors.kWhite,
@@ -237,7 +274,6 @@ class ScoringView extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              StartNextRoundButton(),
                             ],
                           ),
                         ),
@@ -258,41 +294,6 @@ class ScoringView extends StatelessWidget {
             ),
           ),
         );
-      },
-    );
-  }
-}
-
-class StartNextRoundButton extends StatelessWidget {
-  const StartNextRoundButton({super.key});
-
-  LobbyController get controller => Get.find<LobbyController>();
-  WheelController get wheelController => Get.find<WheelController>();
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: AppService.getPlayerId(),
-      builder: (context, snap) {
-        if (snap.hasData == false) {
-          return Center(child: CircularProgressIndicator.adaptive());
-        }
-        bool isHost = snap.data == controller.lobby.host;
-        if (isHost) {
-          return PrimaryButton(
-            text:
-                wheelController.maxRoundSelectedByTheHost ==
-                    wheelController.currentRound
-                ? 'Start Final Round'
-                : 'Start Next Round',
-            onPressed: () {
-              wheelController.startNextRound();
-              context.pushReplacement(LetterGeneratorView.path);
-            },
-          );
-        } else {
-          return SizedBox();
-        }
       },
     );
   }

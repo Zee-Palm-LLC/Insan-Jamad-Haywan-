@@ -9,6 +9,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_round_view
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/game_lobby_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/final_round_scoreboard.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/waiting_view/waiting_view.dart';
@@ -130,6 +131,11 @@ class AppRouter {
             category: category,
           );
         },
+      ),
+      GoRoute(
+        path: FinalRoundScoreboard.path,
+        name: FinalRoundScoreboard.name,
+        builder: (context, state) => const FinalRoundScoreboard(),
       ),
       GoRoute(path: '/', redirect: (context, state) => MainMenuPage.path),
       GoRoute(

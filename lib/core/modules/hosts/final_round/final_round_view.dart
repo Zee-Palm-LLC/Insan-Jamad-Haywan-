@@ -1,17 +1,20 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
-class FinalRoundView extends StatelessWidget {
+class FinalRoundView extends StatefulWidget {
   const FinalRoundView({
     super.key,
     this.isPlayer = true,
@@ -25,6 +28,43 @@ class FinalRoundView extends StatelessWidget {
 
   static const String path = '/final-round';
   static const String name = 'FinalRound';
+
+  @override
+  State<FinalRoundView> createState() => _FinalRoundViewState();
+}
+
+class _FinalRoundViewState extends State<FinalRoundView> {
+  Timer? _navigationTimer;
+  bool _hasNavigated = false;
+  LobbyController get lobbyController => Get.find<LobbyController>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isPlayer) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scheduleNavigation();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _navigationTimer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleNavigation() {
+    if (_hasNavigated) return;
+
+    _navigationTimer?.cancel();
+    _navigationTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && !_hasNavigated) {
+        _hasNavigated = true;
+        context.pushReplacement(LetterGeneratorView.path);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +96,7 @@ class FinalRoundView extends StatelessWidget {
                   if (!isDesktop) SizedBox(height: 50.h),
                   GameLogo(),
                   SizedBox(height: 12.h),
-                  RoomCodeText(lobbyId: 'XY21234'),
+                  RoomCodeText(lobbyId: lobbyController.lobby.id ?? 'N/A'),
                   SizedBox(height: 40.h),
                   Container(
                     width: double.maxFinite,
@@ -79,7 +119,7 @@ class FinalRoundView extends StatelessWidget {
                             fontSize: 24.sp,
                           ),
                         ),
-                        if (isPlayer) ...[
+                        if (widget.isPlayer) ...[
                           SizedBox(height: 20.h),
                           Text(
                             'You only have 30 seconds & a surprise category',
@@ -95,7 +135,7 @@ class FinalRoundView extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (!isPlayer) ...[
+                  if (!widget.isPlayer) ...[
                     SizedBox(height: 20.h),
                     Row(
                       children: [
@@ -112,7 +152,7 @@ class FinalRoundView extends StatelessWidget {
                             border: Border.all(color: AppColors.kGray600),
                           ),
                           child: Text(
-                            selectedAlphabet ?? 'A',
+                            widget.selectedAlphabet ?? 'A',
                             style: AppTypography.kBold21,
                           ),
                         ),
@@ -137,7 +177,7 @@ class FinalRoundView extends StatelessWidget {
                             border: Border.all(color: AppColors.kGray600),
                           ),
                           child: Text(
-                            category ?? 'Animals',
+                            widget.category ?? 'Animals',
                             style: AppTypography.kBold21,
                           ),
                         ),
@@ -145,9 +185,9 @@ class FinalRoundView extends StatelessWidget {
                     ),
                     SizedBox(height: 54.h),
                     PrimaryButton(
-                      text: 'See Final Scoreboard',
+                      text: 'Start Final Round',
                       onPressed: () {
-                        context.push(ScoreboardView.path);
+                        context.pushReplacement(LetterGeneratorView.path);
                       },
                     ),
                   ],
