@@ -34,6 +34,8 @@ class AnswerController extends GetxController {
   bool isEvaluating = false;
   StreamSubscription<int>? _submissionCountSubscription;
   StreamSubscription<int>? _timerSubscription;
+  Timer? _periodicTimer;
+  DateTime? _roundEndTime;
 
   bool doublePoints = false;
   int secondsRemaining = 0;
@@ -42,7 +44,6 @@ class AnswerController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    startTimer();
   }
 
   void startTimer() {
@@ -51,6 +52,7 @@ class AnswerController extends GetxController {
 
   void startTimerSync() {
     _timerSubscription?.cancel();
+    _periodicTimer?.cancel();
     final sessionId = lobbyController.lobby.id ?? "";
     final currentRound = wheelController.currentRound;
 
@@ -75,12 +77,19 @@ class AnswerController extends GetxController {
             totalSeconds = remainingSeconds > 0
                 ? remainingSeconds
                 : totalSeconds;
+            _roundEndTime = DateTime.now().add(
+              Duration(seconds: remainingSeconds),
+            );
+
             update();
 
             log(
-              "Timer updated: remaining=$remainingSeconds, total=$totalSeconds",
+              "Timer updated: remaining=$remainingSeconds, total=$totalSeconds, endTime=$_roundEndTime",
               name: 'AnswerController',
             );
+
+            // Start periodic timer for real-time countdown
+            _startPeriodicTimer();
           },
           onError: (error) {
             log(
@@ -90,6 +99,34 @@ class AnswerController extends GetxController {
             );
           },
         );
+  }
+
+  void _startPeriodicTimer() {
+    _periodicTimer?.cancel();
+    _periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_roundEndTime == null) return;
+
+      final now = DateTime.now();
+      final difference = _roundEndTime!.difference(now);
+      final remainingSeconds = difference.inSeconds;
+
+      if (remainingSeconds <= 0) {
+        secondsRemaining = 0;
+        _periodicTimer?.cancel();
+      } else {
+        secondsRemaining = remainingSeconds;
+      }
+
+      update();
+    });
+  }
+
+  void cancelTimerSync() {
+    _timerSubscription?.cancel();
+    _timerSubscription = null;
+    _periodicTimer?.cancel();
+    _periodicTimer = null;
+    _roundEndTime = null;
   }
 
   String get formattedTime {
@@ -178,6 +215,7 @@ class AnswerController extends GetxController {
   void onClose() {
     _submissionCountSubscription?.cancel();
     _timerSubscription?.cancel();
+    _periodicTimer?.cancel();
     nameController.dispose();
     objectController.dispose();
     animalController.dispose();
@@ -299,6 +337,8 @@ class AnswerController extends GetxController {
   void restController() {
     _submissionCountSubscription?.cancel();
     _timerSubscription?.cancel();
+    _periodicTimer?.cancel();
+    _roundEndTime = null;
     nameController.clear();
     objectController.clear();
     animalController.clear();

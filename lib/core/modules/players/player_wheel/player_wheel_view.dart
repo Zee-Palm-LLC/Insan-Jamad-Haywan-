@@ -35,9 +35,7 @@ class PlayerWheelView extends StatelessWidget {
                   wheelController
                           .roundStatus["${wheelController.currentRound}"] ==
                       "started"
-              ? PlayerAnswerView(
-                  selectedLetter: wheelController.selectedLetter ?? "N/A",
-                )
+              ? const PlayerAnswerView()
               : SingleChildScrollView(
                   padding: EdgeInsets.all(16.h),
                   child: StreamBuilder(

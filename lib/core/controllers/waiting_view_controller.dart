@@ -81,15 +81,7 @@ class WaitingViewController extends GetxController {
         try {
           final context = navigatorKey.currentContext;
           if (context != null && context.mounted) {
-            GoRouter.of(context).go(
-              '${PlayerAnswerView.path}?letter=$selectedLetter',
-              extra: {
-                'sessionId': sessionId,
-                'roundNumber': roundNumber,
-                'selectedLetter': selectedLetter,
-                'totalSeconds': totalSeconds,
-              },
-            );
+            GoRouter.of(context).go(PlayerAnswerView.path);
             developer.log(
               'Navigation successful to PlayerAnswerView',
               name: 'WaitingView',

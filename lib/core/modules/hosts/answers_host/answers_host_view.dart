@@ -17,6 +17,7 @@ import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'dart:developer';
 
 class AnswersHostView extends StatefulWidget {
   const AnswersHostView({super.key});
@@ -52,12 +53,19 @@ class _AnswersHostViewState extends State<AnswersHostView>
       duration: const Duration(milliseconds: 800),
     );
 
-    // Add listener to call updateStartCounting when animation ends
+    // Add listener to call updateStartCounting when animation ends and start timer sync
     _letterController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         final lobbyId = lobbyController.lobby.id;
         if (lobbyId != null && lobbyId.isNotEmpty) {
           _db.updateStartCounting(lobbyId, false);
+        }
+        if (Get.isRegistered<AnswerController>()) {
+          try {
+            Get.find<AnswerController>().startTimerSync();
+          } catch (e) {
+            log('Error starting timer sync: $e', name: 'AnswersHostView');
+          }
         }
       }
     });
@@ -105,6 +113,14 @@ class _AnswersHostViewState extends State<AnswersHostView>
 
   @override
   void dispose() {
+    // Cancel timer subscription when navigating away
+    if (Get.isRegistered<AnswerController>()) {
+      try {
+        Get.find<AnswerController>().cancelTimerSync();
+      } catch (e) {
+        log('Error cancelling timer subscription: $e', name: 'AnswersHostView');
+      }
+    }
     _countdownController.dispose();
     _letterController.dispose();
     super.dispose();
@@ -244,7 +260,7 @@ class _AnswersHostViewState extends State<AnswersHostView>
               onTap: () {
                 context.push(
                   ScoringView.path.replaceAll(
-                    'A',
+                    ':letter',
                     wheelController.selectedLetter ?? '',
                   ),
                 );
@@ -289,13 +305,7 @@ class _AnswersHostViewState extends State<AnswersHostView>
       duration: const Duration(milliseconds: 600),
       onPressed: () {
         wheelController.updateRoundStatus('started');
-        context.push(
-          PlayerAnswerView.path.replaceAll(
-            'A',
-            wheelController.selectedLetter ?? '',
-          ),
-          extra: {"selectedLetter": wheelController.selectedLetter ?? ''},
-        );
+        context.push(PlayerAnswerView.path);
       },
     );
   }

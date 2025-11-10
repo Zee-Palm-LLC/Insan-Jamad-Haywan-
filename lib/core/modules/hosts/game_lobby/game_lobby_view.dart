@@ -38,16 +38,6 @@ class _GameLobbyViewState extends State<GameLobbyView> {
     GameControllerManager.putAllGameControllers();
     super.initState();
     widget.controller.addListener(_handlePhaseChange);
-
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (Get.isRegistered<AnswerController>()) {
-        try {
-          Get.find<AnswerController>().startTimerSync();
-        } catch (e) {
-          log('Error starting timer sync: $e', name: 'GameLobbyView');
-        }
-      }
-    });
   }
 
   @override
@@ -171,23 +161,7 @@ class _GameLobbyViewState extends State<GameLobbyView> {
                               onPressed: players.length < 2
                                   ? null
                                   : () async {
-                                      await widget.controller.startGame(
-                                        onSuccess: () {
-                                          if (Get.isRegistered<
-                                            AnswerController
-                                          >()) {
-                                            try {
-                                              Get.find<AnswerController>()
-                                                  .startTimerSync();
-                                            } catch (e) {
-                                              log(
-                                                'Error restarting timer sync: $e',
-                                                name: 'GameLobbyView',
-                                              );
-                                            }
-                                          }
-                                        },
-                                      );
+                                      await widget.controller.startGame();
                                       if (context.mounted) {
                                         context.push(
                                           LetterGeneratorView.path,

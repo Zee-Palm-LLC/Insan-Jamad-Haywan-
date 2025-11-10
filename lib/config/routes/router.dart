@@ -157,18 +157,7 @@ class AppRouter {
         path: PlayerAnswerView.path,
         name: PlayerAnswerView.name,
         builder: (context, state) {
-          final letter = state.uri.queryParameters['letter'] ?? 'A';
-          final extra = state.extra as Map<String, dynamic>?;
-
-          if (extra == null) {
-            return const Scaffold(
-              body: Center(
-                child: Text('Missing session data. Please start from lobby.'),
-              ),
-            );
-          }
-
-          return PlayerAnswerView(selectedLetter: letter);
+          return const PlayerAnswerView();
         },
       ),
     ],

@@ -9,25 +9,41 @@ import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/custom_paint/handdrawn_border.dart';
-import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
-class PlayerAnswerView extends StatelessWidget {
-  const PlayerAnswerView({super.key, required this.selectedLetter});
-
-  final String selectedLetter;
+class PlayerAnswerView extends StatefulWidget {
+  const PlayerAnswerView({super.key});
 
   static const String path = '/player-answer';
   static const String name = 'PlayerAnswer';
+
+  @override
+  State<PlayerAnswerView> createState() => _PlayerAnswerViewState();
+}
+
+class _PlayerAnswerViewState extends State<PlayerAnswerView> {
   WheelController get wheelController => Get.find<WheelController>();
   LobbyController get lobbyController => Get.find<LobbyController>();
+  AnswerController get answerController => Get.find<AnswerController>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      answerController.startTimerSync();
+    });
+  }
+
+  @override
+  void dispose() {
+    answerController.cancelTimerSync();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,13 +99,14 @@ class PlayerAnswerView extends StatelessWidget {
                             alignment: Alignment.bottomCenter,
                             padding: EdgeInsets.only(top: 6.h),
                             child: Text(
-                              selectedLetter,
+                              wheelController.selectedLetter ?? '',
                               style: AppTypography.kRegular41.copyWith(
                                 color: AppColors.kWhite,
                                 height: 1,
                               ),
                             ),
                           ),
+
                           const Spacer(),
                           Container(
                             padding: EdgeInsets.symmetric(
