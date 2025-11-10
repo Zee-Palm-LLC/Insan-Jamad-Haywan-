@@ -63,7 +63,10 @@ class PlayerAnswerView extends StatelessWidget {
                       if (!isDesktop) SizedBox(height: 50.h),
                       GameLogo(),
                       SizedBox(height: 12.h),
-                      RoomCodeText(lobbyId: 'XY21234', iSend: true),
+                      RoomCodeText(
+                        lobbyId: lobbyController.lobby.id ?? '',
+                        iSend: true,
+                      ),
                       SizedBox(height: 20.h),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -80,7 +83,7 @@ class PlayerAnswerView extends StatelessWidget {
                             alignment: Alignment.bottomCenter,
                             padding: EdgeInsets.only(top: 6.h),
                             child: Text(
-                              'A',
+                              selectedLetter,
                               style: AppTypography.kRegular41.copyWith(
                                 color: AppColors.kWhite,
                                 height: 1,

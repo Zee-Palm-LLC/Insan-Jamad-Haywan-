@@ -9,6 +9,7 @@ import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
+import 'package:insan_jamd_hawan/core/modules/widgets/animations/progress_dialog.dart';
 import 'package:insan_jamd_hawan/core/services/answer_evaluation_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
@@ -29,6 +30,9 @@ class AnswerController extends GetxController {
   List<PlayerAnswerModel> currentRoundPlayersAnswers = <PlayerAnswerModel>[];
   bool submitByAllUsers = false;
   bool aiEvaluated = false;
+  bool isSubmitting = false;
+  bool isEvaluating = false;
+  StreamSubscription<int>? _submissionCountSubscription;
 
   bool doublePoints = false;
   int secondsRemaining = 0;
@@ -75,6 +79,11 @@ class AnswerController extends GetxController {
   Future<void> submitAnswers({required Function onSuccess}) async {
     //1- Time out //3- Auto
     //2- Submit the answers by his self
+    if (isSubmitting) {
+      log("Answer submission already in progress", name: 'AnswerController');
+      return;
+    }
+
     if (nameController.text.trim().isEmpty &&
         objectController.text.trim().isEmpty &&
         animalController.text.trim().isEmpty &&
@@ -83,33 +92,42 @@ class AnswerController extends GetxController {
       throw Exception("At least one answer should be provided");
     }
 
-    String playerName = await AppService.getPlayerId() ?? "N/A";
-    String sessionId = lobbyController.lobby.id ?? "";
+    isSubmitting = true;
+    update();
 
-    if (sessionId.isEmpty) {
-      throw Exception("Session ID cannot be empty");
+    try {
+      String playerName = await AppService.getPlayerId() ?? "N/A";
+      String sessionId = lobbyController.lobby.id ?? "";
+
+      if (sessionId.isEmpty) {
+        throw Exception("Session ID cannot be empty");
+      }
+
+      // Submit the answers to Firestore
+      await FirebaseFirestoreService.instance.submitAnswers(
+        sessionId,
+        PlayerAnswerModel(
+          playerId: playerName,
+          playerName: playerName,
+          answers: {
+            "name": nameController.text.toLowerCase(),
+            "object": objectController.text.toLowerCase(),
+            "animal": animalController.text.toLowerCase(),
+            "plant": plantController.text.toLowerCase(),
+            "country": countryController.text.toLowerCase(),
+          },
+          submittedAt: DateTime.now(),
+          timeRemaining: totalSeconds - secondsRemaining,
+          votes: VotesReceived(votes: {}),
+        ),
+      );
+      onSuccess.call();
+      _allUserWhichHasSubmitTheAnswers();
+    } catch (e) {
+      isSubmitting = false;
+      update();
+      rethrow;
     }
-
-    // Submit the answers to Firestore
-    await FirebaseFirestoreService.instance.submitAnswers(
-      sessionId,
-      PlayerAnswerModel(
-        playerId: playerName,
-        playerName: playerName,
-        answers: {
-          "name": nameController.text.toLowerCase(),
-          "object": objectController.text.toLowerCase(),
-          "animal": animalController.text.toLowerCase(),
-          "plant": plantController.text.toLowerCase(),
-          "country": countryController.text.toLowerCase(),
-        },
-        submittedAt: DateTime.now(),
-        timeRemaining: totalSeconds - secondsRemaining,
-        votes: VotesReceived(votes: {}),
-      ),
-    );
-    onSuccess.call();
-    _allUserWhichHasSubmitTheAnswers();
   }
 
   void toggleDoublePoints() {
@@ -119,6 +137,7 @@ class AnswerController extends GetxController {
 
   @override
   void onClose() {
+    _submissionCountSubscription?.cancel();
     nameController.dispose();
     objectController.dispose();
     animalController.dispose();
@@ -137,7 +156,10 @@ class AnswerController extends GetxController {
   }
 
   void _allUserWhichHasSubmitTheAnswers() {
-    _db
+    // Cancel previous subscription if exists
+    _submissionCountSubscription?.cancel();
+
+    _submissionCountSubscription = _db
         .streamCountOfPlayersWhoSubmittedAnswers(
           Get.find<LobbyController>().lobby.id ?? "",
           Get.find<WheelController>().currentRound,
@@ -146,30 +168,46 @@ class AnswerController extends GetxController {
           log("This is the data that we have $event");
           if (event > 0 &&
               (event == Get.find<LobbyController>().lobby.players?.length)) {
-            try {
-              final currentRound = wheelController.currentRound;
-              final selectedLetter = wheelController.selectedLetter;
+            // Prevent multiple evaluations
+            if (isEvaluating) {
+              log("Evaluation already in progress", name: 'AnswerController');
+              return;
+            }
 
+            isEvaluating = true;
+            final currentRound = wheelController.currentRound;
+            final selectedLetter = wheelController.selectedLetter ?? "A";
+            final context = navigatorKey.currentContext;
+
+            // Show progress dialog with selected letter
+            if (context != null) {
+              ProgressDialog.show(
+                context: context,
+                message: "Evaluating answers for letter: $selectedLetter",
+                barrierDismissible: false,
+              );
+            }
+
+            try {
               await _evaluationService.evaluateRound(
                 sessionId: Get.find<LobbyController>().lobby.id ?? "",
                 roundNumber: currentRound,
-                //TODO: Just for testing
-                selectedLetter: selectedLetter ?? "A",
+                selectedLetter: selectedLetter,
               );
 
+              // Hide progress dialog
+              if (context != null) {
+                ProgressDialog.hide(context);
+              }
+
               // Navigate to ScoringView
-              final context = navigatorKey.currentContext;
               if (context != null) {
                 context.pushNamed(
                   ScoringView.name,
-                  pathParameters: {
-                    'letter': wheelController.selectedLetter ?? "A",
-                  },
-                  extra: {
-                    "selectedAlphabet": wheelController.selectedLetter ?? "A",
-                  },
+                  pathParameters: {'letter': selectedLetter},
+                  extra: {"selectedAlphabet": selectedLetter},
                 );
-                
+
                 AppToaster.showToast(
                   "Answer evaluation completed successfully",
                 );
@@ -192,12 +230,24 @@ class AnswerController extends GetxController {
                 name: 'AnswerController',
               );
             } catch (e, stackTrace) {
+              // Hide progress dialog on error
+              if (context != null) {
+                ProgressDialog.hide(context);
+              }
+
               log(
                 'Error during answer evaluation: $e',
                 name: 'AnswerController',
                 error: e,
                 stackTrace: stackTrace,
               );
+
+              AppToaster.showToast(
+                "Error during evaluation: ${e.toString()}",
+                type: ToastificationType.error,
+              );
+            } finally {
+              isEvaluating = false;
             }
           } else {
             log("All users haven't submitted the answers");
@@ -207,6 +257,7 @@ class AnswerController extends GetxController {
   }
 
   void restController() {
+    _submissionCountSubscription?.cancel();
     nameController.clear();
     objectController.clear();
     animalController.clear();
@@ -216,6 +267,8 @@ class AnswerController extends GetxController {
     secondsRemaining = 0;
     totalSeconds = 60;
     aiEvaluated = false;
+    isSubmitting = false;
+    isEvaluating = false;
     update();
   }
 }
