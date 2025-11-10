@@ -100,24 +100,19 @@ class AnswerController extends GetxController {
 
   Future<void> autoSubmit() async {
     //listen the new document in the rounds / 1/ players & answers (answers is not empty)
-    // await submitAnswers();
-    //  if (wheelController.currentRound ==
-    //                                     wheelController
-    //                                         .maxRoundSelectedByTheHost) {
-    //                                   context.push(ScoreboardView.path);
-    //                                   return;
-    //                                 }
-    //                                 context.push(
-    //                                   ScoringView.path.replaceAll(
-    //                                     ":letter",
-    //                                     wheelController.selectedLetter ?? "A",
-    //                                   ),
-    //                                   extra: {
-    //                                     "selectedAlphabet":
-    //                                         wheelController.selectedLetter ??
-    //                                         "A",
-    //                                   },
-    //                                 );
+    await submitAnswers(onSuccess: () {});
+    if (wheelController.currentRound ==
+        wheelController.maxRoundSelectedByTheHost) {
+      navigatorKey.currentContext?.push(ScoreboardView.path);
+      return;
+    }
+    navigatorKey.currentContext?.push(
+      ScoringView.path.replaceAll(
+        ":letter",
+        wheelController.selectedLetter ?? "A",
+      ),
+      extra: {"selectedAlphabet": wheelController.selectedLetter ?? "A"},
+    );
   }
 
   Future<void> submitAnswers({required Function onSuccess}) async {

@@ -9,9 +9,11 @@ import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
+import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/components/scoring_playing_tile.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
@@ -52,12 +54,14 @@ class ScoringView extends StatelessWidget {
       for (var playerAnswer in currentRoundPlayersAnswers) {
         String answer = playerAnswer.answers[category.toLowerCase()] ?? '';
         if (answer.isNotEmpty) {
+          final categoryKey = categoryLabels[category] ?? category;
+          final categoryScore = playerAnswer.scoring?.breakdown[categoryKey];
           categoryAnswers.add({
             'playerName': playerAnswer.playerName,
             'answer': answer,
-            'points': playerAnswer.scoring?.breakdown[category]?.points ?? 0,
-            'isCorrect':
-                playerAnswer.scoring?.breakdown[category]?.isCorrect ?? false,
+            'points': categoryScore?.points ?? 0,
+            'isCorrect': categoryScore?.isCorrect ?? false,
+            'status': categoryScore?.status,
           });
         }
       }
@@ -83,9 +87,8 @@ class ScoringView extends StatelessWidget {
                     name: categoryAnswers[i]['playerName'] as String,
                     answer: categoryAnswers[i]['answer'] as String,
                     points: categoryAnswers[i]['points'] as int,
-                    color: categoryAnswers[i]['isCorrect']
-                        ? AppColors.kGreen100
-                        : AppColors.kGray300,
+                    status:
+                        categoryAnswers[i]['status'] as AnswerEvaluationStatus?,
                     index: i + 1,
                   ),
                   if (i != categoryAnswers.length - 1)
@@ -284,14 +287,7 @@ class StartNextRoundButton extends StatelessWidget {
                 : 'Start Next Round',
             onPressed: () {
               wheelController.startNextRound();
-              if (isHost) {
-                context.pop();
-                context.pop();
-                context.pop();
-              } else {
-                context.pop();
-                context.pop();
-              }
+              context.pushReplacement(LetterGeneratorView.path);
             },
           );
         } else {

@@ -89,26 +89,64 @@ class AnswerEvaluationService {
           continue;
         }
 
+        developer.log(
+          'Processing evaluation for player ${answer.playerId}: $playerEvaluation',
+          name: 'AnswerEvaluationService',
+        );
+
         final categoryScores = <String, CategoryScore>{};
         int totalScore = 0;
         int correctCount = 0;
 
         for (final entry in playerEvaluation.entries) {
           final category = entry.key;
-          final evaluation = entry.value as Map<String, dynamic>;
-          final statusStr = evaluation['status'] as String;
-          final status = AnswerEvaluationStatus.fromJson(statusStr);
-          final points = status.points;
+          final evaluation = entry.value;
+          Map<String, dynamic> evaluationMap;
+          if (evaluation is Map<String, dynamic>) {
+            evaluationMap = evaluation;
+          } else {
+            developer.log(
+              'Unexpected evaluation type for category $category: ${evaluation.runtimeType}',
+              name: 'AnswerEvaluationService',
+            );
+            continue;
+          }
 
+          String statusStr;
+          int pointsValue;
+
+          if (evaluationMap['status'] is String) {
+            statusStr = evaluationMap['status'] as String;
+            final status = AnswerEvaluationStatus.fromJson(statusStr);
+            pointsValue = evaluationMap['points'] as int? ?? status.points;
+          } else if (evaluationMap['status'] is Map) {
+            final statusMap = evaluationMap['status'] as Map<String, dynamic>;
+            statusStr =
+                statusMap['value'] as String? ??
+                statusMap['status'] as String? ??
+                'incorrect';
+            pointsValue =
+                statusMap['points'] as int? ??
+                evaluationMap['points'] as int? ??
+                0;
+          } else {
+            developer.log(
+              'Invalid status format for category $category: ${evaluationMap['status']}',
+              name: 'AnswerEvaluationService',
+            );
+            continue;
+          }
+
+          final status = AnswerEvaluationStatus.fromJson(statusStr);
           final isCorrect = status == AnswerEvaluationStatus.correct;
           if (isCorrect) correctCount++;
 
           categoryScores[category] = CategoryScore(
             isCorrect: isCorrect,
-            points: points,
+            points: pointsValue,
             status: status,
           );
-          totalScore += points;
+          totalScore += pointsValue;
         }
 
         final scoringResult = ScoringResult(

@@ -148,6 +148,10 @@ class WheelController extends GetxController {
   void startNextRound() {
     _db.updateRoundedStatus(lobbyController.lobby.id!, currentRound, "pending");
     resetController();
+    if (lobbyController.lobby.id != null &&
+        (lobbyController.lobby.id?.isNotEmpty ?? false)) {
+      _db.updateCurrentSelectedLetter(lobbyController.lobby.id!, '');
+    }
     Get.find<AnswerController>().restController();
     update();
   }

@@ -6,16 +6,39 @@ class AudioService {
   static AudioService get instance => _instance;
   static final AudioService _instance = AudioService._();
 
-  AudioService._();
+  AudioService._() {
+    // Set up listener once to track when audio completes
+    player.onPlayerComplete.listen((_) {
+      _isPlaying = false;
+    });
+  }
 
   final player = AudioPlayer();
+  bool _isPlaying = false;
 
   Future<void> playAudio(AudioType audioType) async {
     // if (AppHelpers.getIsSoundOn()) {
     try {
+      if (_isPlaying) {
+        try {
+          await player.stop();
+          await Future.delayed(const Duration(milliseconds: 50));
+        } catch (e) {}
+      }
+
+      _isPlaying = true;
       await player.play(AssetSource(audioType.path, mimeType: 'audio/wav'));
     } catch (e, stackTrace) {
-      log(e.toString(), error: e, stackTrace: stackTrace, name: 'AudioService');
+      _isPlaying = false;
+
+      final errorMessage = e.toString();
+      if (errorMessage.contains('AbortError') ||
+          errorMessage.contains('play() request was interrupted') ||
+          errorMessage.contains('The play() request was interrupted')) {
+        return;
+      }
+
+      log(errorMessage, error: e, stackTrace: stackTrace, name: 'AudioService');
     }
     // }
   }
