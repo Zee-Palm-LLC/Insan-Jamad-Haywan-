@@ -18,15 +18,17 @@ class PlayerListCardController extends GetxController {
   }
 
   void updatePlayers(List<String> players) {
-    final newPlayers = players.where((p) => !joinedPlayers.contains(p)).toList();
+    final newPlayers = players
+        .where((p) => !joinedPlayers.contains(p))
+        .toList();
     if (newPlayers.isEmpty) {
       joinedPlayers.removeWhere((p) => !players.contains(p));
       _allPlayers = players;
       return;
     }
-    
+
     joinedPlayers.removeWhere((p) => !players.contains(p));
-    
+
     _allPlayers = players;
     if (!_isSimulating) {
       _simulateJoining();
@@ -35,7 +37,7 @@ class PlayerListCardController extends GetxController {
 
   Future<void> _simulateJoining() async {
     if (_isSimulating) return;
-    
+
     final newPlayers = _allPlayers
         .where((p) => !joinedPlayers.contains(p))
         .toList();
@@ -49,7 +51,7 @@ class PlayerListCardController extends GetxController {
       if (!joinedPlayers.contains(player) && _allPlayers.contains(player)) {
         joinedPlayers.add(player);
         update();
-        await AudioService.instance.playAudio(AudioType.lobbyJoin);
+        // await AudioService.instance.playAudio(AudioType.lobbyJoin);
       }
     }
 
@@ -59,6 +61,7 @@ class PlayerListCardController extends GetxController {
   @override
   void onClose() {
     _isSimulating = false;
+    AudioService.instance.player.stop();
     super.onClose();
   }
 }

@@ -22,34 +22,17 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> {
   late ConfettiController _controllerCenter;
   late ConfettiController _controllerTopLeft;
   late ConfettiController _controllerTopRight;
-  late ConfettiController _controllerBottomLeft;
-  late ConfettiController _controllerBottomRight;
+  bool _hasStarted = false;
   final Random _random = Random();
-
-  // Custom path for ribbons (long thin rectangles)
-  Path _drawRibbon(Size size) {
-    final path = Path();
-    // Ribbon: long thin rectangle
-    path.addRect(Rect.fromLTWH(0, 0, size.width * 3, size.height * 0.3));
-    return path;
-  }
-
-  // Custom path for small particles (very small dots/rectangles)
-  Path _drawSmallParticle(Size size) {
-    final path = Path();
-    // Very small particle - tiny square or circle
-    path.addOval(Rect.fromLTWH(0, 0, size.width * 0.5, size.height * 0.5));
-    return path;
-  }
-
-  // Randomly choose between ribbon and small particle
+  
+  // Pre-cached simple particle paths for better performance
+  static final Path _circlePath = Path()..addOval(Rect.fromLTWH(0, 0, 4, 4));
+  static final Path _squarePath = Path()..addRect(Rect.fromLTWH(0, 0, 4, 4));
+  
+  // Simplified particle path - use cached paths instead of creating new ones
   Path _createParticlePath(Size size) {
-    // 40% ribbons, 60% small particles
-    if (_random.nextDouble() < 0.4) {
-      return _drawRibbon(size);
-    } else {
-      return _drawSmallParticle(size);
-    }
+    // Use simple cached paths - 50% circle, 50% square
+    return _random.nextBool() ? _circlePath : _squarePath;
   }
 
   @override
@@ -64,39 +47,25 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> {
     _controllerTopRight = ConfettiController(
       duration: widget.duration,
     );
-    _controllerBottomLeft = ConfettiController(
-      duration: widget.duration,
-    );
-    _controllerBottomRight = ConfettiController(
-      duration: widget.duration,
-    );
   }
 
   void _startFireworksBlasts() {
-    if (!mounted || !widget.enabled) return;
+    if (!mounted || !widget.enabled || _hasStarted) return;
+    _hasStarted = true;
 
-    // Center burst immediately
+    // Single burst sequence - no recursion for better performance
     _controllerCenter.play();
 
     // Staggered bursts for fireworks effect
-    Future.delayed(const Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted && widget.enabled) {
         _controllerTopLeft.play();
-        _controllerBottomRight.play();
       }
     });
 
-    Future.delayed(const Duration(milliseconds: 1000), () {
+    Future.delayed(const Duration(milliseconds: 600), () {
       if (mounted && widget.enabled) {
         _controllerTopRight.play();
-        _controllerBottomLeft.play();
-      }
-    });
-
-    // Repeat the pattern for continuous fireworks
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted && widget.enabled) {
-        _startFireworksBlasts();
       }
     });
   }
@@ -105,13 +74,13 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> {
   void didUpdateWidget(ConfettiAnimation oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.enabled && !oldWidget.enabled) {
+      _hasStarted = false;
       _startFireworksBlasts();
     } else if (!widget.enabled && oldWidget.enabled) {
       _controllerCenter.stop();
       _controllerTopLeft.stop();
       _controllerTopRight.stop();
-      _controllerBottomLeft.stop();
-      _controllerBottomRight.stop();
+      _hasStarted = false;
     }
   }
 
@@ -120,8 +89,6 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> {
     _controllerCenter.dispose();
     _controllerTopLeft.dispose();
     _controllerTopRight.dispose();
-    _controllerBottomLeft.dispose();
-    _controllerBottomRight.dispose();
     super.dispose();
   }
 
@@ -135,26 +102,23 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> {
       child: ConfettiWidget(
         confettiController: controller,
         blastDirectionality: BlastDirectionality.explosive,
-        shouldLoop: true, // Continuous animation
+        shouldLoop: false, // Single burst for better performance
         colors: const [
           Colors.green,
           Colors.blue,
           Colors.pink,
           Colors.orange,
-          Colors.purple,
           Colors.yellow,
           Colors.red,
-          Colors.cyan,
-          Colors.white,
-        ],
+        ], // Reduced from 9 to 6 colors
         createParticlePath: _createParticlePath,
-        minimumSize: const Size(2, 2),
-        maximumSize: const Size(8, 8),
-        emissionFrequency: 0.05,
-        numberOfParticles: 50,
-        gravity: 0.1,
-        maxBlastForce: 8 * blastForceMultiplier,
-        minBlastForce: 3 * blastForceMultiplier,
+        minimumSize: const Size(3, 3),
+        maximumSize: const Size(6, 6),
+        emissionFrequency: 0.1, // Reduced from 0.05 (less frequent emissions)
+        numberOfParticles: 25, // Reduced from 50 (half the particles)
+        gravity: 0.15,
+        maxBlastForce: 6 * blastForceMultiplier, // Reduced from 8
+        minBlastForce: 2 * blastForceMultiplier, // Reduced from 3
       ),
     );
   }
@@ -183,31 +147,19 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> {
                 _buildConfettiWidget(
                   controller: _controllerCenter,
                   alignment: Alignment.center,
-                  blastForceMultiplier: 1.2,
+                  blastForceMultiplier: 1.0,
                 ),
                 // Top left blast
                 _buildConfettiWidget(
                   controller: _controllerTopLeft,
                   alignment: Alignment.topLeft,
-                  blastForceMultiplier: 0.8,
+                  blastForceMultiplier: 0.7,
                 ),
                 // Top right blast
                 _buildConfettiWidget(
                   controller: _controllerTopRight,
                   alignment: Alignment.topRight,
-                  blastForceMultiplier: 0.8,
-                ),
-                // Bottom left blast
-                _buildConfettiWidget(
-                  controller: _controllerBottomLeft,
-                  alignment: Alignment.bottomLeft,
-                  blastForceMultiplier: 0.8,
-                ),
-                // Bottom right blast
-                _buildConfettiWidget(
-                  controller: _controllerBottomRight,
-                  alignment: Alignment.bottomRight,
-                  blastForceMultiplier: 0.8,
+                  blastForceMultiplier: 0.7,
                 ),
               ],
             ),

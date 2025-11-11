@@ -1,12 +1,15 @@
 import 'dart:developer';
+
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/answer_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/models/session/round_model.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
-import 'package:go_router/go_router.dart';
+
 import '../../insan-jamd-hawan.dart';
 
 class WheelController extends GetxController {
@@ -30,6 +33,10 @@ class WheelController extends GetxController {
   void onLetterSelection(String val) {
     selectedLetter = val;
     update();
+    
+    // Play letter audio
+    _playLetterAudio(val);
+    
     if (lobbyController.lobby.id != null &&
         (lobbyController.lobby.id?.isEmpty ?? false)) {
       throw Exception("SessionID can't be null or empty");
@@ -38,6 +45,47 @@ class WheelController extends GetxController {
       lobbyController.lobby.id!,
       selectedLetter ?? '',
     );
+  }
+
+  AudioType? _getLetterAudioType(String letter) {
+    if (letter.isEmpty) return null;
+    final upperLetter = letter.toUpperCase();
+    return switch (upperLetter) {
+      'A' => AudioType.letterA,
+      'B' => AudioType.letterB,
+      'C' => AudioType.letterC,
+      'D' => AudioType.letterD,
+      'E' => AudioType.letterE,
+      'F' => AudioType.letterF,
+      'G' => AudioType.letterG,
+      'H' => AudioType.letterH,
+      'I' => AudioType.letterI,
+      'J' => AudioType.letterJ,
+      'K' => AudioType.letterK,
+      'L' => AudioType.letterL,
+      'M' => AudioType.letterM,
+      'N' => AudioType.letterN,
+      'O' => AudioType.letterO,
+      'P' => AudioType.letterP,
+      'Q' => AudioType.letterQ,
+      'R' => AudioType.letterR,
+      'S' => AudioType.letterS,
+      'T' => AudioType.letterT,
+      'U' => AudioType.letterU,
+      'V' => AudioType.letterV,
+      'W' => AudioType.letterW,
+      'X' => AudioType.letterX,
+      'Y' => AudioType.letterY,
+      'Z' => AudioType.letterZ,
+      _ => null,
+    };
+  }
+
+  void _playLetterAudio(String letter) {
+    final audioType = _getLetterAudioType(letter);
+    if (audioType != null) {
+      AudioService.instance.playAudio(audioType);
+    }
   }
 
   void resetController() {
@@ -73,9 +121,14 @@ class WheelController extends GetxController {
             log(
               "This is the event that we got from stream from firebase for letter update $letter",
             );
-            if (letter != null) {
-              selectedLetter = letter;
-              update();
+            if (letter != null && letter.isNotEmpty) {
+              // Only play audio if the letter is different from the current one
+              if (selectedLetter != letter) {
+                selectedLetter = letter;
+                update();
+                // Play letter audio when received from Firebase
+                _playLetterAudio(letter);
+              }
             }
           },
           onError: (error) {
@@ -140,7 +193,7 @@ class WheelController extends GetxController {
         (lobbyController.lobby.id?.isEmpty ?? false)) {
       throw Exception("SessionID can't be null or empty");
     }
-    log(" We are updating the round status ${status} for round $currentRound");
+    log(" We are updating the round status $status for round $currentRound");
     _db.updateRoundedStatus(lobbyController.lobby.id!, currentRound, status);
     update();
   }

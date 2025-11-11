@@ -7,7 +7,6 @@ import 'package:insan_jamd_hawan/core/controllers/answer_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
-import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
@@ -15,6 +14,8 @@ import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dar
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/custom_paint/handdrawn_border.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
+import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class PlayerAnswerView extends StatefulWidget {
@@ -224,6 +225,7 @@ class _PlayerAnswerViewState extends State<PlayerAnswerView> {
                         children: [
                           Expanded(
                             child: PrimaryButton(
+                              audioType: AudioType.stop,
                               onPressed: () => context.pop(),
                               text: 'Stop !',
                               color: AppColors.kRed500,
@@ -268,13 +270,15 @@ class _PlayerAnswerViewState extends State<PlayerAnswerView> {
       child: TextField(
         controller: controller,
         textAlign: TextAlign.center,
+        
         decoration: InputDecoration(
           hintText: label,
+          hintStyle: AppTypography.kRegular19.copyWith(fontSize: 16.sp),
           focusedBorder: InputBorder.none,
           enabledBorder: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
-            vertical: 16.h,
+            vertical: 10.h,
           ),
         ),
         style: AppTypography.kRegular19.copyWith(fontSize: 16.sp),

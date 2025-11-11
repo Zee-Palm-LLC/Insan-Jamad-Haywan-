@@ -13,6 +13,7 @@ import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dar
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/custom_paint/hand_drawn_divider.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class LobbyCreationPage extends StatelessWidget {
@@ -234,6 +235,7 @@ class LobbyCreationPage extends StatelessWidget {
                         curve: Curves.easeOut,
                         startScale: 0.95,
                         child: PrimaryButton(
+                        audioType: AudioType.whooshChime,
                         text: controller.isLoading
                             ? 'Creating...'
                             : 'Create Lobby',

@@ -49,6 +49,7 @@ class AnimatedPlayerTileState extends State<AnimatedPlayerTile>
   @override
   void dispose() {
     _controller.dispose();
+    
     super.dispose();
   }
 

@@ -3,7 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/widgets.dart' show TextEditingController;
 import 'package:get/get.dart';
-import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
+import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
@@ -13,8 +13,8 @@ import 'package:insan_jamd_hawan/core/modules/widgets/animations/progress_dialog
 import 'package:insan_jamd_hawan/core/services/answer_evaluation_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
-import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
+import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
 class AnswerController extends GetxController {
   final TextEditingController nameController = TextEditingController();
@@ -41,10 +41,6 @@ class AnswerController extends GetxController {
   int secondsRemaining = 0;
   int totalSeconds = 60;
 
-  @override
-  void onInit() {
-    super.onInit();
-  }
 
   void startTimer() {
     secondsRemaining = totalSeconds;

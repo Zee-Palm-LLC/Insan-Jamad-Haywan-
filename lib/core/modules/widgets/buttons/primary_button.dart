@@ -11,6 +11,7 @@ class PrimaryButton extends StatefulWidget {
   final bool animated;
   final Duration delay;
   final Duration duration;
+  final AudioType? audioType;
   final Offset slideOffset;
 
   const PrimaryButton({
@@ -23,6 +24,7 @@ class PrimaryButton extends StatefulWidget {
     this.delay = const Duration(milliseconds: 0),
     this.duration = const Duration(milliseconds: 600),
     this.slideOffset = const Offset(0, 0.3),
+    this.audioType,
   });
 
   @override
@@ -40,27 +42,17 @@ class _PrimaryButtonState extends State<PrimaryButton>
   void initState() {
     super.initState();
     if (widget.animated) {
-      _controller = AnimationController(
-        vsync: this,
-        duration: widget.duration,
-      );
+      _controller = AnimationController(vsync: this, duration: widget.duration);
 
-      _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _controller,
-          curve: Curves.easeIn,
-        ),
-      );
+      _fadeAnimation = Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
       _slideAnimation = Tween<Offset>(
         begin: widget.slideOffset,
         end: Offset.zero,
-      ).animate(
-        CurvedAnimation(
-          parent: _controller,
-          curve: Curves.easeOut,
-        ),
-      );
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
     }
   }
 
@@ -94,8 +86,10 @@ class _PrimaryButtonState extends State<PrimaryButton>
     return ElevatedButton(
       onPressed: widget.onPressed == null
           ? null // Disabled state
-          : () {
-              AudioService.instance.playAudio(AudioType.gameStarted);
+          : () async {
+              await AudioService.instance.playAudio(
+                widget.audioType ?? AudioType.click,
+              );
               widget.onPressed!();
             },
       style: ElevatedButton.styleFrom(
@@ -117,7 +111,9 @@ class _PrimaryButtonState extends State<PrimaryButton>
         child: Text(
           widget.text,
           style: AppTypography.kBold24.copyWith(
-            color: widget.onPressed == null ? AppColors.kGray600 : AppColors.kWhite,
+            color: widget.onPressed == null
+                ? AppColors.kGray600
+                : AppColors.kWhite,
           ),
         ),
       ),
@@ -139,10 +135,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
 
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: _buildButton(),
-      ),
+      child: SlideTransition(position: _slideAnimation, child: _buildButton()),
     );
   }
 }
