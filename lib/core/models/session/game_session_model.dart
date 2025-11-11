@@ -80,6 +80,9 @@ class GameSessionModel {
 
   factory GameSessionModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    if (data['sessionId'] == null) {
+      data['sessionId'] = doc.id;
+    }
     return GameSessionModel.fromJson(data);
   }
 

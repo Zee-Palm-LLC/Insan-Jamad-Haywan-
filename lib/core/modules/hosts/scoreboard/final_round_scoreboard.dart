@@ -10,25 +10,45 @@ import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_c
 import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/components/final_scoreboard_list.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/components/final_scoreboard_podium.dart';
 import 'package:insan_jamd_hawan/core/modules/main_menu/main_menu_page.dart';
-import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
-class FinalRoundScoreboard extends StatelessWidget {
+class FinalRoundScoreboard extends StatefulWidget {
   const FinalRoundScoreboard({super.key});
 
   static const String path = '/final-round-scoreboard';
   static const String name = 'FinalRoundScoreboard';
 
   @override
+  State<FinalRoundScoreboard> createState() => _FinalRoundScoreboardState();
+}
+
+class _FinalRoundScoreboardState extends State<FinalRoundScoreboard> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controller once and ensure it persists
+    if (Get.isRegistered<ScoreboardController>()) {
+      Get.delete<ScoreboardController>();
+    }
+    Get.put(ScoreboardController(), permanent: false);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bool isDesktop = Responsive.isDesktop(context);
     final lobbyController = Get.find<LobbyController>();
     return GetBuilder<ScoreboardController>(
-      init: ScoreboardController(),
-      builder: (controller) {
+      builder: (builderController) {
+        // Debug: Log when builder is called
+        debugPrint(
+          'FinalRoundScoreboard builder called: isLoading=${builderController.isLoading}, podiumPlayers=${builderController.podiumPlayers.length}, listPlayers=${builderController.listPlayers.length}',
+        );
+        debugPrint(
+          'Podium players details: ${builderController.podiumPlayers.map((p) => '${p.name} (rank ${p.rank})').join(', ')}',
+        );
         return Scaffold(
           extendBodyBehindAppBar: true,
           // appBar: isDesktop
@@ -74,31 +94,47 @@ class FinalRoundScoreboard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 30.h),
-                      if (controller.isLoading)
+                      if (builderController.isLoading)
                         Center(
                           child: Padding(
                             padding: EdgeInsets.all(40.h),
                             child: CircularProgressIndicator.adaptive(),
                           ),
                         )
-                      else if (controller.error != null)
+                      else if (builderController.error != null)
                         Center(
                           child: Padding(
                             padding: EdgeInsets.all(40.h),
                             child: Text(
-                              'Error: ${controller.error}',
+                              'Error: ${builderController.error}',
                               style: AppTypography.kRegular24,
                               textAlign: TextAlign.center,
                             ),
                           ),
                         )
                       else ...[
-                        if (controller.podiumPlayers.isNotEmpty)
-                          FinalScoreboardPodium(
-                            players: controller.podiumPlayers,
-                          ),
-                        if (controller.listPlayers.isNotEmpty)
-                          FinalScoreboardList(players: controller.listPlayers),
+                        if (builderController.podiumPlayers.isEmpty &&
+                            builderController.listPlayers.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.h),
+                              child: Text(
+                                'No players found',
+                                style: AppTypography.kRegular24,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          )
+                        else ...[
+                          if (builderController.podiumPlayers.isNotEmpty)
+                            FinalScoreboardPodium(
+                              players: builderController.podiumPlayers,
+                            ),
+                          if (builderController.listPlayers.isNotEmpty)
+                            FinalScoreboardList(
+                              players: builderController.listPlayers,
+                            ),
+                        ],
                       ],
                       SizedBox(height: 30.h),
                       PrimaryButton(

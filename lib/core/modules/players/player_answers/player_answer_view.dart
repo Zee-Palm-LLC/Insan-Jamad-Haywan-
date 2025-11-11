@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -10,7 +12,6 @@ import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
-import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
@@ -22,6 +23,8 @@ class PlayerAnswerView extends StatefulWidget {
 
   static const String path = '/player-answer';
   static const String name = 'PlayerAnswer';
+  // WheelController get wheelController => Get.find<WheelController>();
+  // LobbyController get lobbyController => Get.find<LobbyController>();
 
   @override
   State<PlayerAnswerView> createState() => _PlayerAnswerViewState();
@@ -235,7 +238,15 @@ class _PlayerAnswerViewState extends State<PlayerAnswerView> {
                               text: 'Next',
                               width: double.infinity,
                               onPressed: () {
-                                controller.submitAnswers(onSuccess: () {});
+                                controller.submitAnswers(
+                                  onSuccess: () {
+                                    // Success callback - submission completed
+                                    log(
+                                      'Answer submission completed successfully',
+                                      name: 'PlayerAnswerView',
+                                    );
+                                  },
+                                );
                               },
                             ),
                           ),

@@ -27,9 +27,6 @@ class ScoreboardController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    isFinalRound =
-        wheelController.maxRoundSelectedByTheHost ==
-        wheelController.currentRound;
     loadScoreboardData();
   }
 
@@ -44,7 +41,21 @@ class ScoreboardController extends GetxController {
         throw Exception('Session ID is not available');
       }
 
+      final session = await _firestore.getSession(sessionId);
+      if (session == null) {
+        throw Exception('Session not found');
+      }
+
+      final currentRound = session.config.currentRound;
+      final maxRounds = session.config.maxRounds;
+      isFinalRound = currentRound >= maxRounds;
+
+      log(
+        'Scoreboard: currentRound=$currentRound, maxRounds=$maxRounds, isFinalRound=$isFinalRound',
+      );
+
       final players = await _firestore.getLeaderboard(sessionId);
+      log('Scoreboard: Retrieved ${players.length} players from leaderboard');
 
       if (isFinalRound) {
         await _loadFinalRoundData(sessionId, players);
@@ -53,7 +64,11 @@ class ScoreboardController extends GetxController {
       }
 
       isLoading = false;
+      log(
+        'Scoreboard data loaded. isLoading=$isLoading, podiumPlayers=${podiumPlayers.length}, listPlayers=${listPlayers.length}',
+      );
       update();
+      log('Update() called after loading data');
     } catch (e, stackTrace) {
       log(
         'Error loading scoreboard data: $e',
@@ -106,7 +121,13 @@ class ScoreboardController extends GetxController {
   }
 
   Future<void> _loadFinalRoundData(String sessionId, List players) async {
+    log('Loading final round data. Players count: ${players.length}');
+    log(
+      'Players: ${players.map((p) => '${p.playerName} (${p.playerId}): totalScore=${p.totalScore}, scoresByRound=${p.scoresByRound}').join(', ')}',
+    );
+
     final allRounds = await _firestore.getAllRounds(sessionId);
+    log('Total rounds: ${allRounds.length}');
 
     final totalPointsGainedMap = <String, int>{};
     for (final round in allRounds) {
@@ -120,11 +141,22 @@ class ScoreboardController extends GetxController {
             (totalPointsGainedMap[answer.playerId] ?? 0) + roundScore;
       }
     }
+    log('Total points gained map: $totalPointsGainedMap');
 
     podiumPlayers = [];
     for (int i = 0; i < players.length && i < 3; i++) {
       final player = players[i];
-      final totalPointsGained = totalPointsGainedMap[player.playerId] ?? 0;
+
+      int totalPointsGained = totalPointsGainedMap[player.playerId] ?? 0;
+      if (totalPointsGained == 0 && player.scoresByRound.isNotEmpty) {
+        for (final roundScore in player.scoresByRound.values) {
+          totalPointsGained += roundScore as int;
+        }
+      }
+
+      log(
+        'Player ${player.playerName}: totalScore=${player.totalScore}, totalPointsGained=$totalPointsGained',
+      );
 
       String badge;
       Color color;
@@ -146,6 +178,7 @@ class ScoreboardController extends GetxController {
 
       podiumPlayers.add(
         PodiumPlayer(
+          totalScore: player.totalScore,
           rank: i + 1,
           name: player.playerName,
           score:
@@ -160,10 +193,21 @@ class ScoreboardController extends GetxController {
       );
     }
 
+    log('Podium players count: ${podiumPlayers.length}');
+    log(
+      'Podium players: ${podiumPlayers.map((p) => '${p.name} (rank ${p.rank})').join(', ')}',
+    );
+
     listPlayers = [];
     for (int i = 3; i < players.length; i++) {
       final player = players[i];
-      final totalPointsGained = totalPointsGainedMap[player.playerId] ?? 0;
+
+      int totalPointsGained = totalPointsGainedMap[player.playerId] ?? 0;
+      if (totalPointsGained == 0 && player.scoresByRound.isNotEmpty) {
+        for (final roundScore in player.scoresByRound.values) {
+          totalPointsGained += roundScore as int;
+        }
+      }
 
       listPlayers.add(
         ScoreboardListPlayer(

@@ -99,7 +99,8 @@ class AnswerEvaluationService {
         int correctCount = 0;
 
         for (final entry in playerEvaluation.entries) {
-          final category = entry.key;
+          // Normalize category name to capitalized format (e.g., "name" -> "Name")
+          final category = _normalizeCategoryName(entry.key);
           final evaluation = entry.value;
           Map<String, dynamic> evaluationMap;
           if (evaluation is Map<String, dynamic>) {
@@ -212,6 +213,21 @@ class AnswerEvaluationService {
       );
       rethrow;
     }
+  }
+
+  String _normalizeCategoryName(String category) {
+    if (category.isEmpty) return category;
+    final categoryMap = {
+      'name': 'Name',
+      'object': 'Object',
+      'animal': 'Animal',
+      'plant': 'Plant',
+      'country': 'Country',
+    };
+
+    final lowerCategory = category.toLowerCase();
+    return categoryMap[lowerCategory] ??
+        (category[0].toUpperCase() + category.substring(1).toLowerCase());
   }
 
   Future<void> _updatePlayerScore(

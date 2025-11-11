@@ -914,4 +914,22 @@ class FirebaseFirestoreService {
       (snapshot) => snapshot.docs.isNotEmpty,
     );
   }
+
+  /// Get the number of players in a session
+  Future<int> getPlayerCount(String sessionId) async {
+    try {
+      final playersSnapshot = await _playersCollection(sessionId).get();
+      return playersSnapshot.docs.length;
+    } catch (e) {
+      log('Error getting player count: $e', name: 'FirebaseFirestoreService');
+      return 0;
+    }
+  }
+
+  /// Stream the number of players in a session
+  Stream<int> streamPlayerCount(String sessionId) {
+    return _playersCollection(
+      sessionId,
+    ).snapshots().map((snapshot) => snapshot.docs.length);
+  }
 }

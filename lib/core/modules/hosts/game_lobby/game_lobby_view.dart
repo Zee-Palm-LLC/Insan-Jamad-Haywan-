@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
-import 'package:insan_jamd_hawan/core/controllers/answer_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/data/enums/enums.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
@@ -36,6 +35,10 @@ class _GameLobbyViewState extends State<GameLobbyView> {
   @override
   void initState() {
     GameControllerManager.putAllGameControllers();
+
+    if (!Get.isRegistered<LobbyController>()) {
+      Get.put(widget.controller, permanent: true);
+    }
     super.initState();
     widget.controller.addListener(_handlePhaseChange);
   }

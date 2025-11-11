@@ -9,21 +9,46 @@ class FinalScoreboardPodium extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (players.length < 3) {
+    if (players.isEmpty) {
       return const SizedBox.shrink();
     }
+
     final sortedPlayers = List<PodiumPlayer>.from(players);
     sortedPlayers.sort((a, b) => a.rank.compareTo(b.rank));
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        _buildPodiumCard(player: sortedPlayers[1]),
-        _buildPodiumCard(player: sortedPlayers[0]),
-        _buildPodiumCard(player: sortedPlayers[2]),
-      ],
-    );
+    // Handle different numbers of players
+    if (players.length == 1) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          SizedBox(width: 120.w), // Spacer for alignment
+          _buildPodiumCard(player: sortedPlayers[0]),
+          SizedBox(width: 120.w), // Spacer for alignment
+        ],
+      );
+    } else if (players.length == 2) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          _buildPodiumCard(player: sortedPlayers[1]),
+          SizedBox(width: 20.w), // Space between players
+          _buildPodiumCard(player: sortedPlayers[0]),
+        ],
+      );
+    } else {
+      // 3 or more players - original layout
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          _buildPodiumCard(player: sortedPlayers[1]),
+          _buildPodiumCard(player: sortedPlayers[0]),
+          _buildPodiumCard(player: sortedPlayers[2]),
+        ],
+      );
+    }
   }
 
   Widget _buildPodiumCard({required PodiumPlayer player}) {
@@ -96,8 +121,10 @@ class FinalScoreboardPodium extends StatelessWidget {
                     ),
                   ),
                   if (player.rank == 1) ...[
-                    const Spacer()
-                  ] else ...[SizedBox(height: 15.h)],
+                    const Spacer(),
+                  ] else ...[
+                    SizedBox(height: 15.h),
+                  ],
                 ],
               ),
             ),
@@ -141,6 +168,7 @@ class PodiumPlayer {
   final int rank;
   final String name;
   final String score;
+  final int totalScore;
   final String avatarUrl;
   final Color color;
   final String badge;
@@ -150,6 +178,7 @@ class PodiumPlayer {
     required this.rank,
     required this.name,
     required this.score,
+    required this.totalScore,
     required this.avatarUrl,
     required this.color,
     required this.badge,

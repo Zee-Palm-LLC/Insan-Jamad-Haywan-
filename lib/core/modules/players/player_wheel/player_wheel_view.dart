@@ -82,6 +82,13 @@ class PlayerWheelView extends StatelessWidget {
                               if (letter == null)
                                 Column(
                                   children: [
+                                    Text(
+                                      'Waiting for host to select a letter...',
+                                      style: TextStyle(
+                                        fontSize: 18.sp,
+                                        color: AppColors.kWhite,
+                                      ),
+                                    ),
                                     SizedBox(height: 20.h),
                                     FortuneWheelWidget(isHost: false),
                                   ],
