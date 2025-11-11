@@ -55,15 +55,15 @@ class WaitingView extends StatelessWidget {
         return PopScope(
           canPop: false,
           child: Scaffold(
-            appBar: isDesktop
-                ? null
-                : AppBar(
-                    automaticallyImplyLeading: false,
-                    actions: [
-                      CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-                      SizedBox(width: 16.w),
-                    ],
-                  ),
+            // appBar: isDesktop
+            //     ? null
+            //     : AppBar(
+            //         automaticallyImplyLeading: false,
+            //         actions: [
+            //           CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+            //           SizedBox(width: 16.w),
+            //         ],
+            //       ),
             body: AnimatedBg(
               showHorizontalLines: true,
               child: Padding(

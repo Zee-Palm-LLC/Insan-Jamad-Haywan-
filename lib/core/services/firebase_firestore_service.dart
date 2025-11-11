@@ -901,4 +901,17 @@ class FirebaseFirestoreService {
       return remainingSeconds > 0 ? remainingSeconds : 0;
     });
   }
+
+  Stream<bool> hasAnyAnswersSubmittedForTheRound(
+    String sessionId,
+    int roundNumber,
+  ) {
+    final answersCollection = _answersCollection(
+      sessionId,
+      roundNumber.toString(),
+    );
+    return answersCollection.snapshots().map(
+      (snapshot) => snapshot.docs.isNotEmpty,
+    );
+  }
 }

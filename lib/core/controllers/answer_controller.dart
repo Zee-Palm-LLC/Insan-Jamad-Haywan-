@@ -32,6 +32,7 @@ class AnswerController extends GetxController {
   bool aiEvaluated = false;
   bool isSubmitting = false;
   bool isEvaluating = false;
+  bool isAutoSubmittedByAnyOtherUser = false;
   StreamSubscription<int>? _submissionCountSubscription;
   StreamSubscription<int>? _timerSubscription;
   Timer? _periodicTimer;
@@ -40,6 +41,7 @@ class AnswerController extends GetxController {
   bool doublePoints = false;
   int secondsRemaining = 0;
   int totalSeconds = 60;
+  bool isAutoSubmittedOnTimeout = false;
 
   @override
   void onInit() {
@@ -88,6 +90,7 @@ class AnswerController extends GetxController {
               name: 'AnswerController',
             );
             _startPeriodicTimer();
+            _listenToAnswersSubmittedForTheRound();
           },
           onError: (error) {
             log(
@@ -101,14 +104,25 @@ class AnswerController extends GetxController {
 
   void _startPeriodicTimer() {
     _periodicTimer?.cancel();
-    _periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (_roundEndTime == null) return;
 
       final now = DateTime.now();
       final difference = _roundEndTime!.difference(now);
       final remainingSeconds = difference.inSeconds;
-
       if (remainingSeconds <= 0) {
+        _periodicTimer?.cancel();
+      }
+
+      if ((remainingSeconds <= 0) && (isAutoSubmittedOnTimeout == false)) {
+        _periodicTimer?.cancel();
+        await submitAnswers(
+          onSuccess: () {
+            isAutoSubmittedOnTimeout = true;
+            ProgressDialog.hide(navigatorKey.currentContext!);
+          },
+          showLoader: true,
+        );
         secondsRemaining = 0;
         _periodicTimer?.cancel();
       } else {
@@ -164,20 +178,26 @@ class AnswerController extends GetxController {
     );
   }
 
-  Future<void> submitAnswers({required Function onSuccess}) async {
-    //1- Time out //3- Auto
-    //2- Submit the answers by his self
+  Future<void> submitAnswers({
+    required Function onSuccess,
+    bool showLoader = false,
+  }) async {
     if (isSubmitting) {
       log("Answer submission already in progress", name: 'AnswerController');
       return;
     }
+    if (showLoader) {
+      ProgressDialog(message: "Timeout submitting the answers");
+    }
 
-    if (nameController.text.trim().isEmpty &&
-        objectController.text.trim().isEmpty &&
-        animalController.text.trim().isEmpty &&
-        plantController.text.trim().isEmpty &&
-        countryController.text.trim().isEmpty) {
-      throw Exception("At least one answer should be provided");
+    if (!showLoader) {
+      if (nameController.text.trim().isEmpty &&
+          objectController.text.trim().isEmpty &&
+          animalController.text.trim().isEmpty &&
+          plantController.text.trim().isEmpty &&
+          countryController.text.trim().isEmpty) {
+        throw Exception("At least one answer should be provided");
+      }
     }
 
     isSubmitting = true;
@@ -245,7 +265,9 @@ class AnswerController extends GetxController {
     return data;
   }
 
-  void _allUserWhichHasSubmitTheAnswers() {
+  void _allUserWhichHasSubmitTheAnswers({
+    bool isAutoSubmittedOnTimeout = false,
+  }) {
     // Cancel previous subscription if exists
     _submissionCountSubscription?.cancel();
 
@@ -286,7 +308,7 @@ class AnswerController extends GetxController {
             final context = navigatorKey.currentContext;
 
             // Show progress dialog with selected letter
-            if (context != null) {
+            if (context != null && isAutoSubmittedOnTimeout == false) {
               ProgressDialog.show(
                 context: context,
                 message: "Evaluating answers for letter: $selectedLetter",
@@ -302,12 +324,12 @@ class AnswerController extends GetxController {
               );
 
               // Hide progress dialog
-              if (context != null) {
+              if (context != null && isAutoSubmittedOnTimeout == false) {
                 ProgressDialog.hide(context);
               }
 
               // Navigate to ScoringView
-              if (context != null) {
+              if (context != null && isAutoSubmittedOnTimeout == false) {
                 context.pushNamed(
                   ScoringView.name,
                   pathParameters: {'letter': selectedLetter},
@@ -330,7 +352,7 @@ class AnswerController extends GetxController {
               );
             } catch (e, stackTrace) {
               // Hide progress dialog on error
-              if (context != null) {
+              if (context != null && isAutoSubmittedOnTimeout == false) {
                 ProgressDialog.hide(context);
               }
 
@@ -355,6 +377,36 @@ class AnswerController extends GetxController {
         });
   }
 
+  void _listenToAnswersSubmittedForTheRound() {
+    final sessionId = Get.find<LobbyController>().lobby.id ?? "";
+    final currentRound = Get.find<WheelController>().currentRound;
+    if (sessionId.isEmpty || currentRound == 0) {
+      log(
+        "Cannot listen to answers submitted for the round: sessionId=$sessionId, currentRound=$currentRound",
+        name: 'AnswerController',
+      );
+      return;
+    }
+    _db
+        .hasAnyAnswersSubmittedForTheRound(
+          Get.find<LobbyController>().lobby.id ?? "",
+          1,
+        )
+        .listen((event) {
+          log(
+            "This is the data that we have in _listenToAnswersSubmittedForTheRound function and this is the host ${lobbyController.lobby.host} $event and this is the players ${lobbyController.lobby.players}",
+          );
+          if (event && isAutoSubmittedOnTimeout == false) {
+            submitAnswers(
+              onSuccess: () {
+                isAutoSubmittedByAnyOtherUser = true;
+              },
+              showLoader: true,
+            );
+          }
+        });
+  }
+
   void restController() {
     _submissionCountSubscription?.cancel();
     _timerSubscription?.cancel();
@@ -371,6 +423,9 @@ class AnswerController extends GetxController {
     aiEvaluated = false;
     isSubmitting = false;
     isEvaluating = false;
+    cancelTimerSync();
+    isAutoSubmittedOnTimeout = false;
+    isAutoSubmittedByAnyOtherUser = false;
     update();
   }
 }

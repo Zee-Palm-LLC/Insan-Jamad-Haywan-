@@ -7,6 +7,7 @@ import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/answers_host_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/components/fortune_wheel.dart';
 import 'package:insan_jamd_hawan/core/modules/players/player_answers/player_answer_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
@@ -81,15 +82,8 @@ class PlayerWheelView extends StatelessWidget {
                               if (letter == null)
                                 Column(
                                   children: [
-                                    CircularProgressIndicator(),
                                     SizedBox(height: 20.h),
-                                    Text(
-                                      'Host is spinning the wheel...',
-                                      style: TextStyle(
-                                        fontSize: 18.sp,
-                                        color: AppColors.kBlack,
-                                      ),
-                                    ),
+                                    FortuneWheelWidget(isHost: false),
                                   ],
                                 )
                               else if (letter != null)
