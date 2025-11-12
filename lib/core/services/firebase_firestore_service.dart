@@ -932,4 +932,52 @@ class FirebaseFirestoreService {
       sessionId,
     ).snapshots().map((snapshot) => snapshot.docs.length);
   }
+
+  Stream<GameSessionModel?> streamGameSession(String sessionId) {
+    return _sessionDoc(sessionId).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return GameSessionModel.fromFirestore(doc);
+    });
+  }
+
+  Future<void> updateTimePerRound(
+    String sessionId,
+    int timePerRoundSeconds,
+  ) async {
+    try {
+      await _sessionDoc(
+        sessionId,
+      ).update({'config.defaultTimePerRound': timePerRoundSeconds});
+      log(
+        'Updated timePerRound for session $sessionId to $timePerRoundSeconds',
+        name: 'FirebaseFirestoreService',
+      );
+    } catch (e, s) {
+      log(
+        'Error updating timePerRound for session: $e',
+        name: 'FirebaseFirestoreService',
+        error: e,
+        stackTrace: s,
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> updateMaxRounds(String sessionId, int maxRounds) async {
+    try {
+      await _sessionDoc(sessionId).update({'config.maxRounds': maxRounds});
+      log(
+        'Updated maxRounds for session $sessionId to $maxRounds',
+        name: 'FirebaseFirestoreService',
+      );
+    } catch (e, s) {
+      log(
+        'Error updating maxRounds for session: $e',
+        name: 'FirebaseFirestoreService',
+        error: e,
+        stackTrace: s,
+      );
+      rethrow;
+    }
+  }
 }
