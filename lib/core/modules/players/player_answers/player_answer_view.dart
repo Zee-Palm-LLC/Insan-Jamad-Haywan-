@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -9,7 +11,6 @@ import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
-import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
@@ -23,6 +24,8 @@ class PlayerAnswerView extends StatefulWidget {
 
   static const String path = '/player-answer';
   static const String name = 'PlayerAnswer';
+  // WheelController get wheelController => Get.find<WheelController>();
+  // LobbyController get lobbyController => Get.find<LobbyController>();
 
   @override
   State<PlayerAnswerView> createState() => _PlayerAnswerViewState();
@@ -54,21 +57,21 @@ class _PlayerAnswerViewState extends State<PlayerAnswerView> {
       builder: (controller) {
         return Scaffold(
           extendBodyBehindAppBar: true,
-          appBar: isDesktop
-              ? null
-              : AppBar(
-                  leading: Padding(
-                    padding: EdgeInsets.all(10.h),
-                    child: CustomIconButton(
-                      icon: AppAssets.backIcon,
-                      onTap: () => context.pop(),
-                    ),
-                  ),
-                  actions: [
-                    CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-                    SizedBox(width: 16.w),
-                  ],
-                ),
+          // appBar: isDesktop
+          //     ? null
+          //     : AppBar(
+          //         leading: Padding(
+          //           padding: EdgeInsets.all(10.h),
+          //           child: CustomIconButton(
+          //             icon: AppAssets.backIcon,
+          //             onTap: () => context.pop(),
+          //           ),
+          //         ),
+          //         actions: [
+          //           CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+          //           SizedBox(width: 16.w),
+          //         ],
+          //       ),
           body: AnimatedBg(
             showHorizontalLines: true,
             child: SingleChildScrollView(
@@ -237,7 +240,15 @@ class _PlayerAnswerViewState extends State<PlayerAnswerView> {
                               text: 'Next',
                               width: double.infinity,
                               onPressed: () {
-                                controller.submitAnswers(onSuccess: () {});
+                                controller.submitAnswers(
+                                  onSuccess: () {
+                                    // Success callback - submission completed
+                                    log(
+                                      'Answer submission completed successfully',
+                                      name: 'PlayerAnswerView',
+                                    );
+                                  },
+                                );
                               },
                             ),
                           ),

@@ -36,6 +36,10 @@ class _GameLobbyViewState extends State<GameLobbyView> {
   @override
   void initState() {
     GameControllerManager.putAllGameControllers();
+
+    if (!Get.isRegistered<LobbyController>()) {
+      Get.put(widget.controller, permanent: true);
+    }
     super.initState();
     widget.controller.addListener(_handlePhaseChange);
   }

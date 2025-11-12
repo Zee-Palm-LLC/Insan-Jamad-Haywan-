@@ -67,11 +67,11 @@ class OpenAIClient {
             {
               'role': 'system',
               'content':
-                  'You are an expert game evaluator. Evaluate answers strictly according to the rules and return only valid JSON.',
+                  'You are an expert game evaluator. Your role is to evaluate answers fairly and consistently according to the rules. Apply the same evaluation criteria to all players. Return only valid JSON in the exact format specified.',
             },
             {'role': 'user', 'content': prompt},
           ],
-          'temperature': 0.3,
+          'temperature': 0.1,
           'response_format': {'type': 'json_object'},
         },
       );
@@ -104,45 +104,110 @@ class OpenAIClient {
     String selectedLetter,
     List<Map<String, dynamic>> playerAnswers,
   ) {
+    // Normalize the selected letter to uppercase for consistent comparison
+    final normalizedLetter = selectedLetter.toUpperCase();
+
     final buffer = StringBuffer();
     buffer.writeln(
-      'Evaluate answers for a word game. The selected letter is "$selectedLetter".',
+      'Evaluate answers for a word game. The selected letter is "$normalizedLetter" (case-insensitive).',
     );
     buffer.writeln('');
-    buffer.writeln('Rules:');
+    buffer.writeln('CRITICAL EVALUATION RULES:');
+    buffer.writeln('');
+    buffer.writeln('1. LETTER MATCHING (Case-Insensitive):');
     buffer.writeln(
-      '1. Each answer must start with the letter "$selectedLetter"',
-    );
-    buffer.writeln('2. Answers must be valid words in the specified category');
-    buffer.writeln('3. Categories: Name, Object, Animal, Plant, Country');
-    buffer.writeln('4. Evaluation statuses:');
-    buffer.writeln(
-      '   - "correct": Valid answer starting with "$selectedLetter"',
+      '   - Answers must start with the letter "$normalizedLetter" (case-insensitive).',
     );
     buffer.writeln(
-      '   - "incorrect": Does not start with "$selectedLetter" or invalid',
+      '   - Examples: If letter is "A", then "apple", "Apple", "APPLE", "Andrew" are all valid.',
     );
     buffer.writeln(
-      '   - "unclear": Person/place/thing that cannot be verified',
+      '   - If an answer does NOT start with "$normalizedLetter" (ignoring case), mark as "incorrect".',
     );
-    buffer.writeln('   - "duplicate": Same answer as another player');
+    buffer.writeln('');
+    buffer.writeln('2. EMPTY/INVALID ANSWERS:');
+    buffer.writeln(
+      '   - Empty strings, whitespace-only, or answers with only special characters = "incorrect" (0 points)',
+    );
+    buffer.writeln('');
+    buffer.writeln('3. CATEGORY VALIDATION:');
+    buffer.writeln(
+      '   - Name: First names, last names, or common nicknames (e.g., "Alice", "Bob", "Mohammed")',
+    );
+    buffer.writeln(
+      '   - Object: Physical objects, items, things (e.g., "apple", "book", "car")',
+    );
+    buffer.writeln(
+      '   - Animal: Living creatures, animals (e.g., "ant", "elephant", "dog")',
+    );
+    buffer.writeln(
+      '   - Plant: Trees, flowers, vegetables, fruits (e.g., "apple", "rose", "oak")',
+    );
+    buffer.writeln(
+      '   - Country: Official country names (e.g., "Argentina", "Australia", "Afghanistan")',
+    );
+    buffer.writeln(
+      '   - If answer does not fit the category, mark as "incorrect"',
+    );
+    buffer.writeln('');
+    buffer.writeln('4. DUPLICATE DETECTION (Case-Insensitive):');
+    buffer.writeln(
+      '   - Compare answers across ALL players for EACH category separately.',
+    );
+    buffer.writeln(
+      '   - Duplicates are case-insensitive: "Apple" and "apple" are duplicates.',
+    );
+    buffer.writeln(
+      '   - If multiple players have the same answer (ignoring case) in a category, ALL instances are "duplicate" (5 points each).',
+    );
+    buffer.writeln(
+      '   - The FIRST player to submit is NOT automatically "correct" - ALL duplicates get 5 points.',
+    );
+    buffer.writeln('');
+    buffer.writeln('5. UNCLEAR STATUS (Use Sparingly):');
+    buffer.writeln(
+      '   - Only use "unclear" for answers that are ambiguous proper nouns that cannot be definitively verified.',
+    );
+    buffer.writeln(
+      '   - Examples: Obscure personal names, very rare places, or highly specialized terms.',
+    );
+    buffer.writeln(
+      '   - If you can reasonably determine validity, use "correct" or "incorrect" instead.',
+    );
+    buffer.writeln('   - When in doubt, prefer "incorrect" over "unclear".');
+    buffer.writeln('');
+    buffer.writeln('6. NORMALIZATION:');
+    buffer.writeln('   - Trim whitespace before evaluation.');
+    buffer.writeln(
+      '   - Compare answers ignoring case for duplicate detection.',
+    );
+    buffer.writeln('   - Check letter matching ignoring case.');
     buffer.writeln('');
     buffer.writeln('Player Answers:');
     for (final answer in playerAnswers) {
-      buffer.writeln('Player: ${answer['playerId']}');
+      buffer.writeln('Player ID: ${answer['playerId']}');
       final answers = answer['answers'] as Map<String, String>;
-      answers.forEach((category, answerText) {
-        buffer.writeln('  $category: $answerText');
+      // Map lowercase category keys to capitalized display names
+      final categoryMap = {
+        'name': 'Name',
+        'object': 'Object',
+        'animal': 'Animal',
+        'plant': 'Plant',
+        'country': 'Country',
+      };
+      categoryMap.forEach((key, displayName) {
+        final answerText = answers[key] ?? '';
+        buffer.writeln('  $displayName: "$answerText"');
       });
       buffer.writeln('');
     }
     buffer.writeln('');
     buffer.writeln(
-      'Return JSON in this exact format, using the ACTUAL player IDs from above:',
+      'Return JSON in this exact format, using the EXACT player IDs from above:',
     );
     buffer.writeln('{');
     buffer.writeln('  "evaluations": {');
-    buffer.writeln('    "ACTUAL_PLAYER_ID_FROM_ABOVE": {');
+    buffer.writeln('    "EXACT_PLAYER_ID": {');
     buffer.writeln('      "Name": {"status": "correct", "points": 10},');
     buffer.writeln('      "Object": {"status": "duplicate", "points": 5},');
     buffer.writeln('      "Animal": {"status": "incorrect", "points": 0},');
@@ -152,12 +217,17 @@ class OpenAIClient {
     buffer.writeln('  }');
     buffer.writeln('}');
     buffer.writeln('');
+    buffer.writeln('POINTS SYSTEM:');
+    buffer.writeln('  - correct: 10 points');
+    buffer.writeln('  - duplicate: 5 points');
+    buffer.writeln('  - incorrect: 0 points');
+    buffer.writeln('  - unclear: 0 points');
+    buffer.writeln('');
     buffer.writeln(
-      'IMPORTANT: Use the EXACT player IDs shown in the "Player Answers" section above (e.g., "aana", "aira"), NOT placeholder IDs like "playerId1".',
+      'CRITICAL: Use the EXACT player IDs shown above (e.g., "${playerAnswers.isNotEmpty ? playerAnswers[0]['playerId'] : 'playerId'}"), NOT placeholders.',
     );
-    buffer.writeln('Points: correct=10, incorrect=0, unclear=0, duplicate=5');
     buffer.writeln(
-      'Check for duplicates by comparing answers across all players for each category.',
+      'Evaluate consistently and fairly. Apply the same standards to all players.',
     );
 
     return buffer.toString();

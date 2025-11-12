@@ -69,24 +69,24 @@ class _LetterGeneratorViewState extends State<LetterGeneratorView> {
           builder: (letterController) {
             return Scaffold(
               extendBodyBehindAppBar: true,
-              appBar: isDesktop
-                  ? null
-                  : AppBar(
-                      leading: Padding(
-                        padding: EdgeInsets.all(10.h),
-                        child: CustomIconButton(
-                          icon: AppAssets.backIcon,
-                          onTap: () => context.pop(),
-                        ),
-                      ),
-                      actions: [
-                        CustomIconButton(
-                          icon: AppAssets.shareIcon,
-                          onTap: () {},
-                        ),
-                        SizedBox(width: 16.w),
-                      ],
-                    ),
+              // appBar: isDesktop
+              //     ? null
+              //     : AppBar(
+              //         leading: Padding(
+              //           padding: EdgeInsets.all(10.h),
+              //           child: CustomIconButton(
+              //             icon: AppAssets.backIcon,
+              //             onTap: () => context.pop(),
+              //           ),
+              //         ),
+              //         actions: [
+              //           CustomIconButton(
+              //             icon: AppAssets.shareIcon,
+              //             onTap: () {},
+              //           ),
+              //           SizedBox(width: 16.w),
+              //         ],
+              //       ),
               body: AnimatedBg(
                 showHorizontalLines: true,
                 child: SingleChildScrollView(

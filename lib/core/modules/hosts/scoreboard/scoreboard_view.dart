@@ -12,7 +12,6 @@ import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/components/first_position_podium.dart';
-import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
@@ -67,21 +66,21 @@ class _ScoreboardViewState extends State<ScoreboardView> {
       builder: (controller) {
         return Scaffold(
           extendBodyBehindAppBar: true,
-          appBar: isDesktop
-              ? null
-              : AppBar(
-                  leading: Padding(
-                    padding: EdgeInsets.all(10.h),
-                    child: CustomIconButton(
-                      icon: AppAssets.backIcon,
-                      onTap: () => context.pop(),
-                    ),
-                  ),
-                  actions: [
-                    CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-                    SizedBox(width: 16.w),
-                  ],
-                ),
+          // appBar: isDesktop
+          //     ? null
+          //     : AppBar(
+          //         leading: Padding(
+          //           padding: EdgeInsets.all(10.h),
+          //           child: CustomIconButton(
+          //             icon: AppAssets.backIcon,
+          //             onTap: () => context.pop(),
+          //           ),
+          //         ),
+          //         actions: [
+          //           CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+          //           SizedBox(width: 16.w),
+          //         ],
+          //       ),
           body: LobbyBg(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(16.h),

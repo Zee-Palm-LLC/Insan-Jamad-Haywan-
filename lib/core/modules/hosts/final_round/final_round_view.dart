@@ -71,21 +71,21 @@ class _FinalRoundViewState extends State<FinalRoundView> {
     final bool isDesktop = Responsive.isDesktop(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: isDesktop
-          ? null
-          : AppBar(
-              leading: Padding(
-                padding: EdgeInsets.all(10.h),
-                child: CustomIconButton(
-                  icon: AppAssets.backIcon,
-                  onTap: () => context.pop(),
-                ),
-              ),
-              actions: [
-                CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-                SizedBox(width: 16.w),
-              ],
-            ),
+      // appBar: isDesktop
+      //     ? null
+      //     : AppBar(
+      //         leading: Padding(
+      //           padding: EdgeInsets.all(10.h),
+      //           child: CustomIconButton(
+      //             icon: AppAssets.backIcon,
+      //             onTap: () => context.pop(),
+      //           ),
+      //         ),
+      //         actions: [
+      //           CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+      //           SizedBox(width: 16.w),
+      //         ],
+      //       ),
       body: LobbyBg(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.h),

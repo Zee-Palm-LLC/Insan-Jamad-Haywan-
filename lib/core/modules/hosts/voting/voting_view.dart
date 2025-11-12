@@ -43,15 +43,15 @@ class VotingView extends StatelessWidget {
           canPop: false,
           child: Scaffold(
             extendBodyBehindAppBar: true,
-            appBar: isDesktop
-                ? null
-                : AppBar(
-                    automaticallyImplyLeading: false,
-                    actions: [
-                      CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-                      SizedBox(width: 16.w),
-                    ],
-                  ),
+            // appBar: isDesktop
+            //     ? null
+            //     : AppBar(
+            //         automaticallyImplyLeading: false,
+            //         actions: [
+            //           CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+            //           SizedBox(width: 16.w),
+            //         ],
+            //       ),
             body: LobbyBg(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(16.h),
