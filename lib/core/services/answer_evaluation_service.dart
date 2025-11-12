@@ -1,7 +1,6 @@
 import 'dart:developer' as developer;
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
-import 'package:insan_jamd_hawan/core/services/ambiguous_answer_voting_service.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/core/services/openai/openai_client.dart';
 
@@ -11,8 +10,6 @@ class AnswerEvaluationService {
 
   final FirebaseFirestoreService _firestore = FirebaseFirestoreService.instance;
   final OpenAIClient _openAI = OpenAIClient.instance;
-  final AmbiguousAnswerVotingService _votingService =
-      AmbiguousAnswerVotingService.instance;
 
   Future<void> evaluateRound({
     required String sessionId,
@@ -127,6 +124,32 @@ class AnswerEvaluationService {
           // Normalize category name to capitalized format (e.g., "name" -> "Name")
           final category = _normalizeCategoryName(entry.key);
           final evaluation = entry.value;
+
+          // // TEST MODE: Force unclear status for testing
+          // // Check if answer contains test keywords (case-insensitive)
+          // final categoryKey = category.toLowerCase();
+          // final answerText = (answer.answers[categoryKey] ?? '')
+          //     .trim()
+          //     .toLowerCase();
+
+          // if (answerText == 'test' ||
+          //     answerText == 'unclear' ||
+          //     answerText == 'ambiguous' ||
+          //     answerText.contains('test') ||
+          //     answerText.contains('unclear')) {
+          //   developer.log(
+          //     'TEST MODE: Forcing unclear status for ${answer.playerName}\'s $category: "$answerText"',
+          //     name: 'AnswerEvaluationService',
+          //   );
+          //   categoryScores[category] = CategoryScore(
+          //     isCorrect: false,
+          //     points: 0,
+          //     status: AnswerEvaluationStatus.unclear,
+          //   );
+          //   totalScore += 0;
+          //   continue; // Skip normal evaluation for this category
+          // }
+
           Map<String, dynamic> evaluationMap;
           if (evaluation is Map<String, dynamic>) {
             evaluationMap = evaluation;
@@ -202,33 +225,33 @@ class AnswerEvaluationService {
         );
       }
 
-      final ambiguousAnswers = await _votingService.createVotingItems(
-        sessionId: sessionId,
-        roundNumber: roundNumber,
-        allAnswers: allAnswers,
-      );
+      // final ambiguousAnswers = await _votingService.createVotingItems(
+      //   sessionId: sessionId,
+      //   roundNumber: roundNumber,
+      //   allAnswers: allAnswers,
+      // );
 
-      if (ambiguousAnswers.isNotEmpty) {
-        developer.log(
-          'Created ${ambiguousAnswers.length} voting items for ambiguous answers',
-          name: 'AnswerEvaluationService',
-        );
-        await _firestore.updateRoundStatus(
-          sessionId,
-          roundNumber,
-          RoundStatus.voting,
-        );
-      } else {
-        developer.log(
-          'Evaluation completed for round $roundNumber - no ambiguous answers, proceeding to scoring',
-          name: 'AnswerEvaluationService',
-        );
-        await _firestore.updateRoundStatus(
-          sessionId,
-          roundNumber,
-          RoundStatus.completed,
-        );
-      }
+      // if (ambiguousAnswers.isNotEmpty) {
+      //   developer.log(
+      //     'Created ${ambiguousAnswers.length} voting items for ambiguous answers',
+      //     name: 'AnswerEvaluationService',
+      //   );
+      //   await _firestore.updateRoundStatus(
+      //     sessionId,
+      //     roundNumber,
+      //     RoundStatus.voting,
+      //   );
+      // } else {
+      //   developer.log(
+      //     'Evaluation completed for round $roundNumber - no ambiguous answers, proceeding to scoring',
+      //     name: 'AnswerEvaluationService',
+      //   );
+      //     await _firestore.updateRoundStatus(
+      //       sessionId,
+      //       roundNumber,
+      //       RoundStatus.completed,
+      //     );
+      //   }
     } catch (e, stackTrace) {
       developer.log(
         'Error evaluating round: $e',

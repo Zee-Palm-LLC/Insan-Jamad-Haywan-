@@ -106,11 +106,7 @@ class AppRouter {
             );
           }
 
-          return VotingView(
-            selectedAlphabet: letter,
-            sessionId: extra['sessionId'] as String,
-            roundNumber: extra['roundNumber'] as int,
-          );
+          return VotingView(selectedAlphabet: letter);
         },
       ),
       GoRoute(

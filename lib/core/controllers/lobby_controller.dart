@@ -289,15 +289,16 @@ class LobbyController extends GetxController {
     );
   }
 
-  Future<void> deleteRoom() async {
+  Future<void> deleteRoom({bool shouldPop = true}) async {
     await NetworkCall.networkCall(
       onComplete: (_) {
         _cleanup();
         log('Room deleted successfully', name: 'deleteRoom');
-        navigatorKey.currentState?.pushNamedAndRemoveUntil(
-          MainMenuPage.path,
-          (route) => false,
-        );
+        if (shouldPop) {
+          if (navigatorKey.currentState?.canPop() ?? false) {
+            navigatorKey.currentState!.pop();
+          }
+        }
       },
       onError: (e, s) => AppToaster.showToast(
         'Error',

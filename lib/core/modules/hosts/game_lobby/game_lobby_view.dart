@@ -90,40 +90,40 @@ class _GameLobbyViewState extends State<GameLobbyView> {
 
             return Scaffold(
               extendBodyBehindAppBar: true,
-              appBar: isDesktop
-                  ? null
-                  : AppBar(
-                      leading: Padding(
-                        padding: EdgeInsets.all(10.h),
-                        child: CustomIconButton(
-                          icon: AppAssets.backIcon,
-                          onTap: () =>
-                              widget.controller.removePlayer(isKick: false),
-                        ),
-                      ),
-                      actions: [
-                        CustomIconButton(
-                          icon: AppAssets.shareIcon,
-                          onTap: () async {
-                            final codeToShare = inviteCode ?? lobbyId;
-                            await Clipboard.setData(
-                              ClipboardData(text: codeToShare),
-                            );
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Room code copied to clipboard',
-                                  ),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                        SizedBox(width: 16.w),
-                      ],
-                    ),
+              // appBar: isDesktop
+              //     ? null
+              //     : AppBar(
+              //         leading: Padding(
+              //           padding: EdgeInsets.all(10.h),
+              //           child: CustomIconButton(
+              //             icon: AppAssets.backIcon,
+              //             onTap: () =>
+              //                 widget.controller.removePlayer(isKick: false),
+              //           ),
+              //         ),
+              //   actions: [
+              //     CustomIconButton(
+              //       icon: AppAssets.shareIcon,
+              //       onTap: () async {
+              //         final codeToShare = inviteCode ?? lobbyId;
+              //         await Clipboard.setData(
+              //           ClipboardData(text: codeToShare),
+              //         );
+              //         if (context.mounted) {
+              //           ScaffoldMessenger.of(context).showSnackBar(
+              //             const SnackBar(
+              //               content: Text(
+              //                 'Room code copied to clipboard',
+              //               ),
+              //               backgroundColor: Colors.green,
+              //             ),
+              //           );
+              //         }
+              //       },
+              //     ),
+              //     SizedBox(width: 16.w),
+              //   ],
+              // ),
               body: LobbyBg(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.all(16.h),

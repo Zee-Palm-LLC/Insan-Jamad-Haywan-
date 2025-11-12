@@ -141,10 +141,11 @@ class _FinalRoundScoreboardState extends State<FinalRoundScoreboard> {
                       PrimaryButton(
                         text: 'Back to Main Menu',
                         onPressed: () async {
-                          // Navigate back to main menu
-                          await lobbyController.deleteRoom();
+                          await lobbyController.deleteRoom(shouldPop: false);
                           GameControllerManager.restAllControllers();
-                          context.pushReplacement(MainMenuPage.path);
+                          if (mounted) {
+                            context.go(MainMenuPage.path);
+                          }
                         },
                       ),
                       SizedBox(height: 20.h),

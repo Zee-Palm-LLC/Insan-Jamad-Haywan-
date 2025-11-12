@@ -11,6 +11,7 @@ class ScoringPlayingTile extends StatefulWidget {
   final String answer;
   final int points;
   final AnswerEvaluationStatus? status;
+  final VoidCallback? onReportTap;
 
   const ScoringPlayingTile({
     super.key,
@@ -20,6 +21,7 @@ class ScoringPlayingTile extends StatefulWidget {
     required this.answer,
     required this.points,
     this.status,
+    this.onReportTap,
   });
 
   @override
@@ -89,17 +91,28 @@ class ScoringPlayerTileState extends State<ScoringPlayingTile>
                 ),
               ),
             ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.5.h),
-              decoration: BoxDecoration(
-                color: AppColors.kGray300.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(30.r),
+            if (widget.status == AnswerEvaluationStatus.unclear)
+              InkWell(
+                onTap: widget.onReportTap,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 2.5.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.kPrimary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(30.r),
+                    border: Border.all(color: AppColors.kPrimary, width: 1),
+                  ),
+                  child: Text(
+                    'Report',
+                    style: AppTypography.kRegular19.copyWith(
+                      fontSize: 14.sp,
+                      color: AppColors.kPrimary,
+                    ),
+                  ),
+                ),
               ),
-              child: Text(
-                'Report',
-                style: AppTypography.kRegular19.copyWith(fontSize: 14.sp),
-              ),
-            ),
             SizedBox(width: 5.w),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.5.h),
