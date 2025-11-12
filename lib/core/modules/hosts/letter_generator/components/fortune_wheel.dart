@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,7 +10,7 @@ import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/data/helpers/wheel_helper.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/animations/confetti_animation.dart';
-import 'dart:developer' as dev;
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 
 class FortuneWheelWidget extends StatefulWidget {
   const FortuneWheelWidget({
@@ -62,6 +64,7 @@ class _FortuneWheelWidgetState extends State<FortuneWheelWidget> {
     wheelController.update();
     _selectedIndex = _random.nextInt(WheelHelper.getAlphabets().length);
     _controller?.add(_selectedIndex!);
+    AudioService.instance.playAudio(AudioType.spinningWheel);
   }
 
   void _onSpinComplete() {
@@ -71,6 +74,8 @@ class _FortuneWheelWidgetState extends State<FortuneWheelWidget> {
     final selectedLetter = WheelHelper.getAlphabets()[_selectedIndex!];
     wheelController.isSpinning = false;
     wheelController.onLetterSelection(selectedLetter);
+    
+    AudioService.instance.player.stop();
 
     widget.onSpinComplete?.call(selectedLetter);
     dev.log('Wheel stopped at: $selectedLetter');

@@ -6,8 +6,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
-import 'package:insan_jamd_hawan/core/data/enums/enums.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/core/data/enums/enums.dart';
 import 'package:insan_jamd_hawan/core/manager/game_controller_mananger.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_bg.dart';
@@ -17,6 +17,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_gene
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
@@ -160,6 +161,7 @@ class _GameLobbyViewState extends State<GameLobbyView> {
                           if (amHost) ...[
                             PrimaryButton(
                               text: 'Start !',
+                              audioType: AudioType.whooshChime,
                               width: 209.w,
                               onPressed: players.length < 2
                                   ? null

@@ -14,12 +14,13 @@ import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/final_round_scoreboard.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/components/scoring_playing_tile.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
@@ -40,6 +41,9 @@ class _ScoringViewState extends State<ScoringView> {
   WheelController get wheelController => Get.find<WheelController>();
   Timer? _navigationTimer;
   bool _hasNavigated = false;
+  bool _hasPlayedCreativeAudio = false;
+  final Set<String> _playedAnswerKeys = {};
+  final Set<String> _playedCategoryKeys = {};
 
   @override
   void dispose() {
@@ -80,6 +84,7 @@ class _ScoringViewState extends State<ScoringView> {
     };
 
     List<Widget> widgets = [];
+    int categoryIndex = 0;
 
     for (String category in categories) {
       List<Map<String, dynamic>> categoryAnswers = [];
@@ -100,6 +105,17 @@ class _ScoringViewState extends State<ScoringView> {
       }
 
       if (categoryAnswers.isNotEmpty) {
+        final categoryKey = category;
+        final isFirstCategory = categoryIndex == 0;
+        
+        // Play nextCategory audio for categories after the first one
+        if (!isFirstCategory && !_playedCategoryKeys.contains(categoryKey)) {
+          _playedCategoryKeys.add(categoryKey);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            AudioService.instance.playAudio(AudioType.nextCategory);
+          });
+        }
+
         widgets.addAll([
           Text(
             categoryLabels[category] ?? category,
@@ -115,14 +131,10 @@ class _ScoringViewState extends State<ScoringView> {
             child: Column(
               children: [
                 for (int i = 0; i < categoryAnswers.length; i++) ...[
-                  ScoringPlayingTile(
-                    imagePath: '',
-                    name: categoryAnswers[i]['playerName'] as String,
-                    answer: categoryAnswers[i]['answer'] as String,
-                    points: categoryAnswers[i]['points'] as int,
-                    status:
-                        categoryAnswers[i]['status'] as AnswerEvaluationStatus?,
-                    index: i + 1,
+                  _buildAnswerTileWithSound(
+                    categoryAnswers[i],
+                    i + 1,
+                    categoryKey,
                   ),
                   if (i != categoryAnswers.length - 1)
                     Divider(
@@ -136,10 +148,43 @@ class _ScoringViewState extends State<ScoringView> {
           ),
           if (category != categories.last) SizedBox(height: 20.h),
         ]);
+        categoryIndex++;
       }
     }
 
     return widgets;
+  }
+
+  Widget _buildAnswerTileWithSound(
+    Map<String, dynamic> answerData,
+    int index,
+    String categoryKey,
+  ) {
+    final answerKey = '${answerData['playerName']}_${answerData['answer']}_$categoryKey';
+    final points = answerData['points'] as int;
+    
+    return ScoringPlayingTile(
+      imagePath: '',
+      name: answerData['playerName'] as String,
+      answer: answerData['answer'] as String,
+      points: points,
+      status: answerData['status'] as AnswerEvaluationStatus?,
+      index: index,
+      onReveal: () {
+        // Play pop sound when answer is revealed
+        if (!_playedAnswerKeys.contains(answerKey)) {
+          _playedAnswerKeys.add(answerKey);
+          AudioService.instance.playAudio(AudioType.answerRevealPop);
+          
+          // Play cash sound after a short delay if points > 0
+          if (points > 0) {
+            Future.delayed(const Duration(milliseconds: 400), () {
+              AudioService.instance.playAudio(AudioType.pointsCash);
+            });
+          }
+        }
+      },
+    );
   }
 
   @override
@@ -163,6 +208,14 @@ class _ScoringViewState extends State<ScoringView> {
             "This is the player length ${allPlayers?.length} and answered players: ${answeredPlayers.length}",
           );
           if (answeredPlayers.length >= (allPlayers?.length ?? 0)) {
+            // Play creative audio when answers are first displayed
+            if (!_hasPlayedCreativeAudio) {
+              _hasPlayedCreativeAudio = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                AudioService.instance.playAudio(AudioType.creative);
+              });
+            }
+            
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _scheduleNavigation();
             });

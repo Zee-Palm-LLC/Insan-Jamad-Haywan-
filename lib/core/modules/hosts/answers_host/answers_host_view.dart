@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -15,9 +17,9 @@ import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
-import 'package:insan_jamd_hawan/responsive.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
-import 'dart:developer';
+import 'package:insan_jamd_hawan/responsive.dart';
 
 class AnswersHostView extends StatefulWidget {
   const AnswersHostView({super.key});
@@ -53,7 +55,6 @@ class _AnswersHostViewState extends State<AnswersHostView>
       duration: const Duration(milliseconds: 800),
     );
 
-    // Add listener to call updateStartCounting when animation ends and start timer sync
     _letterController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         final lobbyId = lobbyController.lobby.id;
@@ -86,16 +87,21 @@ class _AnswersHostViewState extends State<AnswersHostView>
 
     void showNext() {
       if (currentIndex < countdownSequence.length && mounted) {
+        // Start audio exactly when countdown begins (first number appears)
+        if (currentIndex == 0) {
+          AudioService.instance.playAudio(AudioType.timeGo);
+        }
+        
         setState(() {
           _countdownValue = countdownSequence[currentIndex];
         });
         _countdownController.forward(from: 0.0);
+        
         currentIndex++;
         if (currentIndex < countdownSequence.length) {
-          Future.delayed(const Duration(milliseconds: 1000), showNext);
+          Future.delayed(const Duration(milliseconds: 700), showNext);
         } else {
-          // After "Go!", show letter
-          Future.delayed(const Duration(milliseconds: 500), () {
+          Future.delayed(const Duration(milliseconds: 700), () {
             if (mounted) {
               setState(() {
                 _countdownValue = null;
@@ -107,13 +113,11 @@ class _AnswersHostViewState extends State<AnswersHostView>
         }
       }
     }
-
     Future.delayed(const Duration(milliseconds: 300), showNext);
   }
 
   @override
   void dispose() {
-    // Cancel timer subscription when navigating away
     if (Get.isRegistered<AnswerController>()) {
       try {
         Get.find<AnswerController>().cancelTimerSync();

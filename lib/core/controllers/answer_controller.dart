@@ -3,17 +3,18 @@ import 'dart:developer';
 
 import 'package:flutter/widgets.dart' show TextEditingController;
 import 'package:get/get.dart';
-import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
+import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/animations/progress_dialog.dart';
 import 'package:insan_jamd_hawan/core/services/answer_evaluation_service.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
-import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
+import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
 class AnswerController extends GetxController {
   final TextEditingController nameController = TextEditingController();
@@ -36,6 +37,7 @@ class AnswerController extends GetxController {
   StreamSubscription<List<PlayerAnswerModel>>? _answerSubmissionListener;
   Timer? _periodicTimer;
   DateTime? _roundEndTime;
+  bool _hasPlayedFinishedSound = false;
 
   bool doublePoints = false;
   int secondsRemaining = 0;
@@ -252,7 +254,7 @@ class AnswerController extends GetxController {
       return;
     }
 
-    final eventId = '${otherPlayerId}_${roundNumber}';
+    final eventId = '${otherPlayerId}_$roundNumber';
     if (processedSubmissionEvents.contains(eventId)) {
       log(
         'Already processed submission event: $eventId',
@@ -323,8 +325,13 @@ class AnswerController extends GetxController {
         );
         secondsRemaining = 0;
         _periodicTimer?.cancel();
+        if (!_hasPlayedFinishedSound) {
+          _hasPlayedFinishedSound = true;
+          AudioService.instance.playAudio(AudioType.timerFinished);
+        }
       } else {
         secondsRemaining = remainingSeconds;
+        AudioService.instance.playAudio(AudioType.timer);
       }
 
       update();
@@ -339,6 +346,7 @@ class AnswerController extends GetxController {
     _answerSubmissionListener?.cancel();
     _answerSubmissionListener = null;
     _roundEndTime = null;
+    _hasPlayedFinishedSound = false;
   }
 
   String get formattedTime {
@@ -634,6 +642,7 @@ class AnswerController extends GetxController {
     _periodicTimer?.cancel();
     _answerSubmissionListener?.cancel();
     _roundEndTime = null;
+    _hasPlayedFinishedSound = false;
     nameController.clear();
     objectController.clear();
     animalController.clear();
@@ -655,7 +664,7 @@ class AnswerController extends GetxController {
     currentRoundPlayersAnswers.clear();
 
     log(
-      'Answer controller reset completed for round ${currentProcessedRound}',
+      'Answer controller reset completed for round $currentProcessedRound',
       name: 'AnswerController',
     );
     update();

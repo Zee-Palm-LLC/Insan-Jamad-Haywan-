@@ -11,6 +11,7 @@ class ScoringPlayingTile extends StatefulWidget {
   final String answer;
   final int points;
   final AnswerEvaluationStatus? status;
+  final VoidCallback? onReveal;
 
   const ScoringPlayingTile({
     super.key,
@@ -20,6 +21,7 @@ class ScoringPlayingTile extends StatefulWidget {
     required this.answer,
     required this.points,
     this.status,
+    this.onReveal,
   });
 
   @override
@@ -47,6 +49,12 @@ class ScoringPlayerTileState extends State<ScoringPlayingTile>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed && widget.onReveal != null) {
+        widget.onReveal!();
+      }
+    });
 
     _controller.forward();
   }
