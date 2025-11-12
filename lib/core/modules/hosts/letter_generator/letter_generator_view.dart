@@ -14,17 +14,36 @@ import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
-class LetterGeneratorView extends StatelessWidget {
+class LetterGeneratorView extends StatefulWidget {
   const LetterGeneratorView({super.key});
-
-  LobbyController get controller => Get.find<LobbyController>();
 
   static const String path = '/letter-generator';
   static const String name = 'LetterGenerator';
+
+  @override
+  State<LetterGeneratorView> createState() => _LetterGeneratorViewState();
+}
+
+class _LetterGeneratorViewState extends State<LetterGeneratorView> {
+  LobbyController get controller => Get.find<LobbyController>();
+  bool _hasPlayedAudio = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _playInitialAudio();
+  }
+
+  Future<void> _playInitialAudio() async {
+    if (_hasPlayedAudio) return;
+    _hasPlayedAudio = true;
+    await AudioService.instance.playAudio(AudioType.timeToChooseLetter);
+  }
 
   @override
   Widget build(BuildContext context) {

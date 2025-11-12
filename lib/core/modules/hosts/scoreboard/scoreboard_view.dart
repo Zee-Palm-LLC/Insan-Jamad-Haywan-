@@ -2,27 +2,62 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
+import 'package:insan_jamd_hawan/core/controllers/scoreboard_controller.dart';
+import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_round_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/components/first_position_podium.dart';
-import 'package:insan_jamd_hawan/core/controllers/scoreboard_controller.dart';
-import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
-import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
-import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_round_view.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/components/first_position_podium.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
-class ScoreboardView extends StatelessWidget {
+class ScoreboardView extends StatefulWidget {
   const ScoreboardView({super.key});
 
   static const String path = '/scoreboard';
   static const String name = 'Scoreboard';
+
+  @override
+  State<ScoreboardView> createState() => _ScoreboardViewState();
+}
+
+class _ScoreboardViewState extends State<ScoreboardView> {
+  bool _hasPlayedAudio = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _playScoreboardAudio();
+  }
+
+  void _playScoreboardAudio() {
+    if (_hasPlayedAudio) return;
+    _hasPlayedAudio = true;
+
+    // Play narrator "Here come the scores!" first
+    AudioService.instance.playAudio(AudioType.scoreComes);
+    
+    // Wait for narrator audio to complete, then start looping background music
+    AudioService.instance.player.onPlayerComplete.first.then((_) {
+      // Start looping background music after narrator finishes
+      AudioService.instance.playLoopingMusic(AudioType.bgMusic);
+    });
+  }
+
+  @override
+  void dispose() {
+    // Stop background music when leaving the screen
+    AudioService.instance.stopBackgroundMusic();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

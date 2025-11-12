@@ -15,6 +15,7 @@ class AudioService {
 
   final player = AudioPlayer();
   final timerPlayer = AudioPlayer(); // Separate player for timer ticks
+  final bgMusicPlayer = AudioPlayer(); // Separate player for background music
   bool _isPlaying = false;
 
   Future<void> playAudio(AudioType audioType) async {
@@ -22,7 +23,7 @@ class AudioService {
     // For timer ticking sounds, use separate player to allow continuous ticking
     final isTimerTick = audioType == AudioType.timer;
     final audioPlayer = isTimerTick ? timerPlayer : player;
-    
+
     try {
       if (!isTimerTick && _isPlaying) {
         try {
@@ -38,7 +39,7 @@ class AudioService {
       if (!isTimerTick) {
         _isPlaying = true;
       }
-      
+
       await audioPlayer.play(AssetSource(path, mimeType: mimeType));
     } catch (e, stackTrace) {
       if (!isTimerTick) {
@@ -55,6 +56,32 @@ class AudioService {
       log(errorMessage, error: e, stackTrace: stackTrace, name: 'AudioService');
     }
     // }
+  }
+
+  Future<void> playLoopingMusic(AudioType audioType) async {
+    try {
+      final path = audioType.path;
+      final mimeType = path.endsWith('.mp3') ? 'audio/mpeg' : 'audio/wav';
+      
+      await bgMusicPlayer.setReleaseMode(ReleaseMode.loop);
+      await bgMusicPlayer.play(AssetSource(path, mimeType: mimeType));
+    } catch (e, stackTrace) {
+      final errorMessage = e.toString();
+      if (errorMessage.contains('AbortError') ||
+          errorMessage.contains('play() request was interrupted') ||
+          errorMessage.contains('The play() request was interrupted')) {
+        return;
+      }
+      log(errorMessage, error: e, stackTrace: stackTrace, name: 'AudioService');
+    }
+  }
+
+  Future<void> stopBackgroundMusic() async {
+    try {
+      await bgMusicPlayer.stop();
+    } catch (e) {
+      log('Error stopping background music: $e', name: 'AudioService');
+    }
   }
 }
 
@@ -73,7 +100,7 @@ const String _answerRevealPop = 'audios/lobby_join.wav';
 const String _pointsCash = 'audios/scoreboard.wav';
 const String _whooshChime = 'audios/whoosh_chime.mp3';
 const String _narratorCreative = 'audios/game_started.wav';
-const String _spinnningWheel = 'audios/spinnning_wheel.mp3';
+const String _spinningWheel = 'audios/spinnning_wheel.mp3';
 const String _letterA = 'audios/a.mp3';
 const String _letterB = 'audios/b.mp3';
 const String _letterC = 'audios/c.mp3';
@@ -103,6 +130,14 @@ const String _letterZ = 'audios/z.mp3';
 const String _timer = 'audios/timer.mp3';
 const String _stop = 'audios/stop.mp3';
 const String _timerFinished = 'audios/timer_finish.mp3';
+const String _timeToChooseLetter = 'audios/time_to_choose_letter.mp3';
+const String _timeGo = 'audios/time_go.mp3';
+const String _creative = 'audios/creative.mp3';
+const String nextCategory = 'audios/next_category.mp3';
+const String bgMusic = 'audios/bg_music.mp3';
+const String scoreComes = 'audios/score_comes.mp3';
+const String pointsDoubled = 'audios/points_doubled.mp3';
+const String enteredSomethingWrong = 'audios/entered_something_wrong.mp3';
 
 enum AudioType {
   click,
@@ -120,7 +155,7 @@ enum AudioType {
   pointsCash,
   narratorCreative,
   whooshChime,
-  spinnningWheel,
+  spinningWheel,
   letterA,
   letterB,
   letterC,
@@ -150,6 +185,14 @@ enum AudioType {
   timer,
   stop,
   timerFinished,
+  timeToChooseLetter,
+  timeGo,
+  creative,
+  nextCategory,
+  bgMusic,
+  scoreComes,
+  enteredSomethingWrong,
+  pointsDoubled
 }
 
 extension AudioTypeExtension on AudioType {
@@ -169,7 +212,7 @@ extension AudioTypeExtension on AudioType {
     AudioType.pointsCash => _pointsCash,
     AudioType.narratorCreative => _narratorCreative,
     AudioType.whooshChime => _whooshChime,
-    AudioType.spinnningWheel => _spinnningWheel,
+    AudioType.spinningWheel => _spinningWheel,
     AudioType.letterA => _letterA,
     AudioType.letterB => _letterB,
     AudioType.letterC => _letterC,
@@ -199,5 +242,13 @@ extension AudioTypeExtension on AudioType {
     AudioType.timer => _timer,
     AudioType.stop => _stop,
     AudioType.timerFinished => _timerFinished,
+    AudioType.timeToChooseLetter => _timeToChooseLetter,
+    AudioType.timeGo => _timeGo,
+    AudioType.creative => _creative,
+    AudioType.nextCategory => nextCategory,
+    AudioType.bgMusic => bgMusic,
+    AudioType.scoreComes => scoreComes,
+    AudioType.enteredSomethingWrong => enteredSomethingWrong,
+    AudioType.pointsDoubled => pointsDoubled,
   };
 }

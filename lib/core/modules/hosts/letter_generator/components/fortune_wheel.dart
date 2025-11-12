@@ -64,8 +64,7 @@ class _FortuneWheelWidgetState extends State<FortuneWheelWidget> {
     wheelController.update();
     _selectedIndex = _random.nextInt(WheelHelper.getAlphabets().length);
     _controller?.add(_selectedIndex!);
-    // Play spinning wheel audio
-    AudioService.instance.playAudio(AudioType.spinnningWheel);
+    AudioService.instance.playAudio(AudioType.spinningWheel);
   }
 
   void _onSpinComplete() {
@@ -75,8 +74,7 @@ class _FortuneWheelWidgetState extends State<FortuneWheelWidget> {
     final selectedLetter = WheelHelper.getAlphabets()[_selectedIndex!];
     wheelController.isSpinning = false;
     wheelController.onLetterSelection(selectedLetter);
-
-    // Stop spinning wheel audio
+    
     AudioService.instance.player.stop();
 
     widget.onSpinComplete?.call(selectedLetter);

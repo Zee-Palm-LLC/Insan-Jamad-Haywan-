@@ -11,6 +11,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/final_round_score
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/animations/progress_dialog.dart';
 import 'package:insan_jamd_hawan/core/services/answer_evaluation_service.dart';
+import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
@@ -36,6 +37,7 @@ class AnswerController extends GetxController {
   StreamSubscription<int>? _timerSubscription;
   Timer? _periodicTimer;
   DateTime? _roundEndTime;
+  bool _hasPlayedFinishedSound = false;
 
   bool doublePoints = false;
   int secondsRemaining = 0;
@@ -97,6 +99,7 @@ class AnswerController extends GetxController {
 
   void _startPeriodicTimer() {
     _periodicTimer?.cancel();
+    _hasPlayedFinishedSound = false;
     _periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_roundEndTime == null) return;
 
@@ -107,8 +110,13 @@ class AnswerController extends GetxController {
       if (remainingSeconds <= 0) {
         secondsRemaining = 0;
         _periodicTimer?.cancel();
+        if (!_hasPlayedFinishedSound) {
+          _hasPlayedFinishedSound = true;
+          AudioService.instance.playAudio(AudioType.timerFinished);
+        }
       } else {
         secondsRemaining = remainingSeconds;
+        AudioService.instance.playAudio(AudioType.timer);
       }
 
       update();
@@ -121,6 +129,7 @@ class AnswerController extends GetxController {
     _periodicTimer?.cancel();
     _periodicTimer = null;
     _roundEndTime = null;
+    _hasPlayedFinishedSound = false;
   }
 
   String get formattedTime {
@@ -356,6 +365,7 @@ class AnswerController extends GetxController {
     _timerSubscription?.cancel();
     _periodicTimer?.cancel();
     _roundEndTime = null;
+    _hasPlayedFinishedSound = false;
     nameController.clear();
     objectController.clear();
     animalController.clear();
