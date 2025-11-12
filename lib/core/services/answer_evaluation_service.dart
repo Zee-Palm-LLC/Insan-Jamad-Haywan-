@@ -34,6 +34,27 @@ class AnswerEvaluationService {
         return;
       }
 
+      // Get total number of players in the session
+      final totalPlayers = await _firestore.getPlayerCount(sessionId);
+      final submittedPlayerIds = allAnswers
+          .map((answer) => answer.playerId)
+          .toSet();
+      final submittedCount = submittedPlayerIds.length;
+
+      developer.log(
+        'Submission check: $submittedCount/$totalPlayers players submitted answers',
+        name: 'AnswerEvaluationService',
+      );
+
+      // Only proceed if all players have submitted their answers
+      if (submittedCount < totalPlayers) {
+        developer.log(
+          'Not all players have submitted answers yet. Waiting for remaining ${totalPlayers - submittedCount} player(s)',
+          name: 'AnswerEvaluationService',
+        );
+        return;
+      }
+
       final playerAnswersData = allAnswers
           .map(
             (answer) => {
@@ -55,12 +76,16 @@ class AnswerEvaluationService {
         throw Exception('Invalid evaluation response format');
       }
 
+      // Build player ID mapping for placeholder support
       final playerIdMap = <String, String>{};
       for (int i = 0; i < allAnswers.length; i++) {
         final answer = allAnswers[i];
         playerIdMap['playerId${i + 1}'] = answer.playerId;
         playerIdMap[answer.playerId] = answer.playerId;
       }
+
+      // Detect and fix duplicates to ensure all duplicates get 5 points
+      _fixDuplicateEvaluations(allAnswers, evaluations, playerIdMap);
 
       for (final answer in allAnswers) {
         Map<String, dynamic>? playerEvaluation =
@@ -215,6 +240,74 @@ class AnswerEvaluationService {
     }
   }
 
+  /// Detects duplicate answers and ensures all duplicates get 5 points
+  void _fixDuplicateEvaluations(
+    List<PlayerAnswerModel> allAnswers,
+    Map<String, dynamic> evaluations,
+    Map<String, String> playerIdMap,
+  ) {
+    // Categories to check for duplicates
+    final categories = ['name', 'object', 'animal', 'plant', 'country'];
+
+    for (final category in categories) {
+      final normalizedCategory = _normalizeCategoryName(category);
+
+      // Group players by their normalized answer (case-insensitive, trimmed)
+      final answerGroups = <String, List<String>>{};
+
+      for (final answer in allAnswers) {
+        final answerText = (answer.answers[category] ?? '').trim();
+        if (answerText.isEmpty) continue;
+
+        final normalizedAnswer = answerText.toLowerCase();
+        answerGroups
+            .putIfAbsent(normalizedAnswer, () => [])
+            .add(answer.playerId);
+      }
+
+      // For each group with multiple players, mark all as duplicate
+      for (final entry in answerGroups.entries) {
+        if (entry.value.length > 1) {
+          // Multiple players have the same answer - mark all as duplicate
+          developer.log(
+            'Duplicate detected in $normalizedCategory: "${entry.key}" - ${entry.value.length} players',
+            name: 'AnswerEvaluationService',
+          );
+
+          for (final playerId in entry.value) {
+            // Try to find the evaluation using actual playerId or placeholder
+            Map<String, dynamic>? playerEval =
+                evaluations[playerId] as Map<String, dynamic>?;
+
+            // If not found, try placeholder IDs
+            if (playerEval == null) {
+              for (final mapEntry in playerIdMap.entries) {
+                if (mapEntry.value == playerId &&
+                    evaluations.containsKey(mapEntry.key)) {
+                  playerEval =
+                      evaluations[mapEntry.key] as Map<String, dynamic>?;
+                  break;
+                }
+              }
+            }
+
+            if (playerEval != null) {
+              // Override the evaluation for this category to be duplicate
+              playerEval[normalizedCategory] = {
+                'status': 'duplicate',
+                'points': 5,
+              };
+              developer.log(
+                'Marked player $playerId\'s $normalizedCategory answer as duplicate (5 points)',
+                name: 'AnswerEvaluationService',
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+
   String _normalizeCategoryName(String category) {
     if (category.isEmpty) return category;
     final categoryMap = {
@@ -240,16 +333,34 @@ class AnswerEvaluationService {
       final participation = await _firestore.getPlayer(sessionId, playerId);
       if (participation == null) return;
 
-      final updatedScoresByRound = Map<String, int>.from(
-        participation.scoresByRound,
-      );
-      updatedScoresByRound[roundNumber.toString()] = roundScore;
+      // Get the old round score if it exists (to avoid double-counting)
+      final oldRoundScore =
+          participation.scoresByRound[roundNumber.toString()] ?? 0;
 
-      final newTotalScore = participation.totalScore + roundScore;
-      final newRoundsPlayed = participation.roundsPlayed + 1;
-      final newRoundsCompleted = participation.roundsCompleted + 1;
-      final newAverageScorePerRound =
-          newTotalScore / newRoundsPlayed.toDouble();
+      // Calculate the score difference (new score - old score)
+      final scoreDifference = roundScore - oldRoundScore;
+
+      // Update total score by adding only the difference
+      final newTotalScore = participation.totalScore + scoreDifference;
+
+      // Only increment rounds if this is a new round (not an update)
+      final isNewRound = oldRoundScore == 0;
+      final newRoundsPlayed = isNewRound
+          ? participation.roundsPlayed + 1
+          : participation.roundsPlayed;
+      final newRoundsCompleted = isNewRound
+          ? participation.roundsCompleted + 1
+          : participation.roundsCompleted;
+      final newAverageScorePerRound = newRoundsPlayed > 0
+          ? newTotalScore / newRoundsPlayed.toDouble()
+          : 0.0;
+
+      developer.log(
+        'Updating player $playerId score for round $roundNumber: '
+        'oldRoundScore=$oldRoundScore, newRoundScore=$roundScore, '
+        'scoreDifference=$scoreDifference, newTotalScore=$newTotalScore',
+        name: 'AnswerEvaluationService',
+      );
 
       await _firestore.updatePlayerScore(
         sessionId,
@@ -259,11 +370,19 @@ class AnswerEvaluationService {
         roundScore,
       );
 
-      await _firestore.updatePlayer(sessionId, playerId, {
-        'roundsPlayed': newRoundsPlayed,
-        'roundsCompleted': newRoundsCompleted,
-        'averageScorePerRound': newAverageScorePerRound,
-      });
+      // Only update rounds count if this is a new round
+      if (isNewRound) {
+        await _firestore.updatePlayer(sessionId, playerId, {
+          'roundsPlayed': newRoundsPlayed,
+          'roundsCompleted': newRoundsCompleted,
+          'averageScorePerRound': newAverageScorePerRound,
+        });
+      } else {
+        // Just update the average if the round was already played
+        await _firestore.updatePlayer(sessionId, playerId, {
+          'averageScorePerRound': newAverageScorePerRound,
+        });
+      }
     } catch (e, stackTrace) {
       developer.log(
         'Error updating player score: $e',
