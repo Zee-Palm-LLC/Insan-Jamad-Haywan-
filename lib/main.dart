@@ -11,6 +11,7 @@ import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_serv
 import 'package:insan_jamd_hawan/core/services/openai/openai_client.dart';
 import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_theme.dart';
+import 'package:insan_jamd_hawan/core/utils/browser_history_blocker.dart';
 import 'package:insan_jamd_hawan/firebase_options.dart';
 import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
@@ -38,6 +39,12 @@ void main() async {
   };
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize browser history blocker for web platform
+  if (kIsWeb) {
+    initializeBrowserHistoryBlocker();
+  }
+
   SystemChrome.setSystemUIOverlayStyle(defaultOverlay);
   await StorageService.instance.init();
 

@@ -4,13 +4,33 @@ import 'package:get/get.dart';
 import 'package:insan_jamd_hawan/config/routes/router.dart';
 import 'package:insan_jamd_hawan/core/controllers/game_config_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_theme.dart';
+import 'package:insan_jamd_hawan/core/utils/browser_history_blocker.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
 import 'package:insan_jamd_hawan/main.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-class InsanJamdHawan extends StatelessWidget {
+class InsanJamdHawan extends StatefulWidget {
   const InsanJamdHawan({super.key});
+
+  @override
+  State<InsanJamdHawan> createState() => _InsanJamdHawanState();
+}
+
+class _InsanJamdHawanState extends State<InsanJamdHawan> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      initializeBrowserHistoryBlocker();
+    });
+  }
+
+  @override
+  void dispose() {
+    disposeBrowserHistoryBlocker();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,24 +81,25 @@ class InsanJamdHawan extends StatelessWidget {
                 return GestureDetector(
                   onTap: () => FocusScope.of(context).unfocus(),
                   child: ToastificationWrapper(
-                    child: MaterialApp.router(
-                      title: 'INSAN JAMD HAWAN',
-                    
-                      scrollBehavior: ScrollBehavior().copyWith(
-                        overscroll: false,
+                    child: WillPopScope(
+                      onWillPop: () async => false,
+                      child: MaterialApp.router(
+                        title: 'INSAN JAMD HAWAN',
+                        scrollBehavior: ScrollBehavior().copyWith(
+                          overscroll: false,
+                        ),
+                        builder: (context, child) {
+                          return MediaQuery(
+                            data: MediaQuery.of(
+                              context,
+                            ).copyWith(textScaler: TextScaler.linear(1.2)),
+                            child: child!,
+                          );
+                        },
+                        debugShowCheckedModeBanner: false,
+                        theme: AppTheme.gameLobbyTheme,
+                        routerConfig: AppRouter.router,
                       ),
-                      builder: (context, child) {
-                        return MediaQuery(
-                          data: MediaQuery.of(
-                            context,
-                          ).copyWith(textScaler: TextScaler.linear(1.2)),
-                          child: child!,
-                        );
-                      },
-                      
-                      debugShowCheckedModeBanner: false,
-                      theme: AppTheme.gameLobbyTheme,
-                      routerConfig: AppRouter.router,
                     ),
                   ),
                 );
