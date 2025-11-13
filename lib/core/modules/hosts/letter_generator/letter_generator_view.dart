@@ -98,7 +98,11 @@ class LetterGeneratorView extends StatelessWidget {
                             SizedBox(height: 50.h),
                             FortuneWheelWidget(
                               isHost: true,
+                              onSpinStart: () {
+                                letterController.updateIsWheelSpinning(true);
+                              },
                               onSpinComplete: (va) {
+                                letterController.updateIsWheelSpinning(null);
                                 letterController.onLetterSelection(va);
                               },
                               onCountdownComplete: (va) {},

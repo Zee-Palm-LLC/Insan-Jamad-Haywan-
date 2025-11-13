@@ -167,4 +167,13 @@ class WheelController extends GetxController {
       }
     });
   }
+
+  void updateIsWheelSpinning(bool? isWheelSpinning) {
+    if (lobbyController.lobby.id != null &&
+        (lobbyController.lobby.id?.isEmpty ?? false)) {
+      throw Exception("SessionID can't be null or empty");
+    }
+    _db.updateIsWheelSpinning(lobbyController.lobby.id!, isWheelSpinning);
+    update();
+  }
 }

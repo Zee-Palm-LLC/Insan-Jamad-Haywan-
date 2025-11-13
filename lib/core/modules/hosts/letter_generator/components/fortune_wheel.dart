@@ -15,11 +15,13 @@ class FortuneWheelWidget extends StatefulWidget {
     super.key,
     this.onSpinComplete,
     this.onCountdownComplete,
+    this.onSpinStart,
     this.isHost = true,
   });
 
   final Function(String letter)? onSpinComplete;
   final Function(String letter)? onCountdownComplete;
+  final VoidCallback? onSpinStart;
   final bool isHost;
 
   @override
@@ -58,6 +60,10 @@ class _FortuneWheelWidgetState extends State<FortuneWheelWidget> {
   void _spinWheel() {
     final wheelController = Get.find<WheelController>();
     if (wheelController.isSpinning) return;
+    
+    // Call the callback when spin button is clicked
+    widget.onSpinStart?.call();
+    
     wheelController.isSpinning = true;
     wheelController.update();
     _selectedIndex = _random.nextInt(WheelHelper.getAlphabets().length);
