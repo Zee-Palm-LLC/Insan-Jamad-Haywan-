@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/player_list_card_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_colors.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_typography.dart';
@@ -9,9 +10,11 @@ import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/animat
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/rounds_selector_card.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/time_selector_card.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/custom_paint/hand_drawn_divider.dart';
+import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 
+// ignore: must_be_immutable
 class PlayerListCard extends StatelessWidget {
-  const PlayerListCard({
+  PlayerListCard({
     super.key,
     required this.players,
     required this.hostId,
@@ -24,11 +27,13 @@ class PlayerListCard extends StatelessWidget {
 
   final List<String> players;
   final String? hostId;
-  final int selectedRounds;
-  final int selectedTime;
+  int selectedRounds;
+  int selectedTime;
   final Function(int?) onRoundSelected;
   final Function(int) onTimeSelected;
   final Function(String)? onKickPlayer;
+
+  LobbyController get lobbyController => Get.find<LobbyController>();
 
   @override
   Widget build(BuildContext context) {
@@ -92,42 +97,66 @@ class PlayerListCard extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 18.h),
-              Row(
-                children: [
-                  Text('No. of Rounds', style: AppTypography.kBold21),
-                  const Spacer(),
-                  ...[3, 5, 7].map(
-                    (round) => Padding(
-                      padding: EdgeInsets.only(left: 8.w),
-                      child: RoundSelectorCard(
-                        onTap: () => onRoundSelected(round),
-                        isSelected: selectedRounds == round,
-                        round: round.toString(),
+              StreamBuilder(
+                stream: FirebaseFirestoreService.instance.streamGameSession(
+                  lobbyController.lobby.id ?? '',
+                ),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return Center(child: CircularProgressIndicator.adaptive());
+                  }
+                  final config = snapshot.data?.config;
+                  selectedRounds = config?.maxRounds ?? 0;
+                  selectedTime = config?.defaultTimePerRound ?? 0;
+                  snapshot.data?.hostId;
+
+                  final isHost = hostId == snapshot.data?.hostId;
+                  return Column(
+                    children: [
+                      Row(
+                        children: [
+                          Text('No. of Rounds', style: AppTypography.kBold21),
+                          const Spacer(),
+                          ...[3, 5, 7].map(
+                            (round) => Padding(
+                              padding: EdgeInsets.only(left: 8.w),
+                              child: RoundSelectorCard(
+                                onTap: isHost
+                                    ? () => onRoundSelected(round)
+                                    : () {},
+                                isSelected: selectedRounds == round,
+                                round: round.toString(),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-              HandDrawnDivider(
-                color: AppColors.kGray300,
-                thickness: 1,
-                height: 16.h,
-              ),
-              SizedBox(height: 10.h),
-              Text('Time per round', style: AppTypography.kBold21),
-              SizedBox(height: 10.h),
-              Wrap(
-                spacing: 8.w,
-                children: [45, 60, 90]
-                    .map(
-                      (time) => TimeSelectorCard(
-                        onTap: () => onTimeSelected(time),
-                        time: time.toString(),
-                        isSelected: selectedTime == time,
+                      SizedBox(height: 10.h),
+                      HandDrawnDivider(
+                        color: AppColors.kGray300,
+                        thickness: 1,
+                        height: 16.h,
                       ),
-                    )
-                    .toList(),
+                      SizedBox(height: 10.h),
+                      Text('Time per round', style: AppTypography.kBold21),
+                      SizedBox(height: 10.h),
+                      Wrap(
+                        spacing: 8.w,
+                        children: [45, 60, 90]
+                            .map(
+                              (time) => TimeSelectorCard(
+                                onTap: isHost
+                                    ? () => onTimeSelected(time)
+                                    : () {},
+                                time: time.toString(),
+                                isSelected: selectedTime == time,
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),

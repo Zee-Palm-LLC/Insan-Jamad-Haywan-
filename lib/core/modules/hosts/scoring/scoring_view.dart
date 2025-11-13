@@ -18,7 +18,6 @@ import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.d
 import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/final_round_scoreboard.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/components/scoring_playing_tile.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
-import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
@@ -51,7 +50,7 @@ class _ScoringViewState extends State<ScoringView> {
     if (_hasNavigated) return;
 
     _navigationTimer?.cancel();
-    _navigationTimer = Timer(const Duration(seconds: 5), () {
+    _navigationTimer = Timer(const Duration(seconds: 20), () {
       if (mounted && !_hasNavigated) {
         _hasNavigated = true;
         final bool isFinalRound =
@@ -123,6 +122,21 @@ class _ScoringViewState extends State<ScoringView> {
                     status:
                         categoryAnswers[i]['status'] as AnswerEvaluationStatus?,
                     index: i + 1,
+                    onReportTap:
+                        categoryAnswers[i]['status'] ==
+                            AnswerEvaluationStatus.unclear
+                        ? () {
+                            context.pushNamed(
+                              VotingView.name,
+                              pathParameters: {
+                                'letter': widget.selectedAlphabet,
+                              },
+                              extra: {
+                                'selectedAlphabet': widget.selectedAlphabet,
+                              },
+                            );
+                          }
+                        : null,
                   ),
                   if (i != categoryAnswers.length - 1)
                     Divider(

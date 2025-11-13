@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/scoreboard_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/core/manager/game_controller_mananger.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/components/final_scoreboard_list.dart';
@@ -139,9 +140,12 @@ class _FinalRoundScoreboardState extends State<FinalRoundScoreboard> {
                       SizedBox(height: 30.h),
                       PrimaryButton(
                         text: 'Back to Main Menu',
-                        onPressed: () {
-                          // Navigate back to main menu
-                          context.pushReplacement(MainMenuPage.path);
+                        onPressed: () async {
+                          await lobbyController.deleteRoom(shouldPop: false);
+                          GameControllerManager.restAllControllers();
+                          if (mounted) {
+                            context.go(MainMenuPage.path);
+                          }
                         },
                       ),
                       SizedBox(height: 20.h),

@@ -51,7 +51,6 @@ class _PlayerFortuneWheelWidgetState extends State<PlayerFortuneWheelWidget> {
             '[PlayerFortuneWheel] Firebase update - isSpinning: $newIsSpinning, letter: $newLetter',
           );
 
-          // Only update if values changed
           if (_isSpinning != newIsSpinning || _letter != newLetter) {
             setState(() {
               _isSpinning = newIsSpinning;
@@ -67,13 +66,11 @@ class _PlayerFortuneWheelWidgetState extends State<PlayerFortuneWheelWidget> {
       '[PlayerFortuneWheel] _handleStateChange - isSpinning: $_isSpinning, letter: $_letter',
     );
 
-    // If we have a letter, we want a smooth stop (do NOT cancel timer immediately)
     if (_letter != null) {
       _startSmoothStop(_letter!);
       return;
     }
 
-    // No letter yet → either start or stop spinning based on flag
     _spinningTimer?.cancel();
 
     if (_isSpinning == true) {
@@ -88,7 +85,6 @@ class _PlayerFortuneWheelWidgetState extends State<PlayerFortuneWheelWidget> {
   void _startSpinning() {
     dev.log('[PlayerFortuneWheel] _startSpinning called');
 
-    // If we already have a letter, do NOT start random spinning
     if (_letter != null) {
       dev.log(
         '[PlayerFortuneWheel] Not starting spinning because letter is already set: $_letter',
@@ -96,7 +92,6 @@ class _PlayerFortuneWheelWidgetState extends State<PlayerFortuneWheelWidget> {
       return;
     }
 
-    // Ensure controller exists and is not closed
     if (_controller == null || _controller!.isClosed) {
       _controller = StreamController<int>.broadcast();
     }
@@ -118,11 +113,7 @@ class _PlayerFortuneWheelWidgetState extends State<PlayerFortuneWheelWidget> {
     });
   }
 
-  /// Start a "smooth stop" when a letter arrives:
-  /// - Let it spin a bit more (delay)
-  /// - Then stop gracefully on that letter
   void _startSmoothStop(String letter) {
-    // If already scheduled, don't schedule again
     if (_smoothStopTimer != null) {
       return;
     }
@@ -132,7 +123,6 @@ class _PlayerFortuneWheelWidgetState extends State<PlayerFortuneWheelWidget> {
     _smoothStopTimer = Timer(const Duration(milliseconds: 800), () {
       _smoothStopTimer = null;
 
-      // If widget gone or letter changed, bail out
       if (!mounted || _letter != letter) {
         return;
       }
@@ -144,11 +134,9 @@ class _PlayerFortuneWheelWidgetState extends State<PlayerFortuneWheelWidget> {
   void _stopAtLetter(String letter) {
     dev.log('[PlayerFortuneWheel] _stopAtLetter called for letter: $letter');
 
-    // Stop any running timers
     _spinningTimer?.cancel();
     _spinningTimer = null;
 
-    // Locally mark as not spinning
     _isSpinning = false;
 
     final alphabets = WheelHelper.getAlphabets();
@@ -161,23 +149,18 @@ class _PlayerFortuneWheelWidgetState extends State<PlayerFortuneWheelWidget> {
 
     _currentIndex = targetIndex;
 
-    // Close old controller so NO old random events can come through
     try {
       _controller?.close();
     } catch (_) {
-      // ignore if already closed
     }
 
-    // Create a brand new controller just for the final stop
     _controller = StreamController<int>.broadcast();
 
-    // Push the final index once
     dev.log(
       '[PlayerFortuneWheel] Adding final target index to new stream: $_currentIndex',
     );
     _controller!.add(_currentIndex);
 
-    // Rebuild so FortuneWheel listens to new stream
     if (mounted) {
       setState(() {});
     }
@@ -309,127 +292,6 @@ class _PlayerFortuneWheelWidgetState extends State<PlayerFortuneWheelWidget> {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class StaticPlayerFortuneWheelWidget extends StatelessWidget {
-  final String letter;
-
-  const StaticPlayerFortuneWheelWidget({super.key, required this.letter});
-
-  @override
-  Widget build(BuildContext context) {
-    final alphabets = WheelHelper.getAlphabets();
-    final targetIndex = alphabets.indexOf(letter);
-
-    // Fallback: agar letter list me na mile to index 0
-    final safeIndex = targetIndex == -1 ? 0 : targetIndex;
-
-    // Single-value stream taake FortuneWheel ko ek hi selected index mile
-    final selectedStream = Stream<int>.value(safeIndex);
-
-    return SizedBox(
-      height: 320.h,
-      width: 320.h,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            height: 320.h,
-            width: 320.h,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.kWhite,
-            ),
-          ),
-          Container(
-            height: 320.h,
-            width: 320.h,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.kGray300.withValues(alpha: 0.1),
-                  blurRadius: 5,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: FortuneWheel(
-              // No spinning: just one value with almost-zero duration
-              selected: selectedStream,
-              indicators: const <FortuneIndicator>[],
-              animateFirst: false,
-              physics: CircularPanPhysics(
-                duration: Duration(
-                  milliseconds: 1,
-                ), // practically no animation, just render at position
-                curve: Curves.linear,
-              ),
-              items: [
-                for (int i = 0; i < alphabets.length; i++)
-                  FortuneItem(
-                    style: FortuneItemStyle(
-                      color: alphabets[i] != letter
-                          ? WheelHelper.getColorForIndex(
-                              i,
-                            ).withValues(alpha: 0.1)
-                          : WheelHelper.getColorForIndex(i),
-                      borderWidth: 0,
-                    ),
-                    child: Container(
-                      width: double.maxFinite,
-                      alignment: Alignment.centerRight,
-                      padding: EdgeInsets.only(right: 10.w),
-                      color: alphabets[i] != letter
-                          ? WheelHelper.getColorForIndex(
-                              i,
-                            ).withValues(alpha: 0.1)
-                          : WheelHelper.getColorForIndex(i),
-                      child: Text(
-                        alphabets[i],
-                        style: AppTypography.kRegular19.copyWith(
-                          color: alphabets[i] != letter
-                              ? AppColors.kBlack.withValues(alpha: 0.1)
-                              : AppColors.kBlack,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          // Center selected letter + confetti (optional)
-          ConfettiAnimation(
-            key: ValueKey(letter),
-            enabled: true,
-            duration: const Duration(seconds: 3),
-          ),
-          Container(
-            width: 61.w,
-            height: 61.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.kPrimary,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                letter,
-                style: AppTypography.kBold24.copyWith(color: AppColors.kWhite),
-              ),
-            ),
-          ),
         ],
       ),
     );

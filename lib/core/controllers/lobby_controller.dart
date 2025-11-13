@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:insan_jamd_hawan/core/data/enums/enums.dart';
+import 'package:insan_jamd_hawan/core/modules/main_menu/main_menu_page.dart';
 import 'package:insan_jamd_hawan/core/models/game/lobby_settings.dart';
 import 'package:insan_jamd_hawan/core/models/game/player_state_model.dart';
 import 'package:insan_jamd_hawan/core/models/lobby/lobby_model.dart';
@@ -288,13 +289,15 @@ class LobbyController extends GetxController {
     );
   }
 
-  Future<void> deleteRoom() async {
+  Future<void> deleteRoom({bool shouldPop = true}) async {
     await NetworkCall.networkCall(
       onComplete: (_) {
         _cleanup();
         log('Room deleted successfully', name: 'deleteRoom');
-        if (navigatorKey.currentState?.canPop() ?? false) {
-          navigatorKey.currentState!.pop();
+        if (shouldPop) {
+          if (navigatorKey.currentState?.canPop() ?? false) {
+            navigatorKey.currentState!.pop();
+          }
         }
       },
       onError: (e, s) => AppToaster.showToast(

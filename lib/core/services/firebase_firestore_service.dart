@@ -1,14 +1,10 @@
 import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:insan_jamd_hawan/core/models/session/ambiguous_answer_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/game_player_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/game_session_model.dart';
-import 'package:insan_jamd_hawan/core/models/session/game_summary_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_participation_model.dart';
-import 'package:insan_jamd_hawan/core/models/session/player_vote_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/round_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
 import 'package:insan_jamd_hawan/core/models/user/user_model.dart';
@@ -80,44 +76,11 @@ class FirebaseFirestoreService {
     String playerId,
   ) => _answersCollection(sessionId, roundNumber).doc(playerId);
 
-  CollectionReference _votesCollection(String sessionId, String roundNumber) =>
-      _roundDoc(sessionId, roundNumber).collection('votes');
-
-  DocumentReference _voteDoc(
-    String sessionId,
-    String roundNumber,
-    String playerId,
-  ) => _votesCollection(sessionId, roundNumber).doc(playerId);
-
-  CollectionReference _ambiguousAnswersCollection(
-    String sessionId,
-    String roundNumber,
-  ) => _roundDoc(sessionId, roundNumber).collection('ambiguous_answers');
-
-  DocumentReference _ambiguousAnswerDoc(
-    String sessionId,
-    String roundNumber,
-    String ambiguousAnswerId,
-  ) => _ambiguousAnswersCollection(
-    sessionId,
-    roundNumber,
-  ).doc(ambiguousAnswerId);
-
-  DocumentReference _summaryDoc(String sessionId) =>
-      _sessionDoc(sessionId).collection('summary').doc('data');
-
   CollectionReference get _gamePlayersCollection =>
       _gameDoc.collection('game_players');
 
   DocumentReference _gamePlayerDoc(String playerId) =>
       _gamePlayersCollection.doc(playerId);
-
-  CollectionReference get gameResults => _firestore
-      .collection('insan_jamd_hawan_results')
-      .withConverter(
-        fromFirestore: (snapshot, _) => snapshot.data()!,
-        toFirestore: (data, _) => data as Map<String, dynamic>,
-      );
 
   CollectionReference<UserModel> get users => _firestore
       .collection('users')
@@ -224,25 +187,6 @@ class FirebaseFirestoreService {
     });
   }
 
-  Future<List<PlayerParticipationModel>> getAllPlayers(String sessionId) async {
-    final snapshot = await _playersCollection(sessionId).get();
-    return snapshot.docs
-        .map((doc) => PlayerParticipationModel.fromFirestore(doc))
-        .toList();
-  }
-
-  Future<List<PlayerParticipationModel>> getActivePlayers(
-    String sessionId,
-  ) async {
-    final snapshot = await _playersCollection(sessionId)
-        .where('status', isEqualTo: PlayerStatus.active.toJson())
-        .where('isOnline', isEqualTo: true)
-        .get();
-    return snapshot.docs
-        .map((doc) => PlayerParticipationModel.fromFirestore(doc))
-        .toList();
-  }
-
   Future<List<PlayerParticipationModel>> getLeaderboard(
     String sessionId, {
     int? limit,
@@ -305,17 +249,6 @@ class FirebaseFirestoreService {
     return snapshot.docs.map((doc) => RoundModel.fromFirestore(doc)).toList();
   }
 
-  Stream<List<RoundModel>> listenToRounds(String sessionId) {
-    return _roundsCollection(sessionId)
-        .orderBy('roundNumber', descending: false)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => RoundModel.fromFirestore(doc))
-              .toList(),
-        );
-  }
-
   Stream<RoundModel?> listenToRound(String sessionId, int roundNumber) {
     return _roundDoc(sessionId, roundNumber.toString()).snapshots().map((doc) {
       if (!doc.exists) return null;
@@ -335,20 +268,6 @@ class FirebaseFirestoreService {
     ).set(answer.toJson());
   }
 
-  Future<PlayerAnswerModel?> getAnswer(
-    String sessionId,
-    int roundNumber,
-    String playerId,
-  ) async {
-    final doc = await _answerDoc(
-      sessionId,
-      roundNumber.toString(),
-      playerId,
-    ).get();
-    if (!doc.exists) return null;
-    return PlayerAnswerModel.fromFirestore(doc);
-  }
-
   Future<void> updateAnswerScoring(
     String sessionId,
     int roundNumber,
@@ -362,19 +281,6 @@ class FirebaseFirestoreService {
     ).update({'scoring': scoring});
   }
 
-  Future<void> updateAnswerVotes(
-    String sessionId,
-    int roundNumber,
-    String playerId,
-    Map<String, dynamic> votes,
-  ) async {
-    await _answerDoc(
-      sessionId,
-      roundNumber.toString(),
-      playerId,
-    ).update({'votes': votes});
-  }
-
   Future<List<PlayerAnswerModel>> getAllAnswers(
     String sessionId,
     int roundNumber,
@@ -386,87 +292,6 @@ class FirebaseFirestoreService {
     return snapshot.docs
         .map((doc) => PlayerAnswerModel.fromFirestore(doc))
         .toList();
-  }
-
-  Stream<List<PlayerAnswerModel>> listenToAnswers(
-    String sessionId,
-    int roundNumber,
-  ) {
-    return _answersCollection(
-      sessionId,
-      roundNumber.toString(),
-    ).snapshots().map(
-      (snapshot) => snapshot.docs
-          .map((doc) => PlayerAnswerModel.fromFirestore(doc))
-          .toList(),
-    );
-  }
-
-  Future<void> submitVote(
-    String sessionId,
-    int roundNumber,
-    PlayerVoteModel vote,
-  ) async {
-    await _voteDoc(
-      sessionId,
-      roundNumber.toString(),
-      vote.playerId,
-    ).set(vote.toJson());
-  }
-
-  Future<PlayerVoteModel?> getVote(
-    String sessionId,
-    int roundNumber,
-    String playerId,
-  ) async {
-    final doc = await _voteDoc(
-      sessionId,
-      roundNumber.toString(),
-      playerId,
-    ).get();
-    if (!doc.exists) return null;
-    return PlayerVoteModel.fromFirestore(doc);
-  }
-
-  Future<List<PlayerVoteModel>> getAllVotes(
-    String sessionId,
-    int roundNumber,
-  ) async {
-    final snapshot = await _votesCollection(
-      sessionId,
-      roundNumber.toString(),
-    ).get();
-    return snapshot.docs
-        .map((doc) => PlayerVoteModel.fromFirestore(doc))
-        .toList();
-  }
-
-  Stream<List<PlayerVoteModel>> listenToVotes(
-    String sessionId,
-    int roundNumber,
-  ) {
-    return _votesCollection(sessionId, roundNumber.toString()).snapshots().map(
-      (snapshot) => snapshot.docs
-          .map((doc) => PlayerVoteModel.fromFirestore(doc))
-          .toList(),
-    );
-  }
-
-  Future<void> updateSummary(String sessionId, GameSummaryModel summary) async {
-    await _summaryDoc(sessionId).set(summary.toJson());
-  }
-
-  Future<GameSummaryModel?> getSummary(String sessionId) async {
-    final doc = await _summaryDoc(sessionId).get();
-    if (!doc.exists) return null;
-    return GameSummaryModel.fromFirestore(doc);
-  }
-
-  Stream<GameSummaryModel?> listenToSummary(String sessionId) {
-    return _summaryDoc(sessionId).snapshots().map((doc) {
-      if (!doc.exists) return null;
-      return GameSummaryModel.fromFirestore(doc);
-    });
   }
 
   Future<void> saveGamePlayer(GamePlayerModel player) async {
@@ -510,123 +335,6 @@ class FirebaseFirestoreService {
     );
     await saveGamePlayer(newPlayer);
     return newPlayer;
-  }
-
-  Future<void> createAmbiguousAnswer(
-    AmbiguousAnswerModel ambiguousAnswer,
-  ) async {
-    await _ambiguousAnswerDoc(
-      ambiguousAnswer.sessionId,
-      ambiguousAnswer.roundNumber.toString(),
-      ambiguousAnswer.id,
-    ).set(ambiguousAnswer.toJson());
-  }
-
-  Future<AmbiguousAnswerModel?> getAmbiguousAnswer(
-    String sessionId,
-    int roundNumber,
-    String ambiguousAnswerId,
-  ) async {
-    final doc = await _ambiguousAnswerDoc(
-      sessionId,
-      roundNumber.toString(),
-      ambiguousAnswerId,
-    ).get();
-    if (!doc.exists) return null;
-    return AmbiguousAnswerModel.fromFirestore(doc);
-  }
-
-  Future<List<AmbiguousAnswerModel>> getAllAmbiguousAnswers(
-    String sessionId,
-    int roundNumber,
-  ) async {
-    final snapshot = await _ambiguousAnswersCollection(
-      sessionId,
-      roundNumber.toString(),
-    ).get();
-    return snapshot.docs
-        .map((doc) => AmbiguousAnswerModel.fromFirestore(doc))
-        .toList();
-  }
-
-  Future<void> updateAmbiguousAnswerVote(
-    String sessionId,
-    int roundNumber,
-    String ambiguousAnswerId,
-    String voterId,
-    bool isCorrect,
-    int correctVotes,
-    int incorrectVotes,
-  ) async {
-    await _ambiguousAnswerDoc(
-      sessionId,
-      roundNumber.toString(),
-      ambiguousAnswerId,
-    ).update({
-      'votes.$voterId': isCorrect,
-      'correctVotes': correctVotes,
-      'incorrectVotes': incorrectVotes,
-    });
-  }
-
-  Future<void> completeAmbiguousAnswerVoting(
-    String sessionId,
-    int roundNumber,
-    String ambiguousAnswerId,
-    bool finalDecision,
-  ) async {
-    await _ambiguousAnswerDoc(
-      sessionId,
-      roundNumber.toString(),
-      ambiguousAnswerId,
-    ).update({
-      'status': VotingStatus.completed.toJson(),
-      'finalDecision': finalDecision,
-    });
-  }
-
-  Stream<List<AmbiguousAnswerModel>> listenToAmbiguousAnswers(
-    String sessionId,
-    int roundNumber,
-  ) {
-    return _ambiguousAnswersCollection(
-      sessionId,
-      roundNumber.toString(),
-    ).snapshots().map(
-      (snapshot) => snapshot.docs
-          .map((doc) => AmbiguousAnswerModel.fromFirestore(doc))
-          .toList(),
-    );
-  }
-
-  Future<void> deleteSessionWithSubcollections(String sessionId) async {
-    final batch = _firestore.batch();
-
-    final players = await _playersCollection(sessionId).get();
-    for (final doc in players.docs) {
-      batch.delete(doc.reference);
-    }
-
-    final rounds = await _roundsCollection(sessionId).get();
-    for (final roundDoc in rounds.docs) {
-      final answers = await _answersCollection(sessionId, roundDoc.id).get();
-      for (final answerDoc in answers.docs) {
-        batch.delete(answerDoc.reference);
-      }
-
-      final votes = await _votesCollection(sessionId, roundDoc.id).get();
-      for (final voteDoc in votes.docs) {
-        batch.delete(voteDoc.reference);
-      }
-
-      batch.delete(roundDoc.reference);
-    }
-
-    batch.delete(_summaryDoc(sessionId));
-
-    batch.delete(_sessionDoc(sessionId));
-
-    await batch.commit();
   }
 
   Future<RoundModel> addNewRound({
@@ -973,6 +681,188 @@ class FirebaseFirestoreService {
     } catch (e, s) {
       log(
         'Error updating maxRounds for session: $e',
+        name: 'FirebaseFirestoreService',
+        error: e,
+        stackTrace: s,
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> submitCategoryVote({
+    required String sessionId,
+    required int roundNumber,
+    required String answerPlayerId,
+    required String category,
+    required String voterId,
+    required bool isClear,
+  }) async {
+    try {
+      final answerDoc = _answerDoc(
+        sessionId,
+        roundNumber.toString(),
+        answerPlayerId,
+      );
+
+      final answerSnapshot = await answerDoc.get();
+      if (!answerSnapshot.exists) {
+        throw Exception('Answer not found for player $answerPlayerId');
+      }
+
+      final answerData = answerSnapshot.data() as Map<String, dynamic>;
+      final votes = answerData['votes'] as Map<String, dynamic>? ?? {};
+
+      // Get or create the category votes list
+      final categoryVotes = (votes[category] as List<dynamic>? ?? [])
+          .map((e) => e as String)
+          .toList();
+
+      // Remove any existing vote from this voter for this category
+      categoryVotes.removeWhere((vote) => vote.startsWith('$voterId:'));
+
+      // Add the new vote (format: "voterId:clear" or "voterId:unclear")
+      categoryVotes.add('$voterId:${isClear ? "clear" : "unclear"}');
+
+      // Update the votes in the answer document
+      votes[category] = categoryVotes;
+
+      await answerDoc.update({'votes': votes});
+
+      log(
+        'Vote submitted: $voterId voted ${isClear ? "clear" : "unclear"} for $answerPlayerId\'s $category',
+        name: 'FirebaseFirestoreService',
+      );
+    } catch (e, s) {
+      log(
+        'Error submitting category vote: $e',
+        name: 'FirebaseFirestoreService',
+        error: e,
+        stackTrace: s,
+      );
+      rethrow;
+    }
+  }
+
+  /// Process voting results for all unclear answers and update scoring
+  /// Returns true if any votes were processed
+  Future<bool> processVotingResults({
+    required String sessionId,
+    required int roundNumber,
+  }) async {
+    try {
+      final allAnswers = await getAllAnswers(sessionId, roundNumber);
+      bool anyUpdates = false;
+
+      for (final answer in allAnswers) {
+        if (answer.scoring == null) continue;
+
+        final updatedBreakdown = <String, CategoryScore>{};
+        bool needsUpdate = false;
+
+        for (final entry in answer.scoring!.breakdown.entries) {
+          final category = entry.key;
+          final categoryScore = entry.value;
+
+          // Only process unclear answers
+          if (categoryScore.status != AnswerEvaluationStatus.unclear) {
+            updatedBreakdown[category] = categoryScore;
+            continue;
+          }
+
+          // Get votes for this category
+          final categoryVotes = answer.votes.votes[category] ?? [];
+
+          if (categoryVotes.isEmpty) {
+            // No votes, default to 0 points (unclear)
+            updatedBreakdown[category] = CategoryScore(
+              isCorrect: false,
+              points: 0,
+              status: AnswerEvaluationStatus.incorrect,
+            );
+            needsUpdate = true;
+            continue;
+          }
+
+          // Count clear and unclear votes
+          int clearVotes = 0;
+          int unclearVotes = 0;
+
+          for (final vote in categoryVotes) {
+            if (vote.endsWith(':clear')) {
+              clearVotes++;
+            } else if (vote.endsWith(':unclear')) {
+              unclearVotes++;
+            }
+          }
+
+          // Determine final decision: more clear votes = 10 points, otherwise 0
+          final isClear = clearVotes > unclearVotes;
+
+          updatedBreakdown[category] = CategoryScore(
+            isCorrect: isClear,
+            points: isClear ? 10 : 0,
+            status: isClear
+                ? AnswerEvaluationStatus.correct
+                : AnswerEvaluationStatus.incorrect,
+          );
+          needsUpdate = true;
+
+          log(
+            'Voting result for ${answer.playerName}\'s $category: '
+            'clear=$clearVotes, unclear=$unclearVotes, final=${isClear ? "clear (10pts)" : "unclear (0pts)"}',
+            name: 'FirebaseFirestoreService',
+          );
+        }
+
+        if (needsUpdate) {
+          // Recalculate total score
+          int newTotalScore = 0;
+          int newCorrectCount = 0;
+          for (final score in updatedBreakdown.values) {
+            newTotalScore += score.points;
+            if (score.isCorrect) newCorrectCount++;
+          }
+
+          final updatedScoring = ScoringResult(
+            correctAnswers: newCorrectCount,
+            fooledPlayers: answer.scoring!.fooledPlayers,
+            roundScore: newTotalScore,
+            breakdown: updatedBreakdown,
+          );
+
+          await updateAnswerScoring(
+            sessionId,
+            roundNumber,
+            answer.playerId,
+            updatedScoring.toJson(),
+          );
+
+          // Update player's total score
+          final participation = await getPlayer(sessionId, answer.playerId);
+          if (participation != null) {
+            final oldRoundScore =
+                participation.scoresByRound[roundNumber.toString()] ?? 0;
+            final scoreDifference = newTotalScore - oldRoundScore;
+            final updatedTotalScore =
+                participation.totalScore + scoreDifference;
+
+            await updatePlayerScore(
+              sessionId,
+              answer.playerId,
+              updatedTotalScore,
+              roundNumber.toString(),
+              newTotalScore,
+            );
+          }
+
+          anyUpdates = true;
+        }
+      }
+
+      return anyUpdates;
+    } catch (e, s) {
+      log(
+        'Error processing voting results: $e',
         name: 'FirebaseFirestoreService',
         error: e,
         stackTrace: s,

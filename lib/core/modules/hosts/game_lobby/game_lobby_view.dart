@@ -18,6 +18,7 @@ import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
+import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class GameLobbyView extends StatefulWidget {
@@ -89,40 +90,40 @@ class _GameLobbyViewState extends State<GameLobbyView> {
 
             return Scaffold(
               extendBodyBehindAppBar: true,
-              appBar: isDesktop
-                  ? null
-                  : AppBar(
-                      leading: Padding(
-                        padding: EdgeInsets.all(10.h),
-                        child: CustomIconButton(
-                          icon: AppAssets.backIcon,
-                          onTap: () =>
-                              widget.controller.removePlayer(isKick: false),
-                        ),
-                      ),
-                      actions: [
-                        CustomIconButton(
-                          icon: AppAssets.shareIcon,
-                          onTap: () async {
-                            final codeToShare = inviteCode ?? lobbyId;
-                            await Clipboard.setData(
-                              ClipboardData(text: codeToShare),
-                            );
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Room code copied to clipboard',
-                                  ),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                        SizedBox(width: 16.w),
-                      ],
-                    ),
+              // appBar: isDesktop
+              //     ? null
+              //     : AppBar(
+              //         leading: Padding(
+              //           padding: EdgeInsets.all(10.h),
+              //           child: CustomIconButton(
+              //             icon: AppAssets.backIcon,
+              //             onTap: () =>
+              //                 widget.controller.removePlayer(isKick: false),
+              //           ),
+              //         ),
+              //   actions: [
+              //     CustomIconButton(
+              //       icon: AppAssets.shareIcon,
+              //       onTap: () async {
+              //         final codeToShare = inviteCode ?? lobbyId;
+              //         await Clipboard.setData(
+              //           ClipboardData(text: codeToShare),
+              //         );
+              //         if (context.mounted) {
+              //           ScaffoldMessenger.of(context).showSnackBar(
+              //             const SnackBar(
+              //               content: Text(
+              //                 'Room code copied to clipboard',
+              //               ),
+              //               backgroundColor: Colors.green,
+              //             ),
+              //           );
+              //         }
+              //       },
+              //     ),
+              //     SizedBox(width: 16.w),
+              //   ],
+              // ),
               body: LobbyBg(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.all(16.h),
@@ -146,9 +147,18 @@ class _GameLobbyViewState extends State<GameLobbyView> {
                                 widget.controller.selectedMaxRounds ?? 3,
                             selectedTime:
                                 widget.controller.selectedTimePerRound ?? 60,
-                            onRoundSelected: widget.controller.onMaxRoundChange,
-                            onTimeSelected:
-                                widget.controller.onTimePerRoundChange,
+                            onRoundSelected: (value) {
+                              widget.controller.onMaxRoundChange(value);
+                              if (value != null) {
+                                FirebaseFirestoreService.instance
+                                    .updateMaxRounds(lobbyId, value);
+                              }
+                            },
+                            onTimeSelected: (value) {
+                              widget.controller.onTimePerRoundChange(value);
+                              FirebaseFirestoreService.instance
+                                  .updateTimePerRound(lobbyId, value);
+                            },
                             onKickPlayer: amHost
                                 ? (playerId) => widget.controller.removePlayer(
                                     isKick: true,
