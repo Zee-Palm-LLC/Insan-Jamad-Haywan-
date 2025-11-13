@@ -88,154 +88,163 @@ class _GameLobbyViewState extends State<GameLobbyView> {
             final myId = snapshot.data;
             final amHost = myId == hostId;
 
-            return Scaffold(
-              extendBodyBehindAppBar: true,
-              // appBar: isDesktop
-              //     ? null
-              //     : AppBar(
-              //         leading: Padding(
-              //           padding: EdgeInsets.all(10.h),
-              //           child: CustomIconButton(
-              //             icon: AppAssets.backIcon,
-              //             onTap: () =>
-              //                 widget.controller.removePlayer(isKick: false),
-              //           ),
-              //         ),
-              //   actions: [
-              //     CustomIconButton(
-              //       icon: AppAssets.shareIcon,
-              //       onTap: () async {
-              //         final codeToShare = inviteCode ?? lobbyId;
-              //         await Clipboard.setData(
-              //           ClipboardData(text: codeToShare),
-              //         );
-              //         if (context.mounted) {
-              //           ScaffoldMessenger.of(context).showSnackBar(
-              //             const SnackBar(
-              //               content: Text(
-              //                 'Room code copied to clipboard',
-              //               ),
-              //               backgroundColor: Colors.green,
-              //             ),
-              //           );
-              //         }
-              //       },
-              //     ),
-              //     SizedBox(width: 16.w),
-              //   ],
-              // ),
-              body: LobbyBg(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16.h),
-                  child: Center(
-                    child: DesktopWrapper(
-                      child: Column(
-                        children: [
-                          if (!isDesktop) SizedBox(height: 50.h),
-                          GameLogo(),
-                          SizedBox(height: 12.h),
-                          RoomCodeText(
-                            lobbyId: lobbyId,
-                            inviteCode: inviteCode,
-                            iSend: true,
-                          ),
-                          SizedBox(height: 34.h),
-                          PlayerListCard(
-                            players: players,
-                            hostId: hostId,
-                            selectedRounds:
-                                widget.controller.selectedMaxRounds ?? 3,
-                            selectedTime:
-                                widget.controller.selectedTimePerRound ?? 60,
-                            onRoundSelected: (value) {
-                              widget.controller.onMaxRoundChange(value);
-                              if (value != null) {
-                                FirebaseFirestoreService.instance
-                                    .updateMaxRounds(lobbyId, value);
-                              }
-                            },
-                            onTimeSelected: (value) {
-                              widget.controller.onTimePerRoundChange(value);
-                              FirebaseFirestoreService.instance
-                                  .updateTimePerRound(lobbyId, value);
-                            },
-                            onKickPlayer: amHost
-                                ? (playerId) => widget.controller.removePlayer(
-                                    isKick: true,
-                                    playerIdToKick: playerId,
-                                  )
-                                : null,
-                          ),
-                          SizedBox(height: 20.h),
-                          if (amHost) ...[
-                            PrimaryButton(
-                              text: 'Start !',
-                              width: 209.w,
-                              onPressed: players.length < 2
-                                  ? null
-                                  : () async {
-                                      await widget.controller.startGame();
-                                      if (context.mounted) {
-                                        context.push(
-                                          LetterGeneratorView.path,
-                                          extra: widget.controller,
-                                        );
-                                      }
-                                    },
-                            ),
+            return WillPopScope(
+              onWillPop: () async {
+                context.pop();
+                return false;
+              },
+              child: Scaffold(
+                extendBodyBehindAppBar: true,
+                // appBar: isDesktop
+                //     ? null
+                //     : AppBar(
+                //         leading: Padding(
+                //           padding: EdgeInsets.all(10.h),
+                //           child: CustomIconButton(
+                //             icon: AppAssets.backIcon,
+                //             onTap: () =>
+                //                 widget.controller.removePlayer(isKick: false),
+                //           ),
+                //         ),
+                //   actions: [
+                //     CustomIconButton(
+                //       icon: AppAssets.shareIcon,
+                //       onTap: () async {
+                //         final codeToShare = inviteCode ?? lobbyId;
+                //         await Clipboard.setData(
+                //           ClipboardData(text: codeToShare),
+                //         );
+                //         if (context.mounted) {
+                //           ScaffoldMessenger.of(context).showSnackBar(
+                //             const SnackBar(
+                //               content: Text(
+                //                 'Room code copied to clipboard',
+                //               ),
+                //               backgroundColor: Colors.green,
+                //             ),
+                //           );
+                //         }
+                //       },
+                //     ),
+                //     SizedBox(width: 16.w),
+                //   ],
+                // ),
+                body: LobbyBg(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.all(16.h),
+                    child: Center(
+                      child: DesktopWrapper(
+                        child: Column(
+                          children: [
+                            if (!isDesktop) SizedBox(height: 50.h),
+                            GameLogo(),
                             SizedBox(height: 12.h),
-                            PrimaryButton(
-                              text: 'Leave Lobby',
-                              width: 209.w,
-                              onPressed: () =>
-                                  widget.controller.removePlayer(isKick: false),
+                            RoomCodeText(
+                              lobbyId: lobbyId,
+                              inviteCode: inviteCode,
+                              iSend: true,
                             ),
-                          ] else ...[
-                            Container(
-                              padding: EdgeInsets.all(16.h),
-                              decoration: BoxDecoration(
-                                color: AppColors.kGreen100,
-                                borderRadius: BorderRadius.circular(12.r),
-                                border: Border.all(
-                                  color: AppColors.kPrimary,
-                                  width: 2,
+                            SizedBox(height: 34.h),
+                            PlayerListCard(
+                              players: players,
+                              hostId: hostId,
+                              selectedRounds:
+                                  widget.controller.selectedMaxRounds ?? 3,
+                              selectedTime:
+                                  widget.controller.selectedTimePerRound ?? 60,
+                              onRoundSelected: (value) {
+                                widget.controller.onMaxRoundChange(value);
+                                if (value != null) {
+                                  FirebaseFirestoreService.instance
+                                      .updateMaxRounds(lobbyId, value);
+                                }
+                              },
+                              onTimeSelected: (value) {
+                                widget.controller.onTimePerRoundChange(value);
+                                FirebaseFirestoreService.instance
+                                    .updateTimePerRound(lobbyId, value);
+                              },
+                              onKickPlayer: amHost
+                                  ? (playerId) =>
+                                        widget.controller.removePlayer(
+                                          isKick: true,
+                                          playerIdToKick: playerId,
+                                        )
+                                  : null,
+                            ),
+                            SizedBox(height: 20.h),
+                            if (amHost) ...[
+                              PrimaryButton(
+                                text: 'Start !',
+                                width: 209.w,
+                                onPressed: players.length < 2
+                                    ? null
+                                    : () async {
+                                        await widget.controller.startGame();
+                                        if (context.mounted) {
+                                          context.push(
+                                            LetterGeneratorView.path,
+                                            extra: widget.controller,
+                                          );
+                                        }
+                                      },
+                              ),
+                              SizedBox(height: 12.h),
+                              PrimaryButton(
+                                text: 'Leave Lobby',
+                                width: 209.w,
+                                onPressed: () => widget.controller.removePlayer(
+                                  isKick: false,
                                 ),
                               ),
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.check_circle,
+                            ] else ...[
+                              Container(
+                                padding: EdgeInsets.all(16.h),
+                                decoration: BoxDecoration(
+                                  color: AppColors.kGreen100,
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(
                                     color: AppColors.kPrimary,
-                                    size: 48.w,
+                                    width: 2,
                                   ),
-                                  SizedBox(height: 8.h),
-                                  Text(
-                                    'You\'re in!',
-                                    style: AppTypography.kBold24.copyWith(
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
                                       color: AppColors.kPrimary,
+                                      size: 48.w,
                                     ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  SizedBox(height: 4.h),
-                                  Text(
-                                    'Wait for host to start the game',
-                                    style: AppTypography.kRegular19.copyWith(
-                                      color: AppColors.kGray600,
+                                    SizedBox(height: 8.h),
+                                    Text(
+                                      'You\'re in!',
+                                      style: AppTypography.kBold24.copyWith(
+                                        color: AppColors.kPrimary,
+                                      ),
+                                      textAlign: TextAlign.center,
                                     ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      'Wait for host to start the game',
+                                      style: AppTypography.kRegular19.copyWith(
+                                        color: AppColors.kGray600,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 12.h),
-                            PrimaryButton(
-                              text: 'Leave Lobby',
-                              width: 209.w,
-                              onPressed: () =>
-                                  widget.controller.removePlayer(isKick: false),
-                            ),
+                              SizedBox(height: 12.h),
+                              PrimaryButton(
+                                text: 'Leave Lobby',
+                                width: 209.w,
+                                onPressed: () => widget.controller.removePlayer(
+                                  isKick: false,
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),

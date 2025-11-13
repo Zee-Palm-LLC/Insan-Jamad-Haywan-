@@ -50,106 +50,112 @@ class _FinalRoundScoreboardState extends State<FinalRoundScoreboard> {
         debugPrint(
           'Podium players details: ${builderController.podiumPlayers.map((p) => '${p.name} (rank ${p.rank})').join(', ')}',
         );
-        return Scaffold(
-          extendBodyBehindAppBar: true,
-          // appBar: isDesktop
-          //     ? null
-          //     : AppBar(
-          //         leading: Padding(
-          //           padding: EdgeInsets.all(10.h),
-          //           child: CustomIconButton(
-          //             icon: AppAssets.backIcon,
-          //             onTap: () => context.pop(),
-          //           ),
-          //         ),
-          //         actions: [
-          //           CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-          //           SizedBox(width: 16.w),
-          //         ],
-          //       ),
-          body: AnimatedBg(
-            showHorizontalLines: true,
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16.h),
-              child: Center(
-                child: DesktopWrapper(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (!isDesktop) SizedBox(height: 50.h),
-                      GameLogo(),
-                      SizedBox(height: 12.h),
-                      RoomCodeText(
-                        lobbyId: lobbyController.lobby.id ?? 'N/A',
-                        iSend: true,
-                      ),
-                      SizedBox(height: 40.h),
-                      // Title
-                      Text(
-                        'Final Round\nScoreboard',
-                        textAlign: TextAlign.center,
-                        style: AppTypography.kBold24.copyWith(
-                          color: AppColors.kRed500,
-                          height: 1.2,
-                          fontSize: 34.sp,
+        return WillPopScope(
+          onWillPop: () async {
+            context.pop();
+            return false;
+          },
+          child: Scaffold(
+            extendBodyBehindAppBar: true,
+            // appBar: isDesktop
+            //     ? null
+            //     : AppBar(
+            //         leading: Padding(
+            //           padding: EdgeInsets.all(10.h),
+            //           child: CustomIconButton(
+            //             icon: AppAssets.backIcon,
+            //             onTap: () => context.pop(),
+            //           ),
+            //         ),
+            //         actions: [
+            //           CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+            //           SizedBox(width: 16.w),
+            //         ],
+            //       ),
+            body: AnimatedBg(
+              showHorizontalLines: true,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16.h),
+                child: Center(
+                  child: DesktopWrapper(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (!isDesktop) SizedBox(height: 50.h),
+                        GameLogo(),
+                        SizedBox(height: 12.h),
+                        RoomCodeText(
+                          lobbyId: lobbyController.lobby.id ?? 'N/A',
+                          iSend: true,
                         ),
-                      ),
-                      SizedBox(height: 30.h),
-                      if (builderController.isLoading)
-                        Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(40.h),
-                            child: CircularProgressIndicator.adaptive(),
+                        SizedBox(height: 40.h),
+                        // Title
+                        Text(
+                          'Final Round\nScoreboard',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.kBold24.copyWith(
+                            color: AppColors.kRed500,
+                            height: 1.2,
+                            fontSize: 34.sp,
                           ),
-                        )
-                      else if (builderController.error != null)
-                        Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(40.h),
-                            child: Text(
-                              'Error: ${builderController.error}',
-                              style: AppTypography.kRegular24,
-                              textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 30.h),
+                        if (builderController.isLoading)
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.h),
+                              child: CircularProgressIndicator.adaptive(),
                             ),
-                          ),
-                        )
-                      else ...[
-                        if (builderController.podiumPlayers.isEmpty &&
-                            builderController.listPlayers.isEmpty)
+                          )
+                        else if (builderController.error != null)
                           Center(
                             child: Padding(
                               padding: EdgeInsets.all(40.h),
                               child: Text(
-                                'No players found',
+                                'Error: ${builderController.error}',
                                 style: AppTypography.kRegular24,
                                 textAlign: TextAlign.center,
                               ),
                             ),
                           )
                         else ...[
-                          if (builderController.podiumPlayers.isNotEmpty)
-                            FinalScoreboardPodium(
-                              players: builderController.podiumPlayers,
-                            ),
-                          if (builderController.listPlayers.isNotEmpty)
-                            FinalScoreboardList(
-                              players: builderController.listPlayers,
-                            ),
+                          if (builderController.podiumPlayers.isEmpty &&
+                              builderController.listPlayers.isEmpty)
+                            Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(40.h),
+                                child: Text(
+                                  'No players found',
+                                  style: AppTypography.kRegular24,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            )
+                          else ...[
+                            if (builderController.podiumPlayers.isNotEmpty)
+                              FinalScoreboardPodium(
+                                players: builderController.podiumPlayers,
+                              ),
+                            if (builderController.listPlayers.isNotEmpty)
+                              FinalScoreboardList(
+                                players: builderController.listPlayers,
+                              ),
+                          ],
                         ],
+                        SizedBox(height: 30.h),
+                        PrimaryButton(
+                          text: 'Back to Main Menu',
+                          onPressed: () async {
+                            await lobbyController.deleteRoom(shouldPop: false);
+                            GameControllerManager.restAllControllers();
+                            if (mounted) {
+                              context.go(MainMenuPage.path);
+                            }
+                          },
+                        ),
+                        SizedBox(height: 20.h),
                       ],
-                      SizedBox(height: 30.h),
-                      PrimaryButton(
-                        text: 'Back to Main Menu',
-                        onPressed: () async {
-                          await lobbyController.deleteRoom(shouldPop: false);
-                          GameControllerManager.restAllControllers();
-                          if (mounted) {
-                            context.go(MainMenuPage.path);
-                          }
-                        },
-                      ),
-                      SizedBox(height: 20.h),
-                    ],
+                    ),
                   ),
                 ),
               ),

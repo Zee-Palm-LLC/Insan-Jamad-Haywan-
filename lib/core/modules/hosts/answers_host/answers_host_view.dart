@@ -131,71 +131,79 @@ class _AnswersHostViewState extends State<AnswersHostView>
     final bool isDesktop = Responsive.isDesktop(context);
     return GetBuilder<AnswerController>(
       builder: (controller) {
-        return Scaffold(
-          extendBodyBehindAppBar: true,
-          // appBar: isDesktop
-          //     ? null
-          //     : AppBar(
-          //         leading: Padding(
-          //           padding: EdgeInsets.all(10.h),
-          //           child: CustomIconButton(
-          //             icon: AppAssets.backIcon,
-          //             onTap: () => context.pop(),
-          //           ),
-          //         ),
-          //         actions: [
-          //           CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-          //           SizedBox(width: 16.w),
-          //         ],
-          //       ),
-          body: AnimatedBg(
-            showHorizontalLines: true,
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16.h),
-              child: Center(
-                child: DesktopWrapper(
-                  child: Column(
-                    children: [
-                      if (!isDesktop) SizedBox(height: 50.h),
-                      GameLogo(),
-                      SizedBox(height: 12.h),
-                      RoomCodeText(lobbyId: lobbyController.lobby.id ?? "N/A"),
-                      SizedBox(height: 20.h),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 2.h,
+        return WillPopScope(
+          onWillPop: () async {
+            context.pop();
+            return false;
+          },
+          child: Scaffold(
+            extendBodyBehindAppBar: true,
+            // appBar: isDesktop
+            //     ? null
+            //     : AppBar(
+            //         leading: Padding(
+            //           padding: EdgeInsets.all(10.h),
+            //           child: CustomIconButton(
+            //             icon: AppAssets.backIcon,
+            //             onTap: () => context.pop(),
+            //           ),
+            //         ),
+            //         actions: [
+            //           CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+            //           SizedBox(width: 16.w),
+            //         ],
+            //       ),
+            body: AnimatedBg(
+              showHorizontalLines: true,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16.h),
+                child: Center(
+                  child: DesktopWrapper(
+                    child: Column(
+                      children: [
+                        if (!isDesktop) SizedBox(height: 50.h),
+                        GameLogo(),
+                        SizedBox(height: 12.h),
+                        RoomCodeText(
+                          lobbyId: lobbyController.lobby.id ?? "N/A",
                         ),
-                        decoration: BoxDecoration(
-                          color: AppColors.kLightYellow,
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(color: AppColors.kGray600),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SvgPicture.asset(AppAssets.timerIcon),
-                            SizedBox(width: 8.w),
-                            Text(
-                              controller.formattedTime,
-                              style: AppTypography.kRegular19.copyWith(
-                                color: AppColors.kRed500,
+                        SizedBox(height: 20.h),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.kLightYellow,
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: Border.all(color: AppColors.kGray600),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SvgPicture.asset(AppAssets.timerIcon),
+                              SizedBox(width: 8.w),
+                              Text(
+                                controller.formattedTime,
+                                style: AppTypography.kRegular19.copyWith(
+                                  color: AppColors.kRed500,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 40.h),
-                      if (_countdownValue != null) _buildCountdownAnimation(),
-                      if (_showLetter) ...[
-                        _buildLetterContainer(),
-                        SizedBox(height: 30.h),
-                        _buildContinueButton(),
+                        SizedBox(height: 40.h),
+                        if (_countdownValue != null) _buildCountdownAnimation(),
+                        if (_showLetter) ...[
+                          _buildLetterContainer(),
+                          SizedBox(height: 30.h),
+                          _buildContinueButton(),
+                        ],
+                        if (_countdownValue == null && !_showLetter)
+                          SizedBox(height: 200.h),
+                        if (isDesktop) SizedBox(height: 50.h),
                       ],
-                      if (_countdownValue == null && !_showLetter)
-                        SizedBox(height: 200.h),
-                      if (isDesktop) SizedBox(height: 50.h),
-                    ],
+                    ),
                   ),
                 ),
               ),
