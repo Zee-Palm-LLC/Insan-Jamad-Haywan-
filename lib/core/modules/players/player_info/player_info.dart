@@ -133,12 +133,13 @@ class PlayerInfo extends StatelessWidget {
                       SizedBox(height: 32.h),
                       TextField(
                         controller: controller.usernameController,
-                        style: AppTypography.kRegular19.copyWith(fontSize: 16.sp),
+                        style: AppTypography.kRegular19.copyWith(
+                          fontSize: 16.sp,
+                        ),
                         enabled: !controller.isLoading,
                         textAlign: TextAlign.center,
                         decoration: InputDecoration(
                           hintText: 'Enter your username',
-                          
                         ),
                       ),
                       SizedBox(height: 20.h),

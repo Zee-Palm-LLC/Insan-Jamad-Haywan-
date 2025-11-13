@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/core/data/helpers/app_helpers.dart';
 
 class FinalScoreboardPodium extends StatelessWidget {
   final List<PodiumPlayer> players;
@@ -138,27 +139,37 @@ class FinalScoreboardPodium extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.kGray500, width: 2.w),
+                color: AppColors.kGray300,
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(100.r),
-                child: Image.network(
-                  player.avatarUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: AppColors.kGray300,
-                      child: Icon(
-                        Icons.person,
-                        size: 30.sp,
-                        color: AppColors.kGray600,
-                      ),
-                    );
-                  },
-                ),
+                child: player.avatarUrl.isNotEmpty
+                    ? Image.network(
+                        player.avatarUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return _buildInitials(player);
+                        },
+                      )
+                    : _buildInitials(player),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInitials(PodiumPlayer player) {
+    return Container(
+      color: AppColors.kGray300,
+      alignment: Alignment.center,
+      child: Text(
+        AppHelpers.getInitials(player.name),
+        style: AppTypography.kBold16.copyWith(
+          color: AppColors.kGray600,
+          fontSize: player.rank == 1 ? 24.sp : 20.sp,
+        ),
       ),
     );
   }

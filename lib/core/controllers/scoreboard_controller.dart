@@ -103,9 +103,7 @@ class ScoreboardController extends GetxController {
       playersData.add({
         'playerId': player.playerId,
         'name': player.playerName,
-        'avatarUrl':
-            player.playerAvatar ??
-            'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170',
+        'avatarUrl': player.playerAvatar ?? '',
         'totalPoints': player.totalScore,
         'pointsGained': pointsGained,
         'rank': rank,
@@ -183,9 +181,7 @@ class ScoreboardController extends GetxController {
           name: player.playerName,
           score:
               '+${totalPointsGained.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-          avatarUrl:
-              player.playerAvatar ??
-              'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170',
+          avatarUrl: player.playerAvatar ?? '',
           color: color,
           badge: badge,
           textColor: textColor,
@@ -215,9 +211,7 @@ class ScoreboardController extends GetxController {
           name: player.playerName,
           totalPoints: '${player.totalScore} pts',
           pointsGained: '+$totalPointsGained',
-          avatarUrl:
-              player.playerAvatar ??
-              'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170',
+          avatarUrl: player.playerAvatar ?? '',
         ),
       );
     }
