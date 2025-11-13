@@ -7,7 +7,7 @@ import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/models/lobby/lobby_config_model.dart';
 import 'package:insan_jamd_hawan/core/models/lobby/lobby_model.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
-import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/core/services/game_player_service.dart';
 import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
 import 'package:insan_jamd_hawan/core/utils/network_call.dart';

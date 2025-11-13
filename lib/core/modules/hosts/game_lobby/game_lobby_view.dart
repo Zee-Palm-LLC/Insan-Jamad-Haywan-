@@ -18,7 +18,7 @@ import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
-import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class GameLobbyView extends StatefulWidget {

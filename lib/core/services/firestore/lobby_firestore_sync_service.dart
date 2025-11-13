@@ -1,14 +1,11 @@
 import 'dart:developer';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_participation_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
-import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/core/services/game_player_service.dart';
 
 class LobbyFirestoreSyncService {
-  final String sessionId;
-
+  String sessionId;
   LobbyFirestoreSyncService({required this.sessionId});
 
   Future<void> updateSessionStatus(SessionStatus status) async {
@@ -103,27 +100,6 @@ class LobbyFirestoreSyncService {
     } catch (e, s) {
       log(
         'Error updating left player in Firestore: $e',
-        name: 'LobbyFirestoreSync',
-        error: e,
-        stackTrace: s,
-      );
-    }
-  }
-
-  Future<void> markPlayerDisconnected(String playerId) async {
-    try {
-      await FirebaseFirestoreService.instance.updatePlayer(
-        sessionId,
-        playerId,
-        {'isOnline': false, 'disconnectedAt': Timestamp.now()},
-      );
-      log(
-        'Player $playerId marked as disconnected in Firestore',
-        name: 'LobbyFirestoreSync',
-      );
-    } catch (e, s) {
-      log(
-        'Error marking player as disconnected: $e',
         name: 'LobbyFirestoreSync',
         error: e,
         stackTrace: s,

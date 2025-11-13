@@ -19,7 +19,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/final_round_score
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/components/scoring_playing_tile.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
-import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class ScoringView extends StatefulWidget {

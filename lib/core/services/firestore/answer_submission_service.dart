@@ -2,7 +2,7 @@ import 'dart:developer' as developer;
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_participation_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/round_model.dart';
-import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 
 class AnswerSubmissionService {
   final FirebaseFirestoreService _firestore = FirebaseFirestoreService.instance;

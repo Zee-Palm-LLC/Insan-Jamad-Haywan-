@@ -10,7 +10,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/animat
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/rounds_selector_card.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/time_selector_card.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/custom_paint/hand_drawn_divider.dart';
-import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 
 // ignore: must_be_immutable
 class PlayerListCard extends StatelessWidget {

@@ -9,9 +9,9 @@ import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/scoring_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/animations/progress_dialog.dart';
-import 'package:insan_jamd_hawan/core/services/answer_evaluation_service.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/answer_evaluation_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
-import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
 
