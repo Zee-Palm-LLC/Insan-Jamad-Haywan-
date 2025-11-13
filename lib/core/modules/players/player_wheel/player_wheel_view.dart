@@ -8,6 +8,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/answers_host/answers_host_vi
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/components/fortune_wheel.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/components/player_fortune_wheel_widget.dart';
 import 'package:insan_jamd_hawan/core/modules/players/player_answers/player_answer_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
@@ -40,13 +41,17 @@ class PlayerWheelView extends StatelessWidget {
               : SingleChildScrollView(
                   padding: EdgeInsets.all(16.h),
                   child: StreamBuilder(
-                    stream: FirebaseFirestoreService.instance
-                        .streamStartCounting(controller.lobby.id!),
+                    stream: FirebaseFirestoreService.instance.streamGameSession(
+                      controller.lobby.id!,
+                    ),
                     builder: (context, snapshot) {
-                      if (snapshot.data == true) {
+                      if (snapshot.data?.config.startCounting == true) {
                         return SizedBox(
                           height: context.height,
-                          child: AnswersHostView(),
+                          child: AnswersHostView(
+                            letter: snapshot.data?.config.currentSelectedLetter,
+                            isHost: false,
+                          ),
                         );
                       }
                       return Center(
@@ -90,49 +95,11 @@ class PlayerWheelView extends StatelessWidget {
                                       ),
                                     ),
                                     SizedBox(height: 20.h),
-                                    FortuneWheelWidget(isHost: false),
+                                    PlayerFortuneWheelWidget(showAnimation: false),
                                   ],
                                 )
                               else if (letter != null)
-                                Column(
-                                  children: [
-                                    Container(
-                                      width: 200.w,
-                                      height: 200.h,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: AppColors.kWhite,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: AppColors.kPrimary
-                                                .withOpacity(0.5),
-                                            blurRadius: 20,
-                                            spreadRadius: 5,
-                                          ),
-                                        ],
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          letter ?? "N/A",
-                                          style: TextStyle(
-                                            fontSize: 80.sp,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.kPrimary,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 20.h),
-                                    Text(
-                                      'Selected Letter',
-                                      style: TextStyle(
-                                        fontSize: 24.sp,
-                                        color: AppColors.kWhite,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                )
+                                PlayerFortuneWheelWidget(showAnimation: false)
                               else
                                 Text(
                                   'Waiting for host...',

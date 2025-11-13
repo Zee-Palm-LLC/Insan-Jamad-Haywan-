@@ -12,7 +12,8 @@ import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'dart:developer' as dev;
 
 class PlayerFortuneWheelWidget extends StatefulWidget {
-  const PlayerFortuneWheelWidget({super.key});
+  const PlayerFortuneWheelWidget({super.key, this.showAnimation = true});
+  final bool showAnimation;
 
   @override
   State<PlayerFortuneWheelWidget> createState() =>
@@ -151,8 +152,7 @@ class _PlayerFortuneWheelWidgetState extends State<PlayerFortuneWheelWidget> {
 
     try {
       _controller?.close();
-    } catch (_) {
-    }
+    } catch (_) {}
 
     _controller = StreamController<int>.broadcast();
 
@@ -177,6 +177,10 @@ class _PlayerFortuneWheelWidgetState extends State<PlayerFortuneWheelWidget> {
     _smoothStopTimer?.cancel();
     _controller?.close();
     _firebaseSubscription?.cancel();
+    _firebaseSubscription = null;
+    _controller = null;
+    _isSpinning = false;
+    _letter = null;
     super.dispose();
   }
 
@@ -263,7 +267,7 @@ class _PlayerFortuneWheelWidgetState extends State<PlayerFortuneWheelWidget> {
             ),
           ),
           if (_letter != null) ...[
-            ConfettiAnimation(
+            if (widget.showAnimation) ConfettiAnimation(
               key: ValueKey(_letter),
               enabled: _letter != null,
               duration: const Duration(seconds: 3),

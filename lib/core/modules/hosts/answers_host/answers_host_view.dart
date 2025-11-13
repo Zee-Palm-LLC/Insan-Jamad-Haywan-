@@ -20,7 +20,9 @@ import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
 import 'dart:developer';
 
 class AnswersHostView extends StatefulWidget {
-  const AnswersHostView({super.key});
+  const AnswersHostView({super.key, this.letter, this.isHost = true});
+  final String? letter;
+  final bool isHost;
 
   static const String path = '/answers-host/:letter';
   static const String name = 'AnswersHost';
@@ -56,10 +58,6 @@ class _AnswersHostViewState extends State<AnswersHostView>
     // Add listener to call updateStartCounting when animation ends and start timer sync
     _letterController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        final lobbyId = lobbyController.lobby.id;
-        if (lobbyId != null && lobbyId.isNotEmpty) {
-          _db.updateStartCounting(lobbyId, false);
-        }
         if (Get.isRegistered<AnswerController>()) {
           try {
             Get.find<AnswerController>().startTimerSync();
@@ -116,6 +114,10 @@ class _AnswersHostViewState extends State<AnswersHostView>
     // Cancel timer subscription when navigating away
     if (Get.isRegistered<AnswerController>()) {
       try {
+        final lobbyId = lobbyController.lobby.id;
+        if (lobbyId != null && lobbyId.isNotEmpty) {
+          _db.updateStartCounting(lobbyId, false);
+        }
         Get.find<AnswerController>().cancelTimerSync();
       } catch (e) {
         log('Error cancelling timer subscription: $e', name: 'AnswersHostView');
@@ -190,7 +192,7 @@ class _AnswersHostViewState extends State<AnswersHostView>
                       if (_showLetter) ...[
                         _buildLetterContainer(),
                         SizedBox(height: 30.h),
-                        _buildContinueButton(),
+                        if (widget.isHost) _buildContinueButton(),
                       ],
                       if (_countdownValue == null && !_showLetter)
                         SizedBox(height: 200.h),
@@ -261,7 +263,7 @@ class _AnswersHostViewState extends State<AnswersHostView>
                 context.push(
                   ScoringView.path.replaceAll(
                     ':letter',
-                    wheelController.selectedLetter ?? '',
+                    widget.letter ?? wheelController.selectedLetter ?? '',
                   ),
                 );
               },
@@ -281,7 +283,7 @@ class _AnswersHostViewState extends State<AnswersHostView>
                 ),
                 child: Center(
                   child: Text(
-                    wheelController.selectedLetter ?? '',
+                    widget.letter ?? wheelController.selectedLetter ?? '',
                     style: AppTypography.kBold24.copyWith(
                       color: AppColors.kWhite,
                       fontSize: 80.sp,

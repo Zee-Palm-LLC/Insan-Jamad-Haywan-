@@ -150,7 +150,7 @@ class WheelController extends GetxController {
     resetController();
     if (lobbyController.lobby.id != null &&
         (lobbyController.lobby.id?.isNotEmpty ?? false)) {
-      _db.updateCurrentSelectedLetter(lobbyController.lobby.id!, '');
+      _db.updateCurrentSelectedLetter(lobbyController.lobby.id!, null);
     }
     Get.find<AnswerController>().restController();
     update();

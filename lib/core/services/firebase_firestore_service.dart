@@ -400,7 +400,7 @@ class FirebaseFirestoreService {
 
   Future<void> updateCurrentSelectedLetter(
     String sessionId,
-    String letter,
+    String? letter,
   ) async {
     try {
       await _sessionDoc(
