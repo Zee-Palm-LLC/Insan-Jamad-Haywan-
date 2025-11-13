@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/cache/storage_service.dart';
-import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/core/services/openai/openai_client.dart';
 import 'package:insan_jamd_hawan/core/services/playflow/playflow_client.dart';
 import 'package:insan_jamd_hawan/core/data/constants/app_theme.dart';
@@ -51,7 +51,7 @@ void main() async {
   } catch (e, stackTrace) {
     developer.log(
       '[APP ERROR] Error: $e during _signInAnonymously',
-      name: 'SplashScreen',  // likely during app start
+      name: 'SplashScreen', // likely during app start
       error: e,
       stackTrace: stackTrace,
     );

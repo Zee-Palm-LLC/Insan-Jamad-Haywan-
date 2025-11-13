@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/core/data/helpers/app_helpers.dart';
 
 class PositionPodium extends StatelessWidget {
   final bool isFirst;
@@ -53,20 +54,15 @@ class PositionPodium extends StatelessWidget {
             padding: EdgeInsets.all(2.h),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(100.r),
-              child: Image.network(
-                image,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: AppColors.kGray300,
-                    child: Icon(
-                      Icons.person,
-                      size: 30.sp,
-                      color: AppColors.kGray600,
-                    ),
-                  );
-                },
-              ),
+              child: image.isNotEmpty
+                  ? Image.network(
+                      image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _buildInitials();
+                      },
+                    )
+                  : _buildInitials(),
             ),
           ),
           SizedBox(width: 10.w),
@@ -98,6 +94,20 @@ class PositionPodium extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInitials() {
+    return Container(
+      color: AppColors.kGray300,
+      alignment: Alignment.center,
+      child: Text(
+        AppHelpers.getInitials(name),
+        style: AppTypography.kBold16.copyWith(
+          color: AppColors.kGray600,
+          fontSize: isFirst ? 20.sp : 18.sp,
+        ),
       ),
     );
   }

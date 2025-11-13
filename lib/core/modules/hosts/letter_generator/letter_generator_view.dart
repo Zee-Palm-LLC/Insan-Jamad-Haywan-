@@ -15,7 +15,7 @@ import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dar
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
-import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class LetterGeneratorView extends StatelessWidget {
@@ -48,89 +48,95 @@ class LetterGeneratorView extends StatelessWidget {
         }
         return GetBuilder<WheelController>(
           builder: (letterController) {
-            return Scaffold(
-              extendBodyBehindAppBar: true,
-              // appBar: isDesktop
-              //     ? null
-              //     : AppBar(
-              //         leading: Padding(
-              //           padding: EdgeInsets.all(10.h),
-              //           child: CustomIconButton(
-              //             icon: AppAssets.backIcon,
-              //             onTap: () => context.pop(),
-              //           ),
-              //         ),
-              //         actions: [
-              //           CustomIconButton(
-              //             icon: AppAssets.shareIcon,
-              //             onTap: () {},
-              //           ),
-              //           SizedBox(width: 16.w),
-              //         ],
-              //       ),
-              body: AnimatedBg(
-                showHorizontalLines: true,
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16.h),
-                  child: Center(
-                    child: DesktopWrapper(
-                      child: Column(
-                        children: [
-                          if (!isDesktop) SizedBox(height: 50.h),
-                          GameLogo(),
-                          SizedBox(height: 12.h),
-                          GetBuilder<LobbyController>(
-                            init: controller,
-                            builder: (lobbyController) {
-                              return RoomCodeText(
-                                iSend: true,
-                                lobbyId:
-                                    lobbyController.currentRoom.inviteCode ??
-                                    'XYZ124',
-                              );
-                            },
-                          ),
-                          SizedBox(height: 50.h),
-                          FortuneWheelWidget(
-                            isHost: true,
-                            onSpinStart: () {
-                              letterController.updateIsWheelSpinning(true);
-                            },
-                            onSpinComplete: (va) {
-                              letterController.updateIsWheelSpinning(null);
-                              letterController.onLetterSelection(va);
-                            },
-                            onCountdownComplete: (va) {},
-                          ),
-                          if (letterController.selectedLetter != null) ...[
-                            SizedBox(height: 50.h),
-                            PrimaryButton(
-                              text: 'Continue..',
-                              onPressed: () async {
-                                letterController.createdNewRound(
-                                  allocatedTime:
-                                      controller.selectedTimePerRound ?? 60,
-                                  wheelIndex:
-                                      controller.wheelSelectedIndex ?? 0,
-                                  participants: [],
-                                );
-                                context.push(
-                                  AnswersHostView.path,
-                                  extra: {
-                                    'sessionId': controller.lobby.id,
-                                    'roundNumber':
-                                        controller
-                                            .currentRoom
-                                            .settings
-                                            ?.currentRound ??
-                                        0 + 1,
-                                  },
+            return WillPopScope(
+              onWillPop: () async {
+                context.pop();
+                return false;
+              },
+              child: Scaffold(
+                extendBodyBehindAppBar: true,
+                // appBar: isDesktop
+                //     ? null
+                //     : AppBar(
+                //         leading: Padding(
+                //           padding: EdgeInsets.all(10.h),
+                //           child: CustomIconButton(
+                //             icon: AppAssets.backIcon,
+                //             onTap: () => context.pop(),
+                //           ),
+                //         ),
+                //         actions: [
+                //           CustomIconButton(
+                //             icon: AppAssets.shareIcon,
+                //             onTap: () {},
+                //           ),
+                //           SizedBox(width: 16.w),
+                //         ],
+                //       ),
+                body: AnimatedBg(
+                  showHorizontalLines: true,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.all(16.h),
+                    child: Center(
+                      child: DesktopWrapper(
+                        child: Column(
+                          children: [
+                            if (!isDesktop) SizedBox(height: 50.h),
+                            GameLogo(),
+                            SizedBox(height: 12.h),
+                            GetBuilder<LobbyController>(
+                              init: controller,
+                              builder: (lobbyController) {
+                                return RoomCodeText(
+                                  iSend: true,
+                                  lobbyId:
+                                      lobbyController.currentRoom.inviteCode ??
+                                      'XYZ124',
                                 );
                               },
-                              width: 250.w,
                             ),
+                            SizedBox(height: 50.h),
+                            FortuneWheelWidget(
+                              isHost: true,
+                              onSpinStart: () {
+                                letterController.updateIsWheelSpinning(true);
+                              },
+                              onSpinComplete: (va) {
+                                letterController.updateIsWheelSpinning(null);
+                                letterController.onLetterSelection(va);
+                              },
+                              onCountdownComplete: (va) {},
+                            ),
+                            if (letterController.selectedLetter != null) ...[
+                              SizedBox(height: 50.h),
+                              PrimaryButton(
+                                text: 'Continue..',
+                                onPressed: () async {
+                                  letterController.createdNewRound(
+                                    allocatedTime:
+                                        controller.selectedTimePerRound ?? 60,
+                                    wheelIndex:
+                                        controller.wheelSelectedIndex ?? 0,
+                                    participants: [],
+                                  );
+                                  context.push(
+                                    AnswersHostView.path,
+                                    extra: {
+                                      'sessionId': controller.lobby.id,
+                                      'roundNumber':
+                                          controller
+                                              .currentRoom
+                                              .settings
+                                              ?.currentRound ??
+                                          0 + 1,
+                                    },
+                                  );
+                                },
+                                width: 250.w,
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),

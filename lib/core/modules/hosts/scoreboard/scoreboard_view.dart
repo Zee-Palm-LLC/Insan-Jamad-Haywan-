@@ -29,223 +29,234 @@ class ScoreboardView extends StatelessWidget {
     return GetBuilder<ScoreboardController>(
       init: ScoreboardController(),
       builder: (controller) {
-        return Scaffold(
-          extendBodyBehindAppBar: true,
-          // appBar: isDesktop
-          //     ? null
-          //     : AppBar(
-          //         leading: Padding(
-          //           padding: EdgeInsets.all(10.h),
-          //           child: CustomIconButton(
-          //             icon: AppAssets.backIcon,
-          //             onTap: () => context.pop(),
-          //           ),
-          //         ),
-          //         actions: [
-          //           CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
-          //           SizedBox(width: 16.w),
-          //         ],
-          //       ),
-          body: LobbyBg(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16.h),
-              child: Center(
-                child: DesktopWrapper(
-                  child: Column(
-                    children: [
-                      if (!isDesktop) SizedBox(height: 50.h),
-                      GameLogo(),
-                      SizedBox(height: 12.h),
-                      RoomCodeText(
-                        lobbyId: controller.lobbyController.lobby.id ?? 'N/A',
-                      ),
-                      SizedBox(height: 20.h),
-                      // Scoreboard title
-                      Text(
-                        'Scoreboard',
-                        style: AppTypography.kBold24.copyWith(
-                          color: AppColors.kRed500,
-                          fontSize: 48.sp,
-                          height: 1,
+        return WillPopScope(
+          onWillPop: () async {
+            context.pop();
+            return false;
+          },
+          child: Scaffold(
+            extendBodyBehindAppBar: true,
+            // appBar: isDesktop
+            //     ? null
+            //     : AppBar(
+            //         leading: Padding(
+            //           padding: EdgeInsets.all(10.h),
+            //           child: CustomIconButton(
+            //             icon: AppAssets.backIcon,
+            //             onTap: () => context.pop(),
+            //           ),
+            //         ),
+            //         actions: [
+            //           CustomIconButton(icon: AppAssets.shareIcon, onTap: () {}),
+            //           SizedBox(width: 16.w),
+            //         ],
+            //       ),
+            body: LobbyBg(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16.h),
+                child: Center(
+                  child: DesktopWrapper(
+                    child: Column(
+                      children: [
+                        if (!isDesktop) SizedBox(height: 50.h),
+                        GameLogo(),
+                        SizedBox(height: 12.h),
+                        RoomCodeText(
+                          lobbyId: controller.lobbyController.lobby.id ?? 'N/A',
                         ),
-                      ),
-                      SizedBox(height: 24.h),
-                      if (controller.isLoading)
-                        Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(40.h),
-                            child: CircularProgressIndicator.adaptive(),
+                        SizedBox(height: 20.h),
+                        // Scoreboard title
+                        Text(
+                          'Scoreboard',
+                          style: AppTypography.kBold24.copyWith(
+                            color: AppColors.kRed500,
+                            fontSize: 48.sp,
+                            height: 1,
                           ),
-                        )
-                      else if (controller.error != null)
-                        Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(40.h),
-                            child: Text(
-                              'Error: ${controller.error}',
-                              style: AppTypography.kRegular24,
-                              textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 24.h),
+                        if (controller.isLoading)
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.h),
+                              child: CircularProgressIndicator.adaptive(),
                             ),
-                          ),
-                        )
-                      else if (controller.shownPlayers.isEmpty)
-                        Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(40.h),
-                            child: Text(
-                              'No players found',
-                              style: AppTypography.kRegular24,
-                            ),
-                          ),
-                        )
-                      else ...[
-                        // First place
-                        if (controller.shownPlayers.isNotEmpty)
-                          PositionPodium(
-                            position: controller.getPositionText(1),
-                            badge: AppAssets.firstBadge,
-                            image:
-                                controller.shownPlayers[0]['avatarUrl']
-                                    as String,
-                            name: controller.shownPlayers[0]['name'] as String,
-                            points:
-                                '+${controller.shownPlayers[0]['pointsGained']}',
-                            totalPoints:
-                                '${controller.shownPlayers[0]['totalPoints']}',
-                          ),
-                        // Second and third place container
-                        if (controller.shownPlayers.length > 1)
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 13.w,
-                              vertical: 20.h,
-                            ),
-                            margin: EdgeInsets.symmetric(horizontal: 14.w),
-                            decoration: BoxDecoration(
-                              color: AppColors.kGreen100,
-                              borderRadius: BorderRadius.vertical(
-                                bottom: Radius.circular(12.r),
+                          )
+                        else if (controller.error != null)
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.h),
+                              child: Text(
+                                'Error: ${controller.error}',
+                                style: AppTypography.kRegular24,
+                                textAlign: TextAlign.center,
                               ),
                             ),
-                            child: Column(
-                              children: [
-                                // 2nd and 3rd place
-                                if (controller.shownPlayers.length >= 2)
-                                  Container(
-                                    width: double.maxFinite,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.kWhite,
-                                      borderRadius: BorderRadius.circular(12.r),
+                          )
+                        else if (controller.shownPlayers.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.h),
+                              child: Text(
+                                'No players found',
+                                style: AppTypography.kRegular24,
+                              ),
+                            ),
+                          )
+                        else ...[
+                          // First place
+                          if (controller.shownPlayers.isNotEmpty)
+                            PositionPodium(
+                              position: controller.getPositionText(1),
+                              badge: AppAssets.firstBadge,
+                              image:
+                                  controller.shownPlayers[0]['avatarUrl']
+                                      as String,
+                              name:
+                                  controller.shownPlayers[0]['name'] as String,
+                              points:
+                                  '+${controller.shownPlayers[0]['pointsGained']}',
+                              totalPoints:
+                                  '${controller.shownPlayers[0]['totalPoints']}',
+                            ),
+                          // Second and third place container
+                          if (controller.shownPlayers.length > 1)
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 13.w,
+                                vertical: 20.h,
+                              ),
+                              margin: EdgeInsets.symmetric(horizontal: 14.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.kGreen100,
+                                borderRadius: BorderRadius.vertical(
+                                  bottom: Radius.circular(12.r),
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  // 2nd and 3rd place
+                                  if (controller.shownPlayers.length >= 2)
+                                    Container(
+                                      width: double.maxFinite,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.kWhite,
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
+                                      ),
+                                      padding: EdgeInsets.all(10.h),
+                                      child: Column(
+                                        children: [
+                                          if (controller.shownPlayers.length >=
+                                              2)
+                                            PositionPodium(
+                                              isFirst: false,
+                                              position: controller
+                                                  .getPositionText(2),
+                                              badge: AppAssets.secondBadge,
+                                              image:
+                                                  controller
+                                                          .shownPlayers[1]['avatarUrl']
+                                                      as String,
+                                              name:
+                                                  controller
+                                                          .shownPlayers[1]['name']
+                                                      as String,
+                                              points:
+                                                  '+${controller.shownPlayers[1]['pointsGained']}',
+                                              totalPoints:
+                                                  '${controller.shownPlayers[1]['totalPoints']}',
+                                            ),
+                                          if (controller.shownPlayers.length >=
+                                              3) ...[
+                                            Divider(
+                                              color: AppColors.kGray300,
+                                              thickness: 1,
+                                              height: 16.h,
+                                            ),
+                                            PositionPodium(
+                                              isFirst: false,
+                                              position: controller
+                                                  .getPositionText(3),
+                                              badge: AppAssets.thirdBadge,
+                                              image:
+                                                  controller
+                                                          .shownPlayers[2]['avatarUrl']
+                                                      as String,
+                                              name:
+                                                  controller
+                                                          .shownPlayers[2]['name']
+                                                      as String,
+                                              points:
+                                                  '+${controller.shownPlayers[2]['pointsGained']}',
+                                              totalPoints:
+                                                  '${controller.shownPlayers[2]['totalPoints']}',
+                                            ),
+                                          ],
+                                        ],
+                                      ),
                                     ),
-                                    padding: EdgeInsets.all(10.h),
-                                    child: Column(
-                                      children: [
-                                        if (controller.shownPlayers.length >= 2)
-                                          PositionPodium(
-                                            isFirst: false,
-                                            position: controller
-                                                .getPositionText(2),
-                                            badge: AppAssets.secondBadge,
-                                            image:
-                                                controller
-                                                        .shownPlayers[1]['avatarUrl']
-                                                    as String,
-                                            name:
-                                                controller
-                                                        .shownPlayers[1]['name']
-                                                    as String,
-                                            points:
-                                                '+${controller.shownPlayers[1]['pointsGained']}',
-                                            totalPoints:
-                                                '${controller.shownPlayers[1]['totalPoints']}',
-                                          ),
-                                        if (controller.shownPlayers.length >=
-                                            3) ...[
-                                          Divider(
-                                            color: AppColors.kGray300,
-                                            thickness: 1,
-                                            height: 16.h,
-                                          ),
-                                          PositionPodium(
-                                            isFirst: false,
-                                            position: controller
-                                                .getPositionText(3),
-                                            badge: AppAssets.thirdBadge,
-                                            image:
-                                                controller
-                                                        .shownPlayers[2]['avatarUrl']
-                                                    as String,
-                                            name:
-                                                controller
-                                                        .shownPlayers[2]['name']
-                                                    as String,
-                                            points:
-                                                '+${controller.shownPlayers[2]['pointsGained']}',
-                                            totalPoints:
-                                                '${controller.shownPlayers[2]['totalPoints']}',
+                                  // 4th place and below
+                                  if (controller.shownPlayers.length > 3) ...[
+                                    SizedBox(height: 15.h),
+                                    Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 10.w,
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          ...List.generate(
+                                            controller.shownPlayers.length - 3,
+                                            (idx) {
+                                              final playerIndex = idx + 3;
+                                              final player = controller
+                                                  .shownPlayers[playerIndex];
+                                              return Column(
+                                                children: [
+                                                  PositionPodium(
+                                                    isFirst: false,
+                                                    position: controller
+                                                        .getPositionText(
+                                                          playerIndex + 1,
+                                                        ),
+                                                    image:
+                                                        player['avatarUrl']
+                                                            as String,
+                                                    name:
+                                                        player['name']
+                                                            as String,
+                                                    points:
+                                                        '+${player['pointsGained']}',
+                                                    totalPoints:
+                                                        '${player['totalPoints']}',
+                                                  ),
+                                                  if (idx !=
+                                                      controller
+                                                              .shownPlayers
+                                                              .length -
+                                                          4)
+                                                    Divider(
+                                                      color: AppColors.kGray300,
+                                                      thickness: 1,
+                                                      height: 16.h,
+                                                    ),
+                                                ],
+                                              );
+                                            },
                                           ),
                                         ],
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                // 4th place and below
-                                if (controller.shownPlayers.length > 3) ...[
-                                  SizedBox(height: 15.h),
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 10.w,
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        ...List.generate(
-                                          controller.shownPlayers.length - 3,
-                                          (idx) {
-                                            final playerIndex = idx + 3;
-                                            final player = controller
-                                                .shownPlayers[playerIndex];
-                                            return Column(
-                                              children: [
-                                                PositionPodium(
-                                                  isFirst: false,
-                                                  position: controller
-                                                      .getPositionText(
-                                                        playerIndex + 1,
-                                                      ),
-                                                  image:
-                                                      player['avatarUrl']
-                                                          as String,
-                                                  name:
-                                                      player['name'] as String,
-                                                  points:
-                                                      '+${player['pointsGained']}',
-                                                  totalPoints:
-                                                      '${player['totalPoints']}',
-                                                ),
-                                                if (idx !=
-                                                    controller
-                                                            .shownPlayers
-                                                            .length -
-                                                        4)
-                                                  Divider(
-                                                    color: AppColors.kGray300,
-                                                    thickness: 1,
-                                                    height: 16.h,
-                                                  ),
-                                              ],
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
-                          ),
+                        ],
+                        SizedBox(height: 30.h),
+                        StartNextRoundButton(),
                       ],
-                      SizedBox(height: 30.h),
-                      StartNextRoundButton(),
-                    ],
+                    ),
                   ),
                 ),
               ),

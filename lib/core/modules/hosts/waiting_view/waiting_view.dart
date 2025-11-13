@@ -4,13 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:go_router/go_router.dart';
+
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/waiting_view_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/core/data/helpers/app_helpers.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
-import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
@@ -43,9 +43,16 @@ class WaitingView extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(String playerName) {
+    final initials = AppHelpers.getInitials(playerName);
     return Center(
-      child: Icon(Icons.person, size: 100.h, color: AppColors.kGray600),
+      child: Text(
+        initials,
+        style: AppTypography.kBold16.copyWith(
+          fontSize: 48.sp,
+          color: AppColors.kGray600,
+        ),
+      ),
     );
   }
 
@@ -114,20 +121,27 @@ class WaitingView extends StatelessWidget {
                                                           error,
                                                           stackTrace,
                                                         ) {
-                                                          return _buildPlaceholder();
+                                                          return _buildPlaceholder(
+                                                            controller
+                                                                .playerName,
+                                                          );
                                                         },
                                                   )
-                                                : _buildPlaceholder()
+                                                : _buildPlaceholder(
+                                                    controller.playerName,
+                                                  )
                                           : Image.file(
                                               File(controller.playerAvatar!),
                                               fit: BoxFit.cover,
                                               errorBuilder:
                                                   (context, error, stackTrace) {
-                                                    return _buildPlaceholder();
+                                                    return _buildPlaceholder(
+                                                      controller.playerName,
+                                                    );
                                                   },
                                             ),
                                     )
-                                  : _buildPlaceholder(),
+                                  : _buildPlaceholder(controller.playerName),
                             ),
                             if (controller.isCountdownActive)
                               Container(

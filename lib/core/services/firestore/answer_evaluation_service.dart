@@ -1,7 +1,7 @@
 import 'dart:developer' as developer;
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
-import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/core/services/openai/openai_client.dart';
 
 class AnswerEvaluationService {

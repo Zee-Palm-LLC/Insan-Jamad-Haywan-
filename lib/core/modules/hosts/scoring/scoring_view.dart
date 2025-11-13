@@ -19,7 +19,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/final_round_score
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/components/scoring_playing_tile.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
-import 'package:insan_jamd_hawan/core/services/firebase_firestore_service.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class ScoringView extends StatefulWidget {
@@ -183,112 +183,119 @@ class _ScoringViewState extends State<ScoringView> {
 
             return GetBuilder<AnswerController>(
               builder: (controller) {
-                return Scaffold(
-                  extendBodyBehindAppBar: true,
-                  // appBar: isDesktop
-                  //     ? null
-                  //     : AppBar(
-                  //         leading: Padding(
-                  //           padding: EdgeInsets.all(10.h),
-                  //           child: CustomIconButton(
-                  //             icon: AppAssets.backIcon,
-                  //             onTap: () => context.pop(),
-                  //           ),
-                  //         ),
-                  //         actions: [
-                  //           CustomIconButton(
-                  //             icon: AppAssets.shareIcon,
-                  //             onTap: () {},
-                  //           ),
-                  //           SizedBox(width: 16.w),
-                  //         ],
-                  //       ),
-                  body: LobbyBg(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.all(16.h),
-                      child: Center(
-                        child: DesktopWrapper(
-                          child: Column(
-                            children: [
-                              if (!isDesktop) SizedBox(height: 50.h),
-                              GameLogo(),
-                              SizedBox(height: 12.h),
-                              RoomCodeText(
-                                lobbyId: lobbyController.lobby.id ?? "N/A",
-                              ),
-                              SizedBox(height: 20.h),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Letter',
-                                    style: AppTypography.kRegular24,
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  InkWell(
-                                    onTap: () {
-                                      context.push(VotingView.path);
-                                    },
-                                    child: Container(
-                                      height: 50.h,
-                                      width: 74.w,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.kPrimary,
-                                        borderRadius: BorderRadius.circular(
-                                          5.r,
-                                        ),
-                                      ),
-                                      alignment: Alignment.bottomCenter,
-                                      padding: EdgeInsets.only(top: 6.h),
-                                      child: Text(
-                                        widget.selectedAlphabet,
-                                        style: AppTypography.kRegular41
-                                            .copyWith(
-                                              color: AppColors.kWhite,
-                                              height: 1,
-                                            ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 20.h),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: AppColors.kGreen100,
-                                  borderRadius: BorderRadius.circular(12.r),
+                return WillPopScope(
+                  onWillPop: () async {
+                    context.pop();
+                    return false;
+                  },
+                  child: Scaffold(
+                    extendBodyBehindAppBar: true,
+                    // appBar: isDesktop
+                    //     ? null
+                    //     : AppBar(
+                    //         leading: Padding(
+                    //           padding: EdgeInsets.all(10.h),
+                    //           child: CustomIconButton(
+                    //             icon: AppAssets.backIcon,
+                    //             onTap: () => context.pop(),
+                    //           ),
+                    //         ),
+                    //         actions: [
+                    //           CustomIconButton(
+                    //             icon: AppAssets.shareIcon,
+                    //             onTap: () {},
+                    //           ),
+                    //           SizedBox(width: 16.w),
+                    //         ],
+                    //       ),
+                    body: LobbyBg(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.all(16.h),
+                        child: Center(
+                          child: DesktopWrapper(
+                            child: Column(
+                              children: [
+                                if (!isDesktop) SizedBox(height: 50.h),
+                                GameLogo(),
+                                SizedBox(height: 12.h),
+                                RoomCodeText(
+                                  lobbyId: lobbyController.lobby.id ?? "N/A",
                                 ),
-                                padding: EdgeInsets.all(16.h),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                SizedBox(height: 20.h),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      'Answers',
-                                      style: AppTypography.kBold21.copyWith(
-                                        height: 1,
+                                      'Letter',
+                                      style: AppTypography.kRegular24,
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    InkWell(
+                                      onTap: () {
+                                        context.push(VotingView.path);
+                                      },
+                                      child: Container(
+                                        height: 50.h,
+                                        width: 74.w,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.kPrimary,
+                                          borderRadius: BorderRadius.circular(
+                                            5.r,
+                                          ),
+                                        ),
+                                        alignment: Alignment.bottomCenter,
+                                        padding: EdgeInsets.only(top: 6.h),
+                                        child: Text(
+                                          widget.selectedAlphabet,
+                                          style: AppTypography.kRegular41
+                                              .copyWith(
+                                                color: AppColors.kWhite,
+                                                height: 1,
+                                              ),
+                                        ),
                                       ),
                                     ),
-                                    SizedBox(height: 10.h),
-                                    ...currentRoundPlayersAnswers.isNotEmpty
-                                        ? _buildCategoryAnswers(
-                                            currentRoundPlayersAnswers,
-                                          )
-                                        : [
-                                            Center(
-                                              child: Padding(
-                                                padding: EdgeInsets.all(20.h),
-                                                child: Text(
-                                                  'No answers submitted yet',
-                                                  style:
-                                                      AppTypography.kRegular24,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
                                   ],
                                 ),
-                              ),
-                            ],
+                                SizedBox(height: 20.h),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: AppColors.kGreen100,
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                  padding: EdgeInsets.all(16.h),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Answers',
+                                        style: AppTypography.kBold21.copyWith(
+                                          height: 1,
+                                        ),
+                                      ),
+                                      SizedBox(height: 10.h),
+                                      ...currentRoundPlayersAnswers.isNotEmpty
+                                          ? _buildCategoryAnswers(
+                                              currentRoundPlayersAnswers,
+                                            )
+                                          : [
+                                              Center(
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(20.h),
+                                                  child: Text(
+                                                    'No answers submitted yet',
+                                                    style: AppTypography
+                                                        .kRegular24,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

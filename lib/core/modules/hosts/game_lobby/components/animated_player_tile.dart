@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/core/data/helpers/app_helpers.dart';
 
 class AnimatedPlayerTile extends StatefulWidget {
   final int index;
@@ -52,15 +53,6 @@ class AnimatedPlayerTileState extends State<AnimatedPlayerTile>
     super.dispose();
   }
 
-  String _getInitials(String name) {
-    if (name.isEmpty) return '?';
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return name.substring(0, name.length > 1 ? 2 : 1).toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
@@ -89,7 +81,7 @@ class AnimatedPlayerTileState extends State<AnimatedPlayerTile>
               ),
               child: Center(
                 child: Text(
-                  _getInitials(widget.name),
+                  AppHelpers.getInitials(widget.name),
                   style: AppTypography.kBold16.copyWith(
                     fontSize: 14.sp,
                     color: widget.color,

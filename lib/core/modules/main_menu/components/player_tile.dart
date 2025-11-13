@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
+import 'package:insan_jamd_hawan/core/data/helpers/app_helpers.dart';
 
 class PlayerTile extends StatelessWidget {
   final String name;
@@ -43,7 +44,7 @@ class PlayerTile extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(100.r),
                     child: controller.profileImagePath != null
-                        ? kIsWeb
+                        ? Platform.isAndroid
                               ? (controller.profileImagePath!.startsWith(
                                           'blob:',
                                         ) ||
@@ -61,18 +62,18 @@ class PlayerTile extends StatelessWidget {
                                         fit: BoxFit.cover,
                                         errorBuilder:
                                             (context, error, stackTrace) {
-                                              return _buildPlaceholder();
+                                              return _buildPlaceholder(name);
                                             },
                                       )
-                                    : _buildPlaceholder()
+                                    : _buildPlaceholder(name)
                               : Image.file(
                                   File(controller.profileImagePath!),
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
-                                    return _buildPlaceholder();
+                                    return _buildPlaceholder(name);
                                   },
                                 )
-                        : _buildPlaceholder(),
+                        : _buildPlaceholder(name),
                   ),
                 );
               },
@@ -92,10 +93,15 @@ class PlayerTile extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(String playerName) {
+    final initials = AppHelpers.getInitials(playerName);
     return Container(
       color: AppColors.kGray300,
-      child: Icon(Icons.person, size: 32.sp, color: AppColors.kGray600),
+      alignment: Alignment.center,
+      child: Text(
+        initials,
+        style: AppTypography.kBold16.copyWith(color: AppColors.kGray600),
+      ),
     );
   }
 }
