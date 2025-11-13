@@ -7,6 +7,7 @@ class GameConfigModel {
   final String? currentSelectedLetter;
   final bool? startCounting;
   final Map<String, String>? roundStatus;
+  final bool? isWheelSpinning;
 
   GameConfigModel({
     required this.maxRounds,
@@ -16,7 +17,8 @@ class GameConfigModel {
     required this.currentRound,
     this.currentSelectedLetter,
     this.startCounting,
-    this.roundStatus
+    this.roundStatus,
+    this.isWheelSpinning,
   });
 
   Map<String, dynamic> toJson() {
@@ -29,6 +31,7 @@ class GameConfigModel {
       'currentSelectedLetter': currentSelectedLetter,
       'startCounting': startCounting,
       'roundStatus': roundStatus?.map((key, value) => MapEntry(key, value)),
+      'isWheelSpinning': isWheelSpinning,
     };
   }
 
@@ -48,7 +51,7 @@ class GameConfigModel {
       scoreConfig: ScoreConfigModel.fromJson(
         json['scoreConfig'] as Map<String, dynamic>? ?? {},
       ),
-
+      isWheelSpinning: json['isWheelSpinning'] as bool? ?? false,
     );
   }
 
@@ -58,6 +61,7 @@ class GameConfigModel {
     List<int>? timePerRoundVariations,
     ScoreConfigModel? scoreConfig,
     int? currentRound,
+    bool? isWheelSpinning,
   }) {
     return GameConfigModel(
       maxRounds: maxRounds ?? this.maxRounds,
@@ -66,6 +70,7 @@ class GameConfigModel {
           timePerRoundVariations ?? this.timePerRoundVariations,
       scoreConfig: scoreConfig ?? this.scoreConfig,
       currentRound: currentRound ?? this.currentRound,
+      isWheelSpinning: isWheelSpinning ?? this.isWheelSpinning,
     );
   }
 }
