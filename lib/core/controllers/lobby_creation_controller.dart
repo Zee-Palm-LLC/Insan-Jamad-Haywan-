@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
@@ -198,13 +199,16 @@ class LobbyCreationController extends GetxController {
         if (!initialPlayers.contains(playerId)) initialPlayers.add(playerId);
         final LobbyModel updatedLobby = lobby.copyWith(players: initialPlayers);
 
-        final controller = LobbyController(lobby: updatedLobby);
+        final controller = Get.put(
+          LobbyController(lobby: updatedLobby),
+          permanent: true,
+        );
         controller.onMaxRoundChange(int.tryParse(maxRounds) ?? 3);
         controller.onTimePerRoundChange(int.tryParse(timerPerRound) ?? 60);
 
         // Navigate to game lobby
         if (context.mounted) {
-          context.push('/lobby/${lobby.id}', extra: controller);
+          context.go('/lobby/${lobby.id}', extra: controller);
         }
       },
     );

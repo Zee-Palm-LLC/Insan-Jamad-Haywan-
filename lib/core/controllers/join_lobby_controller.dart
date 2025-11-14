@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
@@ -113,8 +114,11 @@ class JoinLobbyController extends GetxController {
           throw Exception('Invalid invite code or lobby not available');
         }
 
-        final controller = LobbyController(lobby: lobby);
-        context.push('/lobby/${lobby.id}', extra: controller);
+        final controller = Get.put(
+          LobbyController(lobby: lobby),
+          permanent: true,
+        );
+        context.go('/lobby/${lobby.id}', extra: controller);
       },
     );
   }

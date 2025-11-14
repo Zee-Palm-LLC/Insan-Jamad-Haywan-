@@ -884,4 +884,31 @@ class FirebaseFirestoreService {
       throw Exception("Error $e");
     }
   }
+
+  Future<GameSessionModel?> getCurrentGameSession(String sessionId) async {
+    try {
+      final docSnapshot = await _sessionDoc(sessionId).get();
+
+      if (!docSnapshot.exists) {
+        log('Session document does not exist: $sessionId');
+        return null;
+      }
+
+      final data = docSnapshot.data() as Map<String, dynamic>?;
+      if (data == null) {
+        log('Session document data is null: $sessionId');
+        return null;
+      }
+
+      return GameSessionModel.fromJson(data);
+    } catch (e, s) {
+      log(
+        'Error getting current game session: $e',
+        name: 'FirebaseFirestoreService',
+        error: e,
+        stackTrace: s,
+      );
+      rethrow;
+    }
+  }
 }

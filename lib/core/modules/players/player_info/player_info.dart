@@ -21,45 +21,45 @@ class PlayerInfo extends StatelessWidget {
   static const String path = '/player-info';
   static const String name = 'PlayerInfo';
 
-  Widget _buildProfileImagePicker(PlayerInfoController controller) {
-    return GestureDetector(
-      onTap: controller.pickProfileImage,
-      child: Container(
-        width: 120.w,
-        height: 120.w,
-        decoration: ShapeDecoration(
-          shape: RoughCircleBorder.all(
-            color: AppColors.kGray600,
-            width: 2.w,
-            roughness: 0.8,
-          ),
-          color: AppColors.kGreen100,
-        ),
-        child: controller.profileImagePath != null
-            ? ClipOval(
-                child: kIsWeb
-                    ? (controller.profileImagePath!.startsWith('blob:') ||
-                              controller.profileImagePath!.startsWith('data:'))
-                          ? Image.network(
-                              controller.profileImagePath!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return _buildPlaceholder();
-                              },
-                            )
-                          : _buildPlaceholder()
-                    : Image.file(
-                        File(controller.profileImagePath!),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildPlaceholder();
-                        },
-                      ),
-              )
-            : _buildPlaceholder(),
-      ),
-    );
-  }
+  // Widget _buildProfileImagePicker(PlayerInfoController controller) {
+  //   return GestureDetector(
+  //     onTap: controller.pickProfileImage,
+  //     child: Container(
+  //       width: 120.w,
+  //       height: 120.w,
+  //       decoration: ShapeDecoration(
+  //         shape: RoughCircleBorder.all(
+  //           color: AppColors.kGray600,
+  //           width: 2.w,
+  //           roughness: 0.8,
+  //         ),
+  //         color: AppColors.kGreen100,
+  //       ),
+  //       child: controller.profileImagePath != null
+  //           ? ClipOval(
+  //               child: kIsWeb
+  //                   ? (controller.profileImagePath!.startsWith('blob:') ||
+  //                             controller.profileImagePath!.startsWith('data:'))
+  //                         ? Image.network(
+  //                             controller.profileImagePath!,
+  //                             fit: BoxFit.cover,
+  //                             errorBuilder: (context, error, stackTrace) {
+  //                               return _buildPlaceholder();
+  //                             },
+  //                           )
+  //                         : _buildPlaceholder()
+  //                   : Image.file(
+  //                       File(controller.profileImagePath!),
+  //                       fit: BoxFit.cover,
+  //                       errorBuilder: (context, error, stackTrace) {
+  //                         return _buildPlaceholder();
+  //                       },
+  //                     ),
+  //             )
+  //           : _buildPlaceholder(),
+  //     ),
+  //   );
+  // }
 
   Widget _buildPlaceholder() {
     return Center(
@@ -129,7 +129,7 @@ class PlayerInfo extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 30.h),
-                      Center(child: _buildProfileImagePicker(controller)),
+                     //Center(child: _buildProfileImagePicker(controller)),
                       SizedBox(height: 32.h),
                       TextField(
                         controller: controller.usernameController,

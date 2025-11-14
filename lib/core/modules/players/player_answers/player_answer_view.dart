@@ -148,10 +148,12 @@ class _PlayerAnswerViewState extends State<PlayerAnswerView> {
                               children: [
                                 SvgPicture.asset(AppAssets.timerIcon),
                                 SizedBox(width: 8.w),
-                                Text(
-                                  controller.formattedTime,
-                                  style: AppTypography.kRegular19.copyWith(
-                                    color: AppColors.kRed500,
+                                Obx(
+                                  () => Text(
+                                    controller.formattedTime.value,
+                                    style: AppTypography.kRegular19.copyWith(
+                                      color: AppColors.kRed500,
+                                    ),
                                   ),
                                 ),
                               ],

@@ -35,7 +35,7 @@ class AnswerController extends GetxController {
   StreamSubscription<int>? _timerSubscription;
   StreamSubscription<List<PlayerAnswerModel>>? _answerSubmissionListener;
   Timer? _periodicTimer;
-  DateTime? _roundEndTime;
+  RxString formattedTime = '00:00'.obs;
 
   bool doublePoints = false;
   int secondsRemaining = 0;
@@ -49,16 +49,6 @@ class AnswerController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _setupAnswerSubmissionListener();
-  }
-
-  void _setupAnswerSubmissionListener() {
-    // This will be called when the round starts to listen for answer submissions
-    log('Answer submission listener setup completed', name: 'AnswerController');
-  }
-
-  void startTimer() {
-    secondsRemaining = totalSeconds;
   }
 
   void startTimerSync() {
@@ -66,84 +56,10 @@ class AnswerController extends GetxController {
     _periodicTimer?.cancel();
     final sessionId = lobbyController.lobby.id ?? "";
     final currentRound = wheelController.currentRound;
-
-    if (sessionId.isEmpty || currentRound == 0) {
-      log(
-        "Cannot start timer sync: sessionId=$sessionId, currentRound=$currentRound",
-        name: 'AnswerController',
-      );
-      return;
-    }
-
-    // Reset state for new round if round has changed
-    if (currentProcessedRound != currentRound) {
-      log(
-        'New round detected: $currentProcessedRound -> $currentRound, resetting state',
-        name: 'AnswerController',
-      );
-      _resetForNewRound(currentRound);
-    }
-
-    log(
-      "Starting timer sync for sessionId=$sessionId, round=$currentRound",
-      name: 'AnswerController',
-    );
-
-    // Start listening for answer submissions from other players
+    _startPeriodicTimer();
     _startAnswerSubmissionListener(sessionId, currentRound);
-
-    _timerSubscription = _db
-        .streamRoundRemainingTime(sessionId, currentRound)
-        .listen(
-          (remainingSeconds) {
-            secondsRemaining = remainingSeconds;
-            totalSeconds = remainingSeconds > 0
-                ? remainingSeconds
-                : totalSeconds;
-            _roundEndTime = DateTime.now().add(
-              Duration(seconds: remainingSeconds),
-            );
-
-            update();
-
-            log(
-              "Timer updated: remaining=$remainingSeconds, total=$totalSeconds, endTime=$_roundEndTime",
-              name: 'AnswerController',
-            );
-            _startPeriodicTimer();
-          },
-          onError: (error) {
-            log(
-              "Error in timer sync stream: $error",
-              name: 'AnswerController',
-              error: error,
-            );
-          },
-        );
   }
 
-  void _resetForNewRound(int newRound) {
-    // Reset auto-submit state
-    isAutoSubmittedByOtherPlayer = false;
-    isAutoSubmittedOnTimeout = false;
-    playersWhoSubmitted.clear();
-    processedSubmissionEvents.clear();
-    currentProcessedRound = newRound;
-
-    // Reset submission state
-    isSubmitting = false;
-    isEvaluating = false;
-
-    // Cancel previous answer submission listener
-    _answerSubmissionListener?.cancel();
-    _answerSubmissionListener = null;
-
-    log(
-      'Answer controller reset for new round: $newRound',
-      name: 'AnswerController',
-    );
-    update();
-  }
 
   void _startAnswerSubmissionListener(String sessionId, int roundNumber) {
     _answerSubmissionListener?.cancel();
@@ -300,19 +216,29 @@ class AnswerController extends GetxController {
     }
   }
 
-  void _startPeriodicTimer() {
+  void _startPeriodicTimer() async {
+    int? _roundDuration;
     _periodicTimer?.cancel();
+    final session = await _db.getCurrentGameSession(
+      lobbyController.lobby.id ?? "",
+    );
+    if (session != null) {
+      _roundDuration = session.config.defaultTimePerRound;
+    }
+    log("Round duration: $_roundDuration", name: 'AnswerController');
+    if (_roundDuration == null) return;
+
+    secondsRemaining = _roundDuration;
+
     _periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      if (_roundEndTime == null) return;
+      if (_roundDuration == null) return;
 
-      final now = DateTime.now();
-      final difference = _roundEndTime!.difference(now);
-      final remainingSeconds = difference.inSeconds;
-      if (remainingSeconds <= 0) {
-        _periodicTimer?.cancel();
-      }
+      // Decrement the remaining seconds
+      secondsRemaining--;
 
-      if ((remainingSeconds <= 0) && (isAutoSubmittedOnTimeout == false)) {
+      wellFormattedTime();
+
+      if ((secondsRemaining <= 0) && (isAutoSubmittedOnTimeout == false)) {
         _periodicTimer?.cancel();
         await submitAnswers(
           onSuccess: () {
@@ -323,8 +249,6 @@ class AnswerController extends GetxController {
         );
         secondsRemaining = 0;
         _periodicTimer?.cancel();
-      } else {
-        secondsRemaining = remainingSeconds;
       }
 
       update();
@@ -338,13 +262,14 @@ class AnswerController extends GetxController {
     _periodicTimer = null;
     _answerSubmissionListener?.cancel();
     _answerSubmissionListener = null;
-    _roundEndTime = null;
   }
 
-  String get formattedTime {
+  RxString wellFormattedTime() {
     final minutes = secondsRemaining ~/ 60;
     final seconds = secondsRemaining % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    formattedTime.value =
+        '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    return formattedTime;
   }
 
   Future<void> submitAnswers({
@@ -633,7 +558,6 @@ class AnswerController extends GetxController {
     _timerSubscription?.cancel();
     _periodicTimer?.cancel();
     _answerSubmissionListener?.cancel();
-    _roundEndTime = null;
     nameController.clear();
     objectController.clear();
     animalController.clear();
