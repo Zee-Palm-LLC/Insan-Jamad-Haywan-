@@ -483,7 +483,6 @@ class LobbyController extends GetxController {
     if (gameStarted) {
       log('Game started broadcast received', name: 'SSE');
       phase = GamePhase.started;
-      navigatorKey.currentContext?.go(LetterGeneratorView.path);
       AppToaster.showToast(
         'Game Started!',
         subTitle: 'The game has begun',

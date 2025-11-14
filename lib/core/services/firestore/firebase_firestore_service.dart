@@ -561,7 +561,9 @@ class FirebaseFirestoreService {
             final submittedPlayerIds = answersSnapshot.docs.toSet();
             return submittedPlayerIds.length;
           });
-      log("This is the data that we have ${data.length}");
+      log(
+        "This is the data that we have  streamCountOfPlayersWhoSubmittedAnswers${data.length}",
+      );
       return data;
     } catch (e) {
       log('Error streaming count of players who submitted answers: $e');

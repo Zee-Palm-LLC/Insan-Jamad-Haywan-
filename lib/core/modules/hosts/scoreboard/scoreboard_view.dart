@@ -302,10 +302,10 @@ class StartNextRoundButton extends StatelessWidget {
             onPressed: () {
               if (isAboutToStartFinalRound) {
                 wheelController.startNextRound();
-                context.pushReplacement(FinalRoundView.path);
+                context.go(FinalRoundView.path);
               } else {
                 wheelController.startNextRound();
-                context.pushReplacement(LetterGeneratorView.path);
+                context.go(LetterGeneratorView.path);
               }
             },
           );

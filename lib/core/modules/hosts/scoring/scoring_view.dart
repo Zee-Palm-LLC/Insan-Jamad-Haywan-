@@ -58,9 +58,9 @@ class _ScoringViewState extends State<ScoringView> {
             wheelController.currentRound;
 
         if (isFinalRound) {
-          context.pushReplacement(FinalRoundScoreboard.path);
+          context.go(FinalRoundScoreboard.path);
         } else {
-          context.pushReplacement(ScoreboardView.path);
+          context.go(ScoreboardView.path);
         }
       }
     });
@@ -126,11 +126,11 @@ class _ScoringViewState extends State<ScoringView> {
                         categoryAnswers[i]['status'] ==
                             AnswerEvaluationStatus.unclear
                         ? () {
-                            context.pushNamed(
+                            context.go(
                               VotingView.name,
-                              pathParameters: {
-                                'letter': widget.selectedAlphabet,
-                              },
+                              // pathParameters: {
+                              //   'letter': widget.selectedAlphabet,
+                              // },
                               extra: {
                                 'selectedAlphabet': widget.selectedAlphabet,
                               },
@@ -232,7 +232,7 @@ class _ScoringViewState extends State<ScoringView> {
                                     SizedBox(width: 8.w),
                                     InkWell(
                                       onTap: () {
-                                        context.push(VotingView.path);
+                                        context.go(VotingView.path);
                                       },
                                       child: Container(
                                         height: 50.h,

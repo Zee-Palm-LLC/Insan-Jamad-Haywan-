@@ -123,7 +123,7 @@ class WheelController extends GetxController {
                 pId != lobbyController.lobby.host) {
               resetController();
               Get.find<AnswerController>().restController();
-              navigatorKey.currentContext?.replace(LetterGeneratorView.path);
+              navigatorKey.currentContext?.go(LetterGeneratorView.path);
             }
           },
           onError: (error) {

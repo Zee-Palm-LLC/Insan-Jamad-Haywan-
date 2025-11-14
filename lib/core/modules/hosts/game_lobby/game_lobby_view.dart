@@ -65,7 +65,7 @@ class _GameLobbyViewState extends State<GameLobbyView> {
         );
         _hasNavigated = true;
         if (context.mounted) {
-          context.push(LetterGeneratorView.path);
+          context.go(LetterGeneratorView.path);
         }
       }
     }
@@ -182,7 +182,7 @@ class _GameLobbyViewState extends State<GameLobbyView> {
                                     : () async {
                                         await widget.controller.startGame();
                                         if (context.mounted) {
-                                          context.push(
+                                          context.go(
                                             LetterGeneratorView.path,
                                             extra: widget.controller,
                                           );

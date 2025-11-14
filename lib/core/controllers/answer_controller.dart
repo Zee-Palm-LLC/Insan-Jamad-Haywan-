@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/widgets.dart' show TextEditingController;
 import 'package:get/get.dart';
+import 'package:insan_jamd_hawan/core/models/session/game_session_model.dart';
 import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
@@ -34,7 +35,6 @@ class AnswerController extends GetxController {
   StreamSubscription<int>? _submissionCountSubscription;
   StreamSubscription<int>? _timerSubscription;
   StreamSubscription<List<PlayerAnswerModel>>? _answerSubmissionListener;
-  Timer? _periodicTimer;
   RxString formattedTime = '00:00'.obs;
 
   bool doublePoints = false;
@@ -46,34 +46,32 @@ class AnswerController extends GetxController {
   int currentProcessedRound = 0;
   Set<String> processedSubmissionEvents = <String>{};
 
-  @override
-  void onInit() {
-    super.onInit();
-  }
-
   void startTimerSync() {
     _timerSubscription?.cancel();
-    _periodicTimer?.cancel();
     final sessionId = lobbyController.lobby.id ?? "";
-    final currentRound = wheelController.currentRound;
     _startPeriodicTimer();
-    _startAnswerSubmissionListener(sessionId, currentRound);
+    _startAnswerSubmissionListener(sessionId);
   }
 
-
-  void _startAnswerSubmissionListener(String sessionId, int roundNumber) {
+  void _startAnswerSubmissionListener(String sessionId) async {
     _answerSubmissionListener?.cancel();
 
+    GameSessionModel? session = await _db.getCurrentGameSession(sessionId);
+    int? currentRound = session?.config.currentRound;
+
     log(
-      'Starting answer submission listener for round $roundNumber',
+      'Starting answer submission listener for round $currentRound',
       name: 'AnswerController',
     );
 
     _answerSubmissionListener = _db
-        .streamAllAnswersForTheRound(sessionId, roundNumber)
+        .streamAllAnswersForTheRound(sessionId, currentRound!)
         .listen(
           (answers) async {
-            await _handleAnswerSubmissions(answers, roundNumber);
+            if (answers.isEmpty) {
+              return;
+            }
+            await _handleAnswerSubmissions(answers);
           },
           onError: (error) {
             log(
@@ -85,18 +83,10 @@ class AnswerController extends GetxController {
         );
   }
 
-  Future<void> _handleAnswerSubmissions(
-    List<PlayerAnswerModel> answers,
-    int roundNumber,
-  ) async {
-    final currentRound = wheelController.currentRound;
-    if (roundNumber != currentRound) {
-      log(
-        'Ignoring answer submissions for round $roundNumber, current round is $currentRound',
-        name: 'AnswerController',
-      );
-      return;
-    }
+  Future<void> _handleAnswerSubmissions(List<PlayerAnswerModel> answers) async {
+    String sessionId = lobbyController.lobby.id ?? "";
+    GameSessionModel? session = await _db.getCurrentGameSession(sessionId);
+    int? currentRound = session?.config.currentRound;
 
     String? currentPlayerId = await AppService.getPlayerId();
     if (currentPlayerId == null) {
@@ -107,50 +97,40 @@ class AnswerController extends GetxController {
       return;
     }
 
-    log(
-      'Processing answer submissions for round $roundNumber. Current player: $currentPlayerId',
-      name: 'AnswerController',
-    );
-    log(
-      'Received ${answers.length} submissions: ${answers.map((a) => a.playerId).join(', ')}',
-      name: 'AnswerController',
-    );
-
-    bool currentPlayerSubmitted = answers.any(
+    // Check if current player has already submitted
+    bool currentPlayerHasSubmitted = answers.any(
       (answer) => answer.playerId == currentPlayerId,
     );
 
-    List<PlayerAnswerModel> otherPlayersAnswers = answers
-        .where((answer) => answer.playerId != currentPlayerId)
-        .toList();
-
     log(
-      'Current player submitted: $currentPlayerSubmitted, Other players count: ${otherPlayersAnswers.length}',
+      'Handle submissions: round=$currentRound, isSubmitting=$isSubmitting, isAutoSubmittedByOtherPlayer=$isAutoSubmittedByOtherPlayer, currentPlayerHasSubmitted=$currentPlayerHasSubmitted',
       name: 'AnswerController',
     );
 
-    if (otherPlayersAnswers.isNotEmpty && !currentPlayerSubmitted) {
+    // Only auto-submit if:
+    // 1. Current player hasn't submitted yet
+    // 2. Not already submitting
+    // 3. Not already auto-submitted by other player
+    if (!currentPlayerHasSubmitted && 
+        !isSubmitting && 
+        !isAutoSubmittedByOtherPlayer) {
       log(
-        'Other player(s) submitted answers: ${otherPlayersAnswers.map((a) => a.playerId).join(', ')}',
+        'Triggering auto-submit for round $currentRound',
         name: 'AnswerController',
       );
-
-      if (!isSubmitting && !isAutoSubmittedByOtherPlayer) {
-        await _autoSubmitDueToOtherPlayer(
-          otherPlayersAnswers.first.playerId,
-          roundNumber,
-        );
-      }
+      await _autoSubmitDueToOtherPlayer(currentRound!);
+    } else {
+      log(
+        'Auto-submit blocked: currentPlayerHasSubmitted=$currentPlayerHasSubmitted, isSubmitting=$isSubmitting, isAutoSubmittedByOtherPlayer=$isAutoSubmittedByOtherPlayer',
+        name: 'AnswerController',
+      );
     }
 
     currentRoundPlayersAnswers = answers;
     update();
   }
 
-  Future<void> _autoSubmitDueToOtherPlayer(
-    String otherPlayerId,
-    int roundNumber,
-  ) async {
+  Future<void> _autoSubmitDueToOtherPlayer(int roundNumber) async {
     String? currentPlayerId = await AppService.getPlayerId();
     if (currentPlayerId == null) {
       log(
@@ -159,33 +139,10 @@ class AnswerController extends GetxController {
       );
       return;
     }
-
-    if (otherPlayerId == currentPlayerId) {
-      log(
-        'Skipping auto-submit: other player ID matches current player ID ($otherPlayerId)',
-        name: 'AnswerController',
-      );
-      return;
-    }
-
-    final eventId = '${otherPlayerId}_${roundNumber}';
-    if (processedSubmissionEvents.contains(eventId)) {
-      log(
-        'Already processed submission event: $eventId',
-        name: 'AnswerController',
-      );
-      return;
-    }
-
-    processedSubmissionEvents.add(eventId);
-    playersWhoSubmitted.add(otherPlayerId);
-
-    log(
-      'Auto-submitting due to other player ($otherPlayerId) submission for round $roundNumber',
-      name: 'AnswerController',
-    );
-
+    
+    // Set flag immediately to prevent multiple triggers
     isAutoSubmittedByOtherPlayer = true;
+    update();
 
     try {
       await submitAnswers(
@@ -206,19 +163,22 @@ class AnswerController extends GetxController {
       );
     } catch (e) {
       log('Failed to auto-submit answers: $e', name: 'AnswerController');
-      isAutoSubmittedByOtherPlayer = false;
-
       AppToaster.showToast(
         "Auto-submit failed",
         subTitle: "Failed to auto-submit your answers: ${e.toString()}",
         type: ToastificationType.error,
       );
+      // Reset flag on error so user can try again
+      isAutoSubmittedByOtherPlayer = false;
+      update();
     }
+    // Don't reset flag in finally - it should persist to prevent multiple auto-submissions
+    // Flag will be reset in restController() when new round starts
   }
 
   void _startPeriodicTimer() async {
     int? _roundDuration;
-    _periodicTimer?.cancel();
+    _timerSubscription?.cancel();
     final session = await _db.getCurrentGameSession(
       lobbyController.lobby.id ?? "",
     );
@@ -227,39 +187,47 @@ class AnswerController extends GetxController {
     }
     log("Round duration: $_roundDuration", name: 'AnswerController');
     if (_roundDuration == null) return;
-
+    totalSeconds = _roundDuration;
     secondsRemaining = _roundDuration;
 
-    _periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      if (_roundDuration == null) return;
+    // Periodic timer replaced with Stream.periodic and listen
+    _timerSubscription =
+        Stream<int>.periodic(const Duration(seconds: 1), (x) => x).listen((
+          tick,
+        ) async {
+          if (_roundDuration == null) return;
 
-      // Decrement the remaining seconds
-      secondsRemaining--;
+          secondsRemaining--;
+          wellFormattedTime();
 
-      wellFormattedTime();
-
-      if ((secondsRemaining <= 0) && (isAutoSubmittedOnTimeout == false)) {
-        _periodicTimer?.cancel();
-        await submitAnswers(
-          onSuccess: () {
+          if ((secondsRemaining <= 0) && (isAutoSubmittedOnTimeout == false)) {
+            // Set flag immediately to prevent multiple timeout submissions
             isAutoSubmittedOnTimeout = true;
-            ProgressDialog.hide(navigatorKey.currentContext!);
-          },
-          showLoader: true,
-        );
-        secondsRemaining = 0;
-        _periodicTimer?.cancel();
-      }
+            _timerSubscription?.cancel();
+            _timerSubscription = null;
+            
+            await submitAnswers(
+              onSuccess: () {
+                log(
+                  'Auto-submitted answers due to timeout',
+                  name: 'AnswerController',
+                );
+                if (navigatorKey.currentContext != null) {
+                  ProgressDialog.hide(navigatorKey.currentContext!);
+                }
+              },
+              showLoader: true,
+            );
+            secondsRemaining = 0;
+          }
 
-      update();
-    });
+          update();
+        });
   }
 
   void cancelTimerSync() {
     _timerSubscription?.cancel();
     _timerSubscription = null;
-    _periodicTimer?.cancel();
-    _periodicTimer = null;
     _answerSubmissionListener?.cancel();
     _answerSubmissionListener = null;
   }
@@ -277,8 +245,66 @@ class AnswerController extends GetxController {
     bool showLoader = false,
     bool isAutoSubmitted = false,
   }) async {
+    // Get the current round number from Firestore before proceeding
+    final String sessionId = lobbyController.lobby.id ?? "";
+    GameSessionModel? session = await _db.getCurrentGameSession(sessionId);
+    try {} catch (e) {
+      log(
+        'Failed to fetch current round from Firebase: $e',
+        name: 'AnswerController',
+      );
+      throw Exception("Could not retrieve current round from the server.");
+    }
+    
+    String? playerId = await AppService.getPlayerId();
+    if (playerId == null || playerId.isEmpty) {
+      log(
+        'Cannot submit: player ID is null or empty',
+        name: 'AnswerController',
+      );
+      return;
+    }
+
+    // Check if this player has already submitted for this round
+    try {
+      final existingAnswers = await _db
+          .streamAllAnswersForTheRound(
+            sessionId,
+            session?.config.currentRound ?? 0,
+          )
+          .first;
+      
+      bool alreadySubmitted = existingAnswers.any(
+        (answer) => answer.playerId == playerId,
+      );
+      
+      if (alreadySubmitted) {
+        log(
+          'Player $playerId has already submitted for round ${session?.config.currentRound} - skipping submission',
+          name: 'AnswerController',
+        );
+        return;
+      }
+    } catch (e) {
+      log(
+        'Error checking existing submissions: $e',
+        name: 'AnswerController',
+      );
+    }
+    
+    log(
+      'submitAnswers called for round ${session?.config.currentRound} - isSubmitting=$isSubmitting, isAutoSubmitted=$isAutoSubmitted, showLoader=$showLoader',
+      name: 'AnswerController',
+    );
+
+    _timerSubscription?.cancel();
+    _timerSubscription = null;
+    
     if (isSubmitting) {
-      log("Answer submission already in progress", name: 'AnswerController');
+      log(
+        "Answer submission already in progress - blocked! Round: ${session?.config.currentRound}, isAutoSubmitted: $isAutoSubmitted",
+        name: 'AnswerController',
+      );
       return;
     }
     if (showLoader) {
@@ -339,9 +365,10 @@ class AnswerController extends GetxController {
       _allUserWhichHasSubmitTheAnswers();
     } catch (e) {
       log('Failed to submit answers: $e', name: 'AnswerController');
+      rethrow;
+    } finally {
       isSubmitting = false;
       update();
-      rethrow;
     }
   }
 
@@ -354,7 +381,6 @@ class AnswerController extends GetxController {
   void onClose() {
     _submissionCountSubscription?.cancel();
     _timerSubscription?.cancel();
-    _periodicTimer?.cancel();
     _answerSubmissionListener?.cancel();
     nameController.dispose();
     objectController.dispose();
@@ -373,19 +399,20 @@ class AnswerController extends GetxController {
     return data;
   }
 
-  void _allUserWhichHasSubmitTheAnswers() {
+  void _allUserWhichHasSubmitTheAnswers() async {
     _submissionCountSubscription?.cancel();
 
     final sessionId = Get.find<LobbyController>().lobby.id ?? "";
-    final currentRound = Get.find<WheelController>().currentRound;
+    GameSessionModel? session = await _db.getCurrentGameSession(sessionId);
+    int? currentRound = session?.config.currentRound;
 
     log(
-      "Setting up submission count listener for session: $sessionId, round: $currentRound",
+      "Setting up submission count listener for session: $sessionId, round: ${session?.config.currentRound}",
       name: 'AnswerController',
     );
 
     _submissionCountSubscription = _db
-        .streamCountOfPlayersWhoSubmittedAnswers(sessionId, currentRound)
+        .streamCountOfPlayersWhoSubmittedAnswers(sessionId, currentRound!)
         .listen((submissionCount) async {
           int totalPlayers = 0;
           try {
@@ -445,8 +472,12 @@ class AnswerController extends GetxController {
             await Future.delayed(const Duration(milliseconds: 500));
 
             String selectedLetter = wheelController.selectedLetter ?? "A";
+            GameSessionModel? session = await _db.getCurrentGameSession(
+              sessionId,
+            );
+            int? currentRound = session?.config.currentRound;
             try {
-              final round = await _db.getRound(sessionId, currentRound);
+              final round = await _db.getRound(sessionId, currentRound ?? 0);
               if (round != null && round.selectedLetter.isNotEmpty) {
                 selectedLetter = round.selectedLetter;
               }
@@ -481,16 +512,20 @@ class AnswerController extends GetxController {
             }
 
             try {
+              GameSessionModel? session = await _db.getCurrentGameSession(
+                sessionId,
+              );
+              int? currentRound = session?.config.currentRound;
               await _evaluationService.evaluateRound(
                 sessionId: sessionId,
-                roundNumber: currentRound,
+                roundNumber: currentRound!,
                 selectedLetter: selectedLetter,
               );
 
               // Hide progress dialog
-              if (context != null) {
-                ProgressDialog.hide(context);
-              }
+              // if (context != null) {
+              //   ProgressDialog.hide(context);
+              // }
 
               // Navigate to ScoringView
               if (context != null) {
@@ -498,9 +533,9 @@ class AnswerController extends GetxController {
                   "Navigating to scoring view with letter: $selectedLetter",
                   name: 'AnswerController',
                 );
-                context.pushNamed(
-                  ScoringView.name,
-                  pathParameters: {'letter': selectedLetter},
+                context.go(
+                  ScoringView.path,
+                  // pathParameters: {'letter': selectedLetter},
                   extra: {"selectedAlphabet": selectedLetter},
                 );
 
@@ -523,9 +558,9 @@ class AnswerController extends GetxController {
                 name: 'AnswerController',
               );
             } catch (e, stackTrace) {
-              if (context != null) {
-                ProgressDialog.hide(context);
-              }
+              // if (context != null) {
+              //   ProgressDialog.hide(context);
+              // }
 
               log(
                 'Error during answer evaluation: $e',
@@ -552,34 +587,48 @@ class AnswerController extends GetxController {
   }
 
   void restController() {
-    log('Resetting answer controller...', name: 'AnswerController');
+    log(
+      'Resetting answer controller... Current state: isSubmitting=$isSubmitting, isEvaluating=$isEvaluating, isAutoSubmittedByOtherPlayer=$isAutoSubmittedByOtherPlayer',
+      name: 'AnswerController',
+    );
 
+    // Cancel all subscriptions first
     _submissionCountSubscription?.cancel();
+    _submissionCountSubscription = null;
     _timerSubscription?.cancel();
-    _periodicTimer?.cancel();
+    _timerSubscription = null;
     _answerSubmissionListener?.cancel();
+    _answerSubmissionListener = null;
+
+    // Clear all input fields
     nameController.clear();
     objectController.clear();
     animalController.clear();
     plantController.clear();
     countryController.clear();
+
+    // Reset all flags
     doublePoints = false;
     secondsRemaining = 0;
     totalSeconds = 60;
+    formattedTime.value = '00:00';
     aiEvaluated = false;
     isSubmitting = false;
     isEvaluating = false;
-    cancelTimerSync();
     isAutoSubmittedOnTimeout = false;
     isAutoSubmittedByOtherPlayer = false;
-    playersWhoSubmitted.clear();
+    submitByAllUsers = false;
 
-    currentProcessedRound = wheelController.currentRound;
+    // Clear all tracking sets/lists
+    playersWhoSubmitted.clear();
     processedSubmissionEvents.clear();
     currentRoundPlayersAnswers.clear();
 
+    // Update current round tracking
+    currentProcessedRound = wheelController.currentRound;
+
     log(
-      'Answer controller reset completed for round ${currentProcessedRound}',
+      'Answer controller reset completed for round $currentProcessedRound. All flags and listeners cleared.',
       name: 'AnswerController',
     );
     update();

@@ -61,7 +61,7 @@ class _FinalRoundViewState extends State<FinalRoundView> {
     _navigationTimer = Timer(const Duration(seconds: 3), () {
       if (mounted && !_hasNavigated) {
         _hasNavigated = true;
-        context.pushReplacement(LetterGeneratorView.path);
+        context.go(LetterGeneratorView.path);
       }
     });
   }
@@ -195,7 +195,7 @@ class _FinalRoundViewState extends State<FinalRoundView> {
                       PrimaryButton(
                         text: 'Start Final Round',
                         onPressed: () {
-                          context.pushReplacement(LetterGeneratorView.path);
+                          context.go(LetterGeneratorView.path);
                         },
                       ),
                     ],

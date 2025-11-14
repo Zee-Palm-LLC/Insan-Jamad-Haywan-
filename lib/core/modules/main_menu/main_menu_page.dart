@@ -112,7 +112,7 @@ class MainMenuPage extends StatelessWidget {
                               startScale: 0.95,
                               child: MenuButton(
                                 onTap: () {
-                                  context.push('/create-lobby');
+                                  context.go('/create-lobby');
                                 },
                                 icon: AppAssets.createLobby,
                                 name: 'Create Lobby',
