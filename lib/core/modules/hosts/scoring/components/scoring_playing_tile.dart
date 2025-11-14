@@ -11,6 +11,7 @@ class ScoringPlayingTile extends StatefulWidget {
   final String answer;
   final int points;
   final AnswerEvaluationStatus? status;
+  final bool usedDoublePoints;
   final VoidCallback? onReportTap;
 
   const ScoringPlayingTile({
@@ -21,6 +22,7 @@ class ScoringPlayingTile extends StatefulWidget {
     required this.answer,
     required this.points,
     this.status,
+    this.usedDoublePoints = false,
     this.onReportTap,
   });
 
@@ -129,13 +131,39 @@ class ScoringPlayerTileState extends State<ScoringPlayingTile>
               ),
             ),
             SizedBox(width: 5.w),
-            Text(
-              widget.points > 0 ? '+${widget.points}' : '${widget.points}',
-              style: AppTypography.kBold16.copyWith(
-                color: widget.points > 0
-                    ? AppColors.kPrimary
-                    : AppColors.kGray500,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.usedDoublePoints &&
+                    widget.status == AnswerEvaluationStatus.correct)
+                  Container(
+                    margin: EdgeInsets.only(right: 4.w),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 6.w,
+                      vertical: 2.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.kPrimary.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4.r),
+                      border: Border.all(color: AppColors.kPrimary, width: 1),
+                    ),
+                    child: Text(
+                      '2x',
+                      style: AppTypography.kBold16.copyWith(
+                        color: AppColors.kPrimary,
+                        fontSize: 10.sp,
+                      ),
+                    ),
+                  ),
+                Text(
+                  widget.points > 0 ? '+${widget.points}' : '${widget.points}',
+                  style: AppTypography.kBold16.copyWith(
+                    color: widget.points > 0
+                        ? AppColors.kPrimary
+                        : AppColors.kGray500,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

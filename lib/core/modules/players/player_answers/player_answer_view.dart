@@ -16,7 +16,6 @@ import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dar
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/animated_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/custom_paint/handdrawn_border.dart';
-import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class PlayerAnswerView extends StatefulWidget {
@@ -164,33 +163,47 @@ class _PlayerAnswerViewState extends State<PlayerAnswerView> {
                       Row(
                         children: [
                           InkWell(
-                            onTap: () {
-                              controller.toggleDoublePoints();
-                            },
-                            child: Container(
-                              height: 22.h,
-                              width: 22.h,
-                              decoration: ShapeDecoration(
-                                color: AppColors.kWhite.withOpacity(0.9),
-                                shape: HandStyleBorder(
-                                  side: BorderSide(
-                                    color: AppColors.kBlack,
-                                    width: 1.5,
+                            onTap: controller.canUseDoublePoints
+                                ? () {
+                                    controller.toggleDoublePoints();
+                                  }
+                                : null,
+                            child: Opacity(
+                              opacity: controller.canUseDoublePoints
+                                  ? 1.0
+                                  : 0.5,
+                              child: Container(
+                                height: 22.h,
+                                width: 22.h,
+                                decoration: ShapeDecoration(
+                                  color: AppColors.kWhite.withOpacity(0.9),
+                                  shape: HandStyleBorder(
+                                    side: BorderSide(
+                                      color: AppColors.kBlack,
+                                      width: 1.5,
+                                    ),
+                                    borderRadius: BorderRadius.circular(2.r),
+                                    roughness: 0.5,
                                   ),
-                                  borderRadius: BorderRadius.circular(2.r),
-                                  roughness: 0.5,
                                 ),
+                                child: controller.doublePoints
+                                    ? SvgPicture.asset(AppAssets.done)
+                                    : null,
                               ),
-                              child: controller.doublePoints
-                                  ? SvgPicture.asset(AppAssets.done)
-                                  : null,
                             ),
                           ),
                           SizedBox(width: 10.w),
-                          Text(
-                            'Double my points for this round',
-                            style: AppTypography.kRegular19.copyWith(
-                              fontSize: 16.sp,
+                          Expanded(
+                            child: Text(
+                              controller.canUseDoublePoints
+                                  ? 'Double my points for this round'
+                                  : 'Double points already used',
+                              style: AppTypography.kRegular19.copyWith(
+                                fontSize: 16.sp,
+                                color: controller.canUseDoublePoints
+                                    ? null
+                                    : AppColors.kGray500,
+                              ),
                             ),
                           ),
                         ],
@@ -224,34 +237,22 @@ class _PlayerAnswerViewState extends State<PlayerAnswerView> {
                         controller: controller.countryController,
                       ),
                       SizedBox(height: 24.h),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: PrimaryButton(
-                              onPressed: () => context.pop(),
-                              text: 'Stop !',
-                              color: AppColors.kRed500,
-                            ),
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: PrimaryButton(
-                              text: 'Next',
-                              width: double.infinity,
-                              onPressed: () {
-                                controller.submitAnswers(
-                                  onSuccess: () {
-                                    // Success callback - submission completed
-                                    log(
-                                      'Answer submission completed successfully',
-                                      name: 'PlayerAnswerView',
-                                    );
-                                  },
+                      Expanded(
+                        child: PrimaryButton(
+                          text: 'Stop and Submit',
+                          width: double.infinity,
+                          onPressed: () {
+                            controller.submitAnswers(
+                              onSuccess: () {
+                                // Success callback - submission completed
+                                log(
+                                  'Answer submission completed successfully',
+                                  name: 'PlayerAnswerView',
                                 );
                               },
-                            ),
-                          ),
-                        ],
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),

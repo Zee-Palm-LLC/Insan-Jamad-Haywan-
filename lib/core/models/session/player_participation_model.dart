@@ -22,6 +22,7 @@ class PlayerParticipationModel {
   final int? finalRank;
   final DateTime lastHeartbeat;
   final bool isOnline;
+  final bool hasUsedDoublePoints;
 
   PlayerParticipationModel({
     required this.playerId,
@@ -43,6 +44,7 @@ class PlayerParticipationModel {
     this.finalRank,
     required this.lastHeartbeat,
     this.isOnline = true,
+    this.hasUsedDoublePoints = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -70,6 +72,7 @@ class PlayerParticipationModel {
       'finalRank': finalRank,
       'lastHeartbeat': Timestamp.fromDate(lastHeartbeat),
       'isOnline': isOnline,
+      'hasUsedDoublePoints': hasUsedDoublePoints,
     };
   }
 
@@ -111,6 +114,7 @@ class PlayerParticipationModel {
       finalRank: json['finalRank'] as int?,
       lastHeartbeat: (json['lastHeartbeat'] as Timestamp).toDate(),
       isOnline: json['isOnline'] as bool? ?? true,
+      hasUsedDoublePoints: json['hasUsedDoublePoints'] as bool? ?? false,
     );
   }
 
@@ -139,6 +143,7 @@ class PlayerParticipationModel {
     int? finalRank,
     DateTime? lastHeartbeat,
     bool? isOnline,
+    bool? hasUsedDoublePoints,
   }) {
     return PlayerParticipationModel(
       playerId: playerId ?? this.playerId,
@@ -160,6 +165,7 @@ class PlayerParticipationModel {
       finalRank: finalRank ?? this.finalRank,
       lastHeartbeat: lastHeartbeat ?? this.lastHeartbeat,
       isOnline: isOnline ?? this.isOnline,
+      hasUsedDoublePoints: hasUsedDoublePoints ?? this.hasUsedDoublePoints,
     );
   }
 }

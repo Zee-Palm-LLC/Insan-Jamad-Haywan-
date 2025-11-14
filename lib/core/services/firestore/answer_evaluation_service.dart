@@ -58,6 +58,7 @@ class AnswerEvaluationService {
               'playerId': answer.playerId,
               'playerName': answer.playerName,
               'answers': answer.answers,
+              'usedDoublePoints': answer.usedDoublePoints,
             },
           )
           .toList();
@@ -162,22 +163,16 @@ class AnswerEvaluationService {
           }
 
           String statusStr;
-          int pointsValue;
+          int basePointsValue;
 
           if (evaluationMap['status'] is String) {
             statusStr = evaluationMap['status'] as String;
-            final status = AnswerEvaluationStatus.fromJson(statusStr);
-            pointsValue = evaluationMap['points'] as int? ?? status.points;
           } else if (evaluationMap['status'] is Map) {
             final statusMap = evaluationMap['status'] as Map<String, dynamic>;
             statusStr =
                 statusMap['value'] as String? ??
                 statusMap['status'] as String? ??
                 'incorrect';
-            pointsValue =
-                statusMap['points'] as int? ??
-                evaluationMap['points'] as int? ??
-                0;
           } else {
             developer.log(
               'Invalid status format for category $category: ${evaluationMap['status']}',
@@ -187,15 +182,36 @@ class AnswerEvaluationService {
           }
 
           final status = AnswerEvaluationStatus.fromJson(statusStr);
+          basePointsValue = status.points;
           final isCorrect = status == AnswerEvaluationStatus.correct;
           if (isCorrect) correctCount++;
 
+          final finalPoints = answer.usedDoublePoints && isCorrect
+              ? basePointsValue * 2
+              : basePointsValue;
+
           categoryScores[category] = CategoryScore(
             isCorrect: isCorrect,
-            points: pointsValue,
+            points: finalPoints,
             status: status,
           );
-          totalScore += pointsValue;
+          totalScore += finalPoints;
+        }
+
+        if (answer.usedDoublePoints) {
+          int scoreWithoutDouble = 0;
+          for (final score in categoryScores.values) {
+            if (score.isCorrect && answer.usedDoublePoints) {
+              scoreWithoutDouble += score.points ~/ 2;
+            } else {
+              scoreWithoutDouble += score.points;
+            }
+          }
+          developer.log(
+            'Double points applied for player ${answer.playerId}: '
+            'original score would be $scoreWithoutDouble, final score: $totalScore',
+            name: 'AnswerEvaluationService',
+          );
         }
 
         final scoringResult = ScoringResult(

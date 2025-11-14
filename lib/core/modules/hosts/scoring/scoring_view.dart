@@ -94,6 +94,7 @@ class _ScoringViewState extends State<ScoringView> {
             'points': categoryScore?.points ?? 0,
             'isCorrect': categoryScore?.isCorrect ?? false,
             'status': categoryScore?.status,
+            'usedDoublePoints': playerAnswer.usedDoublePoints,
           });
         }
       }
@@ -122,6 +123,9 @@ class _ScoringViewState extends State<ScoringView> {
                     status:
                         categoryAnswers[i]['status'] as AnswerEvaluationStatus?,
                     index: i + 1,
+                    usedDoublePoints:
+                        categoryAnswers[i]['usedDoublePoints'] as bool? ??
+                        false,
                     onReportTap:
                         categoryAnswers[i]['status'] ==
                             AnswerEvaluationStatus.unclear

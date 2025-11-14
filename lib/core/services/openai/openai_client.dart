@@ -186,6 +186,12 @@ class OpenAIClient {
     buffer.writeln('Player Answers:');
     for (final answer in playerAnswers) {
       buffer.writeln('Player ID: ${answer['playerId']}');
+      final usedDoublePoints = answer['usedDoublePoints'] as bool? ?? false;
+      if (usedDoublePoints) {
+        buffer.writeln(
+          '  [DOUBLE POINTS ACTIVE - Correct answers will be doubled]',
+        );
+      }
       final answers = answer['answers'] as Map<String, String>;
       // Map lowercase category keys to capitalized display names
       final categoryMap = {

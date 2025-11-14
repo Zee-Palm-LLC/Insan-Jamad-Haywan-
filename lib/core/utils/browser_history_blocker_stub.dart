@@ -1,0 +1,3 @@
+void initializeBrowserHistoryBlocker() {}
+
+void disposeBrowserHistoryBlocker() {}

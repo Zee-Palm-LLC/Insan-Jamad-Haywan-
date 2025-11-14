@@ -38,6 +38,7 @@ class AnswerController extends GetxController {
   DateTime? _roundEndTime;
 
   bool doublePoints = false;
+  bool? _canUseDoublePoints;
   int secondsRemaining = 0;
   int totalSeconds = 60;
   bool isAutoSubmittedOnTimeout = false;
@@ -50,12 +51,49 @@ class AnswerController extends GetxController {
   void onInit() {
     super.onInit();
     _setupAnswerSubmissionListener();
+    _checkDoublePointsAvailability();
   }
 
   void _setupAnswerSubmissionListener() {
     // This will be called when the round starts to listen for answer submissions
     log('Answer submission listener setup completed', name: 'AnswerController');
   }
+
+  Future<void> _checkDoublePointsAvailability() async {
+    try {
+      String? playerId = await AppService.getPlayerId();
+      if (playerId == null) {
+        _canUseDoublePoints = false;
+        return;
+      }
+
+      final sessionId = lobbyController.lobby.id ?? "";
+      if (sessionId.isEmpty) {
+        _canUseDoublePoints = false;
+        return;
+      }
+
+      final participation = await _db.getPlayer(sessionId, playerId);
+      _canUseDoublePoints = participation == null
+          ? true
+          : !(participation.hasUsedDoublePoints);
+      log(
+        'Double points availability checked: $_canUseDoublePoints '
+        '(player: $playerId, hasUsedDoublePoints: ${participation?.hasUsedDoublePoints})',
+        name: 'AnswerController',
+      );
+      update();
+    } catch (e) {
+      log(
+        'Error checking double points availability: $e',
+        name: 'AnswerController',
+      );
+      _canUseDoublePoints = false;
+      update();
+    }
+  }
+
+  bool get canUseDoublePoints => _canUseDoublePoints ?? false;
 
   void startTimer() {
     secondsRemaining = totalSeconds;
@@ -82,6 +120,8 @@ class AnswerController extends GetxController {
         name: 'AnswerController',
       );
       _resetForNewRound(currentRound);
+    } else {
+      _checkDoublePointsAvailability();
     }
 
     log(
@@ -133,6 +173,12 @@ class AnswerController extends GetxController {
     // Reset submission state
     isSubmitting = false;
     isEvaluating = false;
+
+    // Reset double points for new round
+    doublePoints = false;
+
+    // Re-check double points availability for the new round
+    _checkDoublePointsAvailability();
 
     // Cancel previous answer submission listener
     _answerSubmissionListener?.cancel();
@@ -387,6 +433,9 @@ class AnswerController extends GetxController {
 
       log('Submitting answers for player: $playerId', name: 'AnswerController');
 
+      final usedDoublePoints =
+          !isAutoSubmitted && doublePoints && canUseDoublePoints;
+
       await FirebaseFirestoreService.instance.submitAnswers(
         sessionId,
         PlayerAnswerModel(
@@ -401,9 +450,28 @@ class AnswerController extends GetxController {
           },
           submittedAt: DateTime.now(),
           timeRemaining: totalSeconds - secondsRemaining,
+          usedDoublePoints: usedDoublePoints,
           votes: VotesReceived(votes: {}),
         ),
       );
+
+      if (usedDoublePoints) {
+        try {
+          await _db.updatePlayer(sessionId, playerId, {
+            'hasUsedDoublePoints': true,
+          });
+          _canUseDoublePoints = false;
+          log(
+            'Marked double points as used for player: $playerId',
+            name: 'AnswerController',
+          );
+        } catch (e) {
+          log(
+            'Error updating hasUsedDoublePoints: $e',
+            name: 'AnswerController',
+          );
+        }
+      }
 
       log(
         'Successfully submitted answers for player: $playerId',
@@ -421,7 +489,18 @@ class AnswerController extends GetxController {
   }
 
   void toggleDoublePoints() {
+    if (!canUseDoublePoints) {
+      AppToaster.showToast(
+        "Double Points Already Used",
+        subTitle:
+            "You have already used your double points option in a previous round.",
+        type: ToastificationType.warning,
+      );
+      return;
+    }
+
     doublePoints = !doublePoints;
+    log('Double points toggled: $doublePoints', name: 'AnswerController');
     update();
   }
 
