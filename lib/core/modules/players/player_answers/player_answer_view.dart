@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:go_router/go_router.dart';
 import 'package:insan_jamd_hawan/core/controllers/answer_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
@@ -148,10 +147,12 @@ class _PlayerAnswerViewState extends State<PlayerAnswerView> {
                               children: [
                                 SvgPicture.asset(AppAssets.timerIcon),
                                 SizedBox(width: 8.w),
-                                Text(
-                                  controller.formattedTime,
-                                  style: AppTypography.kRegular19.copyWith(
-                                    color: AppColors.kRed500,
+                                Obx(
+                                  () => Text(
+                                    controller.formattedTime.value,
+                                    style: AppTypography.kRegular19.copyWith(
+                                      color: AppColors.kRed500,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -186,7 +187,7 @@ class _PlayerAnswerViewState extends State<PlayerAnswerView> {
                                     roughness: 0.5,
                                   ),
                                 ),
-                                child: controller.doublePoints
+                                child: controller.doublePoints.value
                                     ? SvgPicture.asset(AppAssets.done)
                                     : null,
                               ),
@@ -237,22 +238,20 @@ class _PlayerAnswerViewState extends State<PlayerAnswerView> {
                         controller: controller.countryController,
                       ),
                       SizedBox(height: 24.h),
-                      Expanded(
-                        child: PrimaryButton(
-                          text: 'Stop and Submit',
-                          width: double.infinity,
-                          onPressed: () {
-                            controller.submitAnswers(
-                              onSuccess: () {
-                                // Success callback - submission completed
-                                log(
-                                  'Answer submission completed successfully',
-                                  name: 'PlayerAnswerView',
-                                );
-                              },
-                            );
-                          },
-                        ),
+                      PrimaryButton(
+                        text: 'Stop and Submit',
+                        width: double.infinity,
+                        onPressed: () {
+                          controller.submitAnswers(
+                            onSuccess: () {
+                              // Success callback - submission completed
+                              log(
+                                'Answer submission completed successfully',
+                                name: 'PlayerAnswerView',
+                              );
+                            },
+                          );
+                        },
                       ),
                     ],
                   ),

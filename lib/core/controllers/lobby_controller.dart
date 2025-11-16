@@ -2,12 +2,17 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:get/get.dart';
+import 'package:insan_jamd_hawan/config/routes/router.dart';
+import 'package:insan_jamd_hawan/core/controllers/join_lobby_controller.dart';
+import 'package:insan_jamd_hawan/core/controllers/lobby_creation_controller.dart';
 import 'package:insan_jamd_hawan/core/data/enums/enums.dart';
 import 'package:insan_jamd_hawan/core/models/game/lobby_settings.dart';
 import 'package:insan_jamd_hawan/core/models/game/player_state_model.dart';
 import 'package:insan_jamd_hawan/core/models/lobby/lobby_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
+import 'package:insan_jamd_hawan/core/modules/main_menu/main_menu_page.dart';
 import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
@@ -19,12 +24,12 @@ import 'package:insan_jamd_hawan/core/services/sse_connection_manager.dart';
 import 'package:insan_jamd_hawan/core/utils/network_call.dart';
 import 'package:insan_jamd_hawan/core/utils/toastification.dart';
 import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
+import 'package:go_router/go_router.dart';
 
 class LobbyController extends GetxController {
   final LobbyModel lobby;
 
   LobbyController({required this.lobby}) : _currentRoom = lobby;
-
   LobbyModel _currentRoom;
   LobbyModel get currentRoom => _currentRoom;
 
@@ -33,7 +38,6 @@ class LobbyController extends GetxController {
   late final LobbyFirestoreSyncService _firestoreSync;
   late final RoomManagerService _roomManager;
 
-  PageController pageController = PageController();
   final TextEditingController _answerController = TextEditingController();
   TextEditingController get answerController => _answerController;
 
@@ -289,30 +293,16 @@ class LobbyController extends GetxController {
   }
 
   Future<void> deleteRoom({bool shouldPop = true}) async {
-    await NetworkCall.networkCall(
-      onComplete: (_) {
-        _cleanup();
-        log('Room deleted successfully', name: 'deleteRoom');
-        if (shouldPop) {
-          if (navigatorKey.currentState?.canPop() ?? false) {
-            navigatorKey.currentState!.pop();
-          }
-        }
-      },
-      onError: (e, s) => AppToaster.showToast(
-        'Error',
-        subTitle: e.toString(),
-        type: ToastificationType.error,
-      ),
-      future: () async {
-        String? playerId = await AppService.getPlayerId();
-        if (playerId == null) {
-          throw Exception('Player ID is not set');
-        }
-
-        await _roomManager.deleteLobby(lobby.id!);
-      },
-    );
+    if (Get.isRegistered<LobbyCreationController>()) {
+      Get.delete<LobbyCreationController>(force: true);
+    }
+    if (Get.isRegistered<JoinLobbyController>()) {
+      Get.delete<JoinLobbyController>(force: true);
+    }
+    if (Get.isRegistered<LobbyController>()) {
+      Get.delete<LobbyController>(force: true);
+    }
+    await _roomManager.deleteLobby(lobby.id!);
   }
 
   Future<void> removePlayer({
@@ -326,7 +316,6 @@ class LobbyController extends GetxController {
         String? targetPlayerId = playerIdToKick ?? playerId;
 
         if (targetPlayerId == _currentRoom.host && targetPlayerId == playerId) {
-          _cleanup();
           if (navigatorKey.currentState?.canPop() ?? false) {
             navigatorKey.currentState!.pop();
           }
@@ -338,6 +327,8 @@ class LobbyController extends GetxController {
         type: ToastificationType.error,
       ),
       future: () async {
+        Get.delete<JoinLobbyController>();
+        Get.delete<LobbyCreationController>();
         await _roomManager.removePlayer(
           lobbyId: lobby.id!,
           currentRoom: _currentRoom,
@@ -356,7 +347,7 @@ class LobbyController extends GetxController {
         subTitle: 'You are no longer a member of this lobby',
         type: ToastificationType.error,
       );
-      _cleanup();
+      reInitAllServices();
       Future.delayed(const Duration(milliseconds: 500), () {
         if (navigatorKey.currentState?.canPop() ?? false) {
           navigatorKey.currentState!.pop();
@@ -420,18 +411,14 @@ class LobbyController extends GetxController {
         break;
 
       case RoomStatus.deleted:
-        _cleanup();
+        reInitAllServices();
         log('Room deleted', name: 'RoomStatus');
         AppToaster.showToast(
           'Lobby Deleted',
           subTitle: 'The lobby has been deleted by the host.',
           type: ToastificationType.error,
         );
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (navigatorKey.currentState?.canPop() ?? false) {
-            navigatorKey.currentState!.pop();
-          }
-        });
+        navigatorKey.currentContext?.go(MainMenuPage.path);
         break;
 
       case RoomStatus.updated:
@@ -528,13 +515,6 @@ class LobbyController extends GetxController {
     });
   }
 
-  void _cleanup() {
-    _playerHeartbeatTimer?.cancel();
-    _sseManager.cancelReconnect();
-    _markPlayerOffline();
-    update();
-  }
-
   Future<void> _markPlayerOffline() async {
     try {
       final playerId = await AppService.getPlayerId();
@@ -559,5 +539,48 @@ class LobbyController extends GetxController {
     _answerController.dispose();
     _markPlayerOffline();
     super.onClose();
+  }
+
+  void resetController() {
+    _selectedMaxRounds = null;
+    _selectedTimePerRound = null;
+    _answerController.clear();
+    update();
+  }
+
+  Future<void> reInitAllServices() async {
+    await NetworkCall.networkCall(
+      onError: (e, s) => AppToaster.showToast(
+        'Error',
+        subTitle: 'Failed to reinitialize services: ${e.toString()}',
+        type: ToastificationType.error,
+      ),
+      future: () async {
+        log('Re-initializing all services', name: 'ServiceReInit');
+
+        _playerHeartbeatTimer?.cancel();
+        _playerHeartbeatTimer = null;
+
+        _sseManager.dispose();
+
+        await _markPlayerOffline();
+
+        _initializeServices();
+
+        await _sseManager.connect();
+
+        _startPlayerHeartbeat();
+
+        log('All services re-initialized successfully', name: 'ServiceReInit');
+
+        AppToaster.showToast(
+          'Reconnected',
+          subTitle: 'Successfully reconnected to the lobby',
+          type: ToastificationType.success,
+        );
+
+        update();
+      },
+    );
   }
 }

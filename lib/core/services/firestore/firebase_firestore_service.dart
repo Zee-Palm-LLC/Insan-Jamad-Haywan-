@@ -294,6 +294,73 @@ class FirebaseFirestoreService {
         .toList();
   }
 
+  Future<List<PlayerAnswerModel>> getAllSpecialRoundAnswers(
+    String sessionId,
+  ) async {
+    final snapshot = await _answersCollection(sessionId, 'special_round').get();
+    return snapshot.docs
+        .map((doc) => PlayerAnswerModel.fromFirestore(doc))
+        .toList();
+  }
+
+  Future<void> submitSpecialRoundAnswer(
+    String sessionId,
+    PlayerAnswerModel answer,
+  ) async {
+    await _answerDoc(
+      sessionId,
+      'special_round',
+      answer.playerId,
+    ).set(answer.toJson());
+  }
+
+  Stream<List<PlayerAnswerModel>> streamSpecialRoundAnswers(String sessionId) {
+    try {
+      return _answersCollection(sessionId, 'special_round').snapshots().map((
+        snapshot,
+      ) {
+        var data = snapshot.docs
+            .map(
+              (doc) => PlayerAnswerModel.fromJson(
+                doc.data() as Map<String, dynamic>,
+              ),
+            )
+            .toList();
+        log("Special round answers stream: ${data.length} answers");
+        return data;
+      });
+    } catch (e) {
+      log('Error streaming special round answers: $e');
+      rethrow;
+    }
+  }
+
+  Stream<int> streamSpecialRoundSubmissionCount(String sessionId) {
+    try {
+      return _answersCollection(sessionId, 'special_round').snapshots().map((
+        answersSnapshot,
+      ) {
+        final submittedPlayerIds = answersSnapshot.docs.toSet();
+        return submittedPlayerIds.length;
+      });
+    } catch (e) {
+      log('Error streaming special round submission count: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateSpecialRoundAnswerScoring(
+    String sessionId,
+    String playerId,
+    Map<String, dynamic> scoring,
+  ) async {
+    await _answerDoc(
+      sessionId,
+      'special_round',
+      playerId,
+    ).update({'scoring': scoring});
+  }
+
   Future<void> saveGamePlayer(GamePlayerModel player) async {
     await _gamePlayerDoc(player.playerId).set(player.toJson());
   }
@@ -477,6 +544,24 @@ class FirebaseFirestoreService {
     }
   }
 
+  Future<void> updateSurpriseRoundedStatus(
+    String sessionId,
+    String roundNumber,
+    //complete
+    //pending
+    //started
+    String status,
+  ) async {
+    try {
+      await _sessionDoc(
+        sessionId,
+      ).set({'roundStatus_$roundNumber': status}, SetOptions(merge: true));
+    } on Exception catch (e) {
+      log("Error while updating round status $e");
+      throw Exception("Error $e");
+    }
+  }
+
   Stream<Map<String, String>?> streamRoundStatus(String sessionId) {
     return _sessionDoc(sessionId).snapshots().map((snapshot) {
       final data = snapshot.data() as Map<String, dynamic>?;
@@ -488,11 +573,15 @@ class FirebaseFirestoreService {
       data.forEach((key, value) {
         if (key.startsWith('roundStatus_')) {
           if (value is String) {
+            log(
+              "We are in the streamRoundStatus and this is the key $key and this is the value $value",
+            );
             final roundNumber = key.substring('roundStatus_'.length);
             roundStatusMap[roundNumber] = value;
           }
         }
       });
+      log("This is the round status map $roundStatusMap");
 
       return roundStatusMap.isNotEmpty ? roundStatusMap : null;
     });
@@ -561,7 +650,9 @@ class FirebaseFirestoreService {
             final submittedPlayerIds = answersSnapshot.docs.toSet();
             return submittedPlayerIds.length;
           });
-      log("This is the data that we have ${data.length}");
+      log(
+        "This is the data that we have  streamCountOfPlayersWhoSubmittedAnswers${data.length}",
+      );
       return data;
     } catch (e) {
       log('Error streaming count of players who submitted answers: $e');
@@ -882,6 +973,33 @@ class FirebaseFirestoreService {
     } on Exception catch (e) {
       log("Error while updating isWheelSpinning $e");
       throw Exception("Error $e");
+    }
+  }
+
+  Future<GameSessionModel?> getCurrentGameSession(String sessionId) async {
+    try {
+      final docSnapshot = await _sessionDoc(sessionId).get();
+
+      if (!docSnapshot.exists) {
+        log('Session document does not exist: $sessionId');
+        return null;
+      }
+
+      final data = docSnapshot.data() as Map<String, dynamic>?;
+      if (data == null) {
+        log('Session document data is null: $sessionId');
+        return null;
+      }
+
+      return GameSessionModel.fromJson(data);
+    } catch (e, s) {
+      log(
+        'Error getting current game session: $e',
+        name: 'FirebaseFirestoreService',
+        error: e,
+        stackTrace: s,
+      );
+      rethrow;
     }
   }
 }

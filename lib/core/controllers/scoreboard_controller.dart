@@ -215,6 +215,26 @@ class ScoreboardController extends GetxController {
         ),
       );
     }
+
+    shownPlayers.clear();
+    for (int i = 0; i < players.length; i++) {
+      final player = players[i];
+      int totalPointsGained = totalPointsGainedMap[player.playerId] ?? 0;
+      if (totalPointsGained == 0 && player.scoresByRound.isNotEmpty) {
+        for (final roundScore in player.scoresByRound.values) {
+          totalPointsGained += roundScore as int;
+        }
+      }
+
+      shownPlayers.add({
+        'playerId': player.playerId,
+        'name': player.playerName,
+        'avatarUrl': player.playerAvatar ?? '',
+        'totalPoints': player.totalScore,
+        'pointsGained': totalPointsGained,
+        'rank': i + 1,
+      });
+    }
   }
 
   String getPositionText(int rank) {

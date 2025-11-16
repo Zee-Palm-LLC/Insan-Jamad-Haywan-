@@ -61,9 +61,9 @@ class _VotingViewState extends State<VotingView> {
         if (controller.votingCompleted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
-              context.pushReplacementNamed(
+              context.go(
                 ScoringView.name,
-                pathParameters: {'letter': widget.selectedAlphabet},
+                //pathParameters: {'letter': widget.selectedAlphabet},
                 extra: {'selectedAlphabet': widget.selectedAlphabet},
               );
             }

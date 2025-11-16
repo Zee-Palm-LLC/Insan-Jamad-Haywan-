@@ -14,7 +14,6 @@ import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/player_list_card.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
-import 'package:insan_jamd_hawan/core/modules/widgets/buttons/custom_icon_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
@@ -65,7 +64,7 @@ class _GameLobbyViewState extends State<GameLobbyView> {
         );
         _hasNavigated = true;
         if (context.mounted) {
-          context.push(LetterGeneratorView.path);
+          context.go(LetterGeneratorView.path);
         }
       }
     }
@@ -152,18 +151,24 @@ class _GameLobbyViewState extends State<GameLobbyView> {
                                   widget.controller.selectedMaxRounds ?? 3,
                               selectedTime:
                                   widget.controller.selectedTimePerRound ?? 60,
-                              onRoundSelected: (value) {
-                                widget.controller.onMaxRoundChange(value);
-                                if (value != null) {
-                                  FirebaseFirestoreService.instance
-                                      .updateMaxRounds(lobbyId, value);
-                                }
-                              },
-                              onTimeSelected: (value) {
-                                widget.controller.onTimePerRoundChange(value);
-                                FirebaseFirestoreService.instance
-                                    .updateTimePerRound(lobbyId, value);
-                              },
+                              onRoundSelected: amHost
+                                  ? (value) {
+                                      widget.controller.onMaxRoundChange(value);
+                                      if (value != null) {
+                                        FirebaseFirestoreService.instance
+                                            .updateMaxRounds(lobbyId, value);
+                                      }
+                                    }
+                                  : (_) {},
+                              onTimeSelected: amHost
+                                  ? (value) {
+                                      widget.controller.onTimePerRoundChange(
+                                        value,
+                                      );
+                                      FirebaseFirestoreService.instance
+                                          .updateTimePerRound(lobbyId, value);
+                                    }
+                                  : (_) {},
                               onKickPlayer: amHost
                                   ? (playerId) =>
                                         widget.controller.removePlayer(
@@ -182,7 +187,7 @@ class _GameLobbyViewState extends State<GameLobbyView> {
                                     : () async {
                                         await widget.controller.startGame();
                                         if (context.mounted) {
-                                          context.push(
+                                          context.go(
                                             LetterGeneratorView.path,
                                             extra: widget.controller,
                                           );

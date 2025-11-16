@@ -16,7 +16,6 @@ import 'package:insan_jamd_hawan/firebase_options.dart';
 import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
 late FirebaseApp insanJamdHawanFirebaseApp;
-
 void main() async {
   FlutterError.onError = (details) {
     developer.log(

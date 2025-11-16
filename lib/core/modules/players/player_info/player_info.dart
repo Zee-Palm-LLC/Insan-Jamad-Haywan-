@@ -21,45 +21,45 @@ class PlayerInfo extends StatelessWidget {
   static const String path = '/player-info';
   static const String name = 'PlayerInfo';
 
-  Widget _buildProfileImagePicker(PlayerInfoController controller) {
-    return GestureDetector(
-      onTap: controller.pickProfileImage,
-      child: Container(
-        width: 120.w,
-        height: 120.w,
-        decoration: ShapeDecoration(
-          shape: RoughCircleBorder.all(
-            color: AppColors.kGray600,
-            width: 2.w,
-            roughness: 0.8,
-          ),
-          color: AppColors.kGreen100,
-        ),
-        child: controller.profileImagePath != null
-            ? ClipOval(
-                child: kIsWeb
-                    ? (controller.profileImagePath!.startsWith('blob:') ||
-                              controller.profileImagePath!.startsWith('data:'))
-                          ? Image.network(
-                              controller.profileImagePath!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return _buildPlaceholder();
-                              },
-                            )
-                          : _buildPlaceholder()
-                    : Image.file(
-                        File(controller.profileImagePath!),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildPlaceholder();
-                        },
-                      ),
-              )
-            : _buildPlaceholder(),
-      ),
-    );
-  }
+  // Widget _buildProfileImagePicker(PlayerInfoController controller) {
+  //   return GestureDetector(
+  //     onTap: controller.pickProfileImage,
+  //     child: Container(
+  //       width: 120.w,
+  //       height: 120.w,
+  //       decoration: ShapeDecoration(
+  //         shape: RoughCircleBorder.all(
+  //           color: AppColors.kGray600,
+  //           width: 2.w,
+  //           roughness: 0.8,
+  //         ),
+  //         color: AppColors.kGreen100,
+  //       ),
+  //       child: controller.profileImagePath != null
+  //           ? ClipOval(
+  //               child: kIsWeb
+  //                   ? (controller.profileImagePath!.startsWith('blob:') ||
+  //                             controller.profileImagePath!.startsWith('data:'))
+  //                         ? Image.network(
+  //                             controller.profileImagePath!,
+  //                             fit: BoxFit.cover,
+  //                             errorBuilder: (context, error, stackTrace) {
+  //                               return _buildPlaceholder();
+  //                             },
+  //                           )
+  //                         : _buildPlaceholder()
+  //                   : Image.file(
+  //                       File(controller.profileImagePath!),
+  //                       fit: BoxFit.cover,
+  //                       errorBuilder: (context, error, stackTrace) {
+  //                         return _buildPlaceholder();
+  //                       },
+  //                     ),
+  //             )
+  //           : _buildPlaceholder(),
+  //     ),
+  //   );
+  // }
 
   Widget _buildPlaceholder() {
     return Center(
@@ -129,7 +129,7 @@ class PlayerInfo extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 30.h),
-                      Center(child: _buildProfileImagePicker(controller)),
+                      //Center(child: _buildProfileImagePicker(controller)),
                       SizedBox(height: 32.h),
                       TextField(
                         controller: controller.usernameController,
@@ -138,10 +138,36 @@ class PlayerInfo extends StatelessWidget {
                         ),
                         enabled: !controller.isLoading,
                         textAlign: TextAlign.center,
+                        maxLength: 18, // Enforce max length for username
                         decoration: InputDecoration(
                           hintText: 'Enter your username',
+                          counterText:
+                              '', // Hide default character counter if desired
                         ),
+                        onChanged: (value) {
+                          if (value.length > 18) {
+                            controller.usernameController.text = value
+                                .substring(0, 18);
+                            controller.usernameController.selection =
+                                TextSelection.fromPosition(
+                                  TextPosition(offset: 18),
+                                );
+                          }
+                        },
                       ),
+                      // You could add a warning if needed
+                      if (controller.usernameController.text.length >= 18)
+                        Padding(
+                          padding: EdgeInsets.only(top: 4.h),
+                          child: Text(
+                            "Username cannot be longer than 18 characters.",
+                            style: AppTypography.kRegular19.copyWith(
+                              color: AppColors.kRed500,
+                              fontSize: 12.sp,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       SizedBox(height: 20.h),
                       Center(
                         child: PrimaryButton(

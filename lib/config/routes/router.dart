@@ -15,6 +15,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/waiting_view/waiting_view.dart';
 import 'package:insan_jamd_hawan/core/modules/main_menu/main_menu_page.dart';
 import 'package:insan_jamd_hawan/core/modules/players/player_info/player_info.dart';
+import 'package:insan_jamd_hawan/core/modules/special_round/surprise_round_answer_view.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/insan-jamd-hawan.dart';
 
@@ -115,18 +116,16 @@ class AppRouter {
         builder: (context, state) => const ScoreboardView(),
       ),
       GoRoute(
-        path: FinalRoundView.path,
-        name: FinalRoundView.name,
+        path: SurpriseRoundView.path,
+        name: SurpriseRoundView.name,
         builder: (context, state) {
-          final isPlayer = state.uri.queryParameters['isPlayer'] == 'true';
-          final letter = state.uri.queryParameters['letter'];
-          final category = state.uri.queryParameters['category'];
-          return FinalRoundView(
-            isPlayer: isPlayer,
-            selectedAlphabet: letter,
-            category: category,
-          );
+          return SurpriseRoundView();
         },
+      ),
+      GoRoute(
+        path: SurpriseRoundAnswerView.path,
+        name: SurpriseRoundAnswerView.name,
+        builder: (context, state) => SurpriseRoundAnswerView(),
       ),
       GoRoute(
         path: FinalRoundScoreboard.path,

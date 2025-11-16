@@ -6,6 +6,8 @@ enum RoomStatus { connected, deleted, updated, waiting, error }
 
 enum PlayerAction { submitAnswer, vote, chooseOption, skip }
 
+enum SpecialRoundStatus { started, cancelled, completed, pending }
+
 enum GameCategory {
   general,
   science,

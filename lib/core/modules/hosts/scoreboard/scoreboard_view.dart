@@ -15,6 +15,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_special_ro
 import 'package:insan_jamd_hawan/core/modules/widgets/buttons/primary_button.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
+import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
 
 class ScoreboardView extends StatelessWidget {
@@ -22,7 +23,8 @@ class ScoreboardView extends StatelessWidget {
 
   static const String path = '/scoreboard';
   static const String name = 'Scoreboard';
-
+  WheelController get wheelController => Get.find<WheelController>();
+  LobbyController get lobbyController => Get.find<LobbyController>();
   @override
   Widget build(BuildContext context) {
     final bool isDesktop = Responsive.isDesktop(context);
@@ -93,7 +95,10 @@ class ScoreboardView extends StatelessWidget {
                               ),
                             ),
                           )
-                        else if (controller.shownPlayers.isEmpty)
+                        else if (controller.isFinalRound
+                            ? (controller.podiumPlayers.isEmpty &&
+                                  controller.listPlayers.isEmpty)
+                            : controller.shownPlayers.isEmpty)
                           Center(
                             child: Padding(
                               padding: EdgeInsets.all(40.h),
@@ -254,7 +259,23 @@ class ScoreboardView extends StatelessWidget {
                             ),
                         ],
                         SizedBox(height: 30.h),
-                        StartNextRoundButton(),
+                        if (wheelController.maxRoundSelectedByTheHost ==
+                            wheelController.currentRound) ...[
+                          PrimaryButton(
+                            text: 'Start Surprise Round',
+                            onPressed: () {
+                              FirebaseFirestoreService.instance
+                                  .updateSurpriseRoundedStatus(
+                                    lobbyController.lobby.id ?? 'N/A',
+                                    'special_round',
+                                    "special_round",
+                                  );
+                              context.go(SurpriseRoundView.path);
+                            },
+                          ),
+                        ] else ...[
+                          StartNextRoundButton(),
+                        ],
                       ],
                     ),
                   ),
@@ -300,13 +321,12 @@ class StartNextRoundButton extends StatelessWidget {
                 ? 'Start Final Round'
                 : 'Start Next Round',
             onPressed: () {
-              if (isAboutToStartFinalRound) {
-                wheelController.startNextRound();
-                context.pushReplacement(FinalRoundView.path);
-              } else {
-                wheelController.startNextRound();
-                context.pushReplacement(LetterGeneratorView.path);
-              }
+              // if (isAboutToStartFinalRound) {
+              //   wheelController.startNextRound();
+              //   context.go(FinalRoundView.path);
+              // } else {
+              wheelController.startNextRound();
+              context.go(LetterGeneratorView.path);
             },
           );
         } else {

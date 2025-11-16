@@ -60,7 +60,8 @@ class _AnswersHostViewState extends State<AnswersHostView>
       if (status == AnimationStatus.completed) {
         if (Get.isRegistered<AnswerController>()) {
           try {
-            Get.find<AnswerController>().startTimerSync();
+            // Get.find<AnswerController>().startTimerSync();
+            log('Timer sync started for host', name: 'AnswersHostView');
           } catch (e) {
             log('Error starting timer sync: $e', name: 'AnswersHostView');
           }
@@ -118,7 +119,8 @@ class _AnswersHostViewState extends State<AnswersHostView>
         if (lobbyId != null && lobbyId.isNotEmpty) {
           _db.updateStartCounting(lobbyId, false);
         }
-        Get.find<AnswerController>().cancelTimerSync();
+        // Get.find<AnswerController>().cancelTimerSync();
+        log('Timer sync cancelled for host', name: 'AnswersHostView');
       } catch (e) {
         log('Error cancelling timer subscription: $e', name: 'AnswersHostView');
       }
@@ -178,10 +180,12 @@ class _AnswersHostViewState extends State<AnswersHostView>
                           children: [
                             SvgPicture.asset(AppAssets.timerIcon),
                             SizedBox(width: 8.w),
-                            Text(
-                              controller.formattedTime,
-                              style: AppTypography.kRegular19.copyWith(
-                                color: AppColors.kRed500,
+                            Obx(
+                              () => Text(
+                                controller.formattedTime.value,
+                                style: AppTypography.kRegular19.copyWith(
+                                  color: AppColors.kRed500,
+                                ),
                               ),
                             ),
                           ],
@@ -260,7 +264,7 @@ class _AnswersHostViewState extends State<AnswersHostView>
             scale: _letterScaleAnimation,
             child: InkWell(
               onTap: () {
-                context.push(
+                context.go(
                   ScoringView.path.replaceAll(
                     ':letter',
                     widget.letter ?? wheelController.selectedLetter ?? '',
@@ -307,7 +311,7 @@ class _AnswersHostViewState extends State<AnswersHostView>
       duration: const Duration(milliseconds: 600),
       onPressed: () {
         wheelController.updateRoundStatus('started');
-        context.push(PlayerAnswerView.path);
+        context.go(PlayerAnswerView.path);
       },
     );
   }

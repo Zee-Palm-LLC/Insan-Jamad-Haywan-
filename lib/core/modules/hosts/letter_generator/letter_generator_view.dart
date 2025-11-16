@@ -119,7 +119,7 @@ class LetterGeneratorView extends StatelessWidget {
                                         controller.wheelSelectedIndex ?? 0,
                                     participants: [],
                                   );
-                                  context.push(
+                                  context.go(
                                     AnswersHostView.path,
                                     extra: {
                                       'sessionId': controller.lobby.id,

@@ -1,3 +1,5 @@
+import 'package:insan_jamd_hawan/core/data/enums/enums.dart';
+
 class GameConfigModel {
   final int maxRounds;
   final int currentRound;
@@ -8,7 +10,9 @@ class GameConfigModel {
   final bool? startCounting;
   final Map<String, String>? roundStatus;
   final bool? isWheelSpinning;
-
+  final SpecialRoundStatus? specialRoundStatus;
+  final String? specialRoundCategory;
+  final String? specialRoundLetter;
   GameConfigModel({
     required this.maxRounds,
     required this.defaultTimePerRound,
@@ -19,6 +23,9 @@ class GameConfigModel {
     this.startCounting,
     this.roundStatus,
     this.isWheelSpinning,
+    this.specialRoundStatus,
+    this.specialRoundCategory,
+    this.specialRoundLetter,
   });
 
   Map<String, dynamic> toJson() {
@@ -32,6 +39,9 @@ class GameConfigModel {
       'startCounting': startCounting,
       'roundStatus': roundStatus?.map((key, value) => MapEntry(key, value)),
       'isWheelSpinning': isWheelSpinning,
+      'specialRoundStatus': specialRoundStatus?.name,
+      'specialRoundCategory': specialRoundCategory,
+      'specialRoundLetter': specialRoundLetter,
     };
   }
 
@@ -52,6 +62,11 @@ class GameConfigModel {
         json['scoreConfig'] as Map<String, dynamic>? ?? {},
       ),
       isWheelSpinning: json['isWheelSpinning'] as bool? ?? false,
+      specialRoundStatus: json['specialRoundStatus'] == null
+          ? null
+          : SpecialRoundStatus.values.byName(json['specialRoundStatus']),
+      specialRoundCategory: json['specialRoundCategory'] as String?,
+      specialRoundLetter: json['specialRoundLetter'] as String?,
     );
   }
 
@@ -62,6 +77,9 @@ class GameConfigModel {
     ScoreConfigModel? scoreConfig,
     int? currentRound,
     bool? isWheelSpinning,
+    SpecialRoundStatus? specialRoundStatus,
+    String? specialRoundCategory,
+    String? specialRoundLetter,
   }) {
     return GameConfigModel(
       maxRounds: maxRounds ?? this.maxRounds,
@@ -71,6 +89,9 @@ class GameConfigModel {
       scoreConfig: scoreConfig ?? this.scoreConfig,
       currentRound: currentRound ?? this.currentRound,
       isWheelSpinning: isWheelSpinning ?? this.isWheelSpinning,
+      specialRoundStatus: specialRoundStatus ?? this.specialRoundStatus,
+      specialRoundCategory: specialRoundCategory ?? this.specialRoundCategory,
+      specialRoundLetter: specialRoundLetter ?? this.specialRoundLetter,
     );
   }
 }

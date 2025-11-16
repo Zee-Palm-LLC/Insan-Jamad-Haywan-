@@ -11,6 +11,7 @@ import 'package:insan_jamd_hawan/core/controllers/wheel_controller.dart';
 import 'package:insan_jamd_hawan/core/data/constants/constants.dart';
 import 'package:insan_jamd_hawan/core/models/session/player_answer_model.dart';
 import 'package:insan_jamd_hawan/core/models/session/session_enums.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_special_round_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/game_logo.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/lobby_bg.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/game_lobby/components/room_code_text.dart';
@@ -18,6 +19,7 @@ import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/scoreboard_view.d
 import 'package:insan_jamd_hawan/core/modules/hosts/scoreboard/final_round_scoreboard.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/scoring/components/scoring_playing_tile.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/voting/voting_view.dart';
+import 'package:insan_jamd_hawan/core/modules/special_round/surprise_round_answer_view.dart';
 import 'package:insan_jamd_hawan/core/modules/widgets/cards/desktop_wrapper.dart';
 import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:insan_jamd_hawan/responsive.dart';
@@ -57,11 +59,10 @@ class _ScoringViewState extends State<ScoringView> {
             wheelController.maxRoundSelectedByTheHost ==
             wheelController.currentRound;
 
-        if (isFinalRound) {
-          context.pushReplacement(FinalRoundScoreboard.path);
-        } else {
-          context.pushReplacement(ScoreboardView.path);
-        }
+        // if (isFinalRound) {
+        //   context.go(SurpriseRoundView.path);
+        // } else {
+        context.go(ScoreboardView.path);
       }
     });
   }
@@ -130,11 +131,11 @@ class _ScoringViewState extends State<ScoringView> {
                         categoryAnswers[i]['status'] ==
                             AnswerEvaluationStatus.unclear
                         ? () {
-                            context.pushNamed(
+                            context.go(
                               VotingView.name,
-                              pathParameters: {
-                                'letter': widget.selectedAlphabet,
-                              },
+                              // pathParameters: {
+                              //   'letter': widget.selectedAlphabet,
+                              // },
                               extra: {
                                 'selectedAlphabet': widget.selectedAlphabet,
                               },
@@ -236,7 +237,7 @@ class _ScoringViewState extends State<ScoringView> {
                                     SizedBox(width: 8.w),
                                     InkWell(
                                       onTap: () {
-                                        context.push(VotingView.path);
+                                        context.go(VotingView.path);
                                       },
                                       child: Container(
                                         height: 50.h,

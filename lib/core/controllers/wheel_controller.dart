@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import 'package:insan_jamd_hawan/core/controllers/answer_controller.dart';
 import 'package:insan_jamd_hawan/core/controllers/lobby_controller.dart';
 import 'package:insan_jamd_hawan/core/models/session/round_model.dart';
+import 'package:insan_jamd_hawan/core/modules/hosts/final_round/final_special_round_view.dart';
 import 'package:insan_jamd_hawan/core/modules/hosts/letter_generator/letter_generator_view.dart';
+import 'package:insan_jamd_hawan/core/modules/special_round/surprise_round_answer_view.dart';
 import 'package:insan_jamd_hawan/core/services/cache/helper.dart';
 import 'package:insan_jamd_hawan/core/services/firestore/firebase_firestore_service.dart';
 import 'package:go_router/go_router.dart';
@@ -119,11 +121,20 @@ class WheelController extends GetxController {
               "This is the event that we got from stream from firebase for round status update $status",
             );
             String? pId = await AppService.getPlayerId();
+            if ((status?.keys.contains("special_round") ??
+                    false ||
+                        (status?.values.contains("special_round") ?? false)) &&
+                pId != lobbyController.lobby.host) {
+              resetController();
+              Get.find<AnswerController>().restController();
+              navigatorKey.currentContext?.go(SurpriseRoundView.path);
+              return;
+            }
             if ((status?.values.contains("pending") ?? false) &&
                 pId != lobbyController.lobby.host) {
               resetController();
               Get.find<AnswerController>().restController();
-              navigatorKey.currentContext?.replace(LetterGeneratorView.path);
+              navigatorKey.currentContext?.go(LetterGeneratorView.path);
             }
           },
           onError: (error) {
