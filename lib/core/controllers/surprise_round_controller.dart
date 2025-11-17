@@ -186,8 +186,8 @@ class SurpriseRoundController extends GetxController {
 
   void _startPeriodicTimer() async {
     _timerSubscription?.cancel();
-    totalSeconds = 60;
-    secondsRemaining = 60;
+    totalSeconds = 30;
+    secondsRemaining = 30;
 
     // Periodic timer
     _timerSubscription =
@@ -560,7 +560,7 @@ class SurpriseRoundController extends GetxController {
 
     // Reset all flags
     secondsRemaining = 0;
-    totalSeconds = 60;
+    totalSeconds = 30;
     formattedTime.value = '00:00';
     isSubmitting = false;
     isEvaluating = false;
