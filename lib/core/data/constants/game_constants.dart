@@ -1,24 +1,11 @@
 class GameConstants {
   static List<String> categories = [
-    "Food",
     "Color",
     "Movie",
-    "Country",
+    "Tv Show",
     "Brand",
-    "Profession",
-    "Sport",
-    "Fruit",
-    "Vegetable",
-    "Clothing",
-    "Vehicle",
-    "Song",
-    "Book",
-    "Celebrity",
-    "TV Show",
-    "Technology",
-    "Flower",
-    "Drink",
-    "Superhero",
-    "Language",
+    "Car Item",
+    "Kitchen Item",
+    "Event",
   ];
 }

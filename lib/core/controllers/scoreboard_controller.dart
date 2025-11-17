@@ -128,6 +128,8 @@ class ScoreboardController extends GetxController {
     log('Total rounds: ${allRounds.length}');
 
     final totalPointsGainedMap = <String, int>{};
+    
+    // Calculate points from regular rounds
     for (final round in allRounds) {
       final roundAnswers = await _firestore.getAllAnswers(
         sessionId,
@@ -139,7 +141,22 @@ class ScoreboardController extends GetxController {
             (totalPointsGainedMap[answer.playerId] ?? 0) + roundScore;
       }
     }
-    log('Total points gained map: $totalPointsGainedMap');
+    
+    // Add points from special round
+    try {
+      final specialRoundAnswers = await _firestore.getAllSpecialRoundAnswers(sessionId);
+      log('Special round answers found: ${specialRoundAnswers.length}');
+      for (final answer in specialRoundAnswers) {
+        final roundScore = answer.scoring?.roundScore ?? 0;
+        totalPointsGainedMap[answer.playerId] =
+            (totalPointsGainedMap[answer.playerId] ?? 0) + roundScore;
+        log('Added special round score for ${answer.playerId}: $roundScore');
+      }
+    } catch (e) {
+      log('No special round answers or error fetching them: $e');
+    }
+    
+    log('Total points gained map (including special round): $totalPointsGainedMap');
 
     podiumPlayers = [];
     for (int i = 0; i < players.length && i < 3; i++) {

@@ -31,7 +31,7 @@ class SurpriseRoundController extends GetxController {
   RxString formattedTime = '00:00'.obs;
 
   int secondsRemaining = 0;
-  int totalSeconds = 60;
+  int totalSeconds = 30;
   bool isAutoSubmittedOnTimeout = false;
   bool isAutoSubmittedByOtherPlayer = false;
   Set<String> playersWhoSubmitted = <String>{};
@@ -58,7 +58,7 @@ class SurpriseRoundController extends GetxController {
       if (session != null) {
         _selectedLetter = session.config.specialRoundLetter;
         _selectedCategory = session.config.specialRoundCategory;
-        _categoryScore = 10;
+        _categoryScore = 20;
 
         update();
       }
@@ -478,7 +478,7 @@ class SurpriseRoundController extends GetxController {
                 sessionId: sessionId,
                 letter: _selectedLetter!,
                 category: _selectedCategory!,
-                categoryScore: _categoryScore ?? 10,
+                categoryScore: _categoryScore ?? 20,
               );
 
               // Hide progress dialog

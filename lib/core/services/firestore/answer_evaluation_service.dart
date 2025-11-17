@@ -240,34 +240,6 @@ class AnswerEvaluationService {
           name: 'AnswerEvaluationService',
         );
       }
-
-      // final ambiguousAnswers = await _votingService.createVotingItems(
-      //   sessionId: sessionId,
-      //   roundNumber: roundNumber,
-      //   allAnswers: allAnswers,
-      // );
-
-      // if (ambiguousAnswers.isNotEmpty) {
-      //   developer.log(
-      //     'Created ${ambiguousAnswers.length} voting items for ambiguous answers',
-      //     name: 'AnswerEvaluationService',
-      //   );
-      //   await _firestore.updateRoundStatus(
-      //     sessionId,
-      //     roundNumber,
-      //     RoundStatus.voting,
-      //   );
-      // } else {
-      //   developer.log(
-      //     'Evaluation completed for round $roundNumber - no ambiguous answers, proceeding to scoring',
-      //     name: 'AnswerEvaluationService',
-      //   );
-      //     await _firestore.updateRoundStatus(
-      //       sessionId,
-      //       roundNumber,
-      //       RoundStatus.completed,
-      //     );
-      //   }
     } catch (e, stackTrace) {
       developer.log(
         'Error evaluating round: $e',
@@ -349,7 +321,8 @@ class AnswerEvaluationService {
 
   String _normalizeCategoryName(String category) {
     if (category.isEmpty) return category;
-    final categoryMap = {
+    
+    final standardCategoryMap = {
       'name': 'Name',
       'object': 'Object',
       'animal': 'Animal',
@@ -358,15 +331,27 @@ class AnswerEvaluationService {
     };
 
     final lowerCategory = category.toLowerCase();
-    return categoryMap[lowerCategory] ??
-        (category[0].toUpperCase() + category.substring(1).toLowerCase());
+    
+    // Check if it's a standard category
+    if (standardCategoryMap.containsKey(lowerCategory)) {
+      return standardCategoryMap[lowerCategory]!;
+    }
+    
+    // For custom categories (like "tv show"), capitalize each word
+    final words = lowerCategory.split(' ');
+    final capitalizedWords = words.map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1);
+    }).toList();
+    
+    return capitalizedWords.join(' ');
   }
 
   Future<void> evaluateSpecialRound({
     required String sessionId,
     required String letter,
     required String category,
-    int categoryScore = 10,
+    int categoryScore = 20,
   }) async {
     try {
       developer.log(
@@ -432,10 +417,11 @@ class AnswerEvaluationService {
           )
           .toList();
 
-      // Evaluate using OpenAI
+      // Evaluate using OpenAI - specify only the category being evaluated
       final evaluationResult = await _openAI.evaluateAnswers(
         selectedLetter: letter,
         playerAnswers: playerAnswersData,
+        categoriesToEvaluate: [categoryKey],
       );
 
       final evaluations =
@@ -556,18 +542,20 @@ class AnswerEvaluationService {
           scoringResult.toJson(),
         );
 
-        // Note: For special rounds, we might not want to update player scores
-        // in the same way as regular rounds. You can uncomment and modify this
-        // if you want to update player scores for special rounds.
-        // await _updatePlayerScore(
-        //   sessionId,
-        //   answer.playerId,
-        //   -1, // Use -1 or a special identifier for special rounds
-        //   finalPoints,
-        // );
+        // Get the session to find the current round number for special rounds
+        final session = await _firestore.getSession(sessionId);
+        final specialRoundNumber = session?.config.maxRounds ?? 0;
+        
+        // Update player score with special round points
+        await _updatePlayerScore(
+          sessionId,
+          answer.playerId,
+          specialRoundNumber, // Use maxRounds as the special round number
+          finalPoints,
+        );
 
         developer.log(
-          'Evaluated player ${answer.playerId} for special round: $finalPoints points',
+          'Evaluated player ${answer.playerId} for special round: $finalPoints points (round $specialRoundNumber)',
           name: 'AnswerEvaluationService',
         );
       }

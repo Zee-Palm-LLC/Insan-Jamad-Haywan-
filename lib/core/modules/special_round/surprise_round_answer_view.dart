@@ -163,12 +163,7 @@ class _SurpriseRoundAnswerViewState extends State<SurpriseRoundAnswerView> {
                     onPressed: controller.isSubmitting
                         ? null
                         : () {
-                            controller.submitAnswer(
-                              onSuccess: () {
-                                context.go(FinalRoundScoreboard.path);
-                                log('Answer submitted successfully');
-                              },
-                            );
+                            controller.submitAnswer(onSuccess: () {});
                           },
                   ),
                 ],

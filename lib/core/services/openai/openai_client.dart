@@ -49,6 +49,7 @@ class OpenAIClient {
   Future<Map<String, dynamic>> evaluateAnswers({
     required String selectedLetter,
     required List<Map<String, dynamic>> playerAnswers,
+    List<String>? categoriesToEvaluate,
   }) async {
     if (!_isInitialized || _dio == null) {
       throw Exception(
@@ -57,7 +58,11 @@ class OpenAIClient {
     }
 
     try {
-      final prompt = _buildEvaluationPrompt(selectedLetter, playerAnswers);
+      final prompt = _buildEvaluationPrompt(
+        selectedLetter,
+        playerAnswers,
+        categoriesToEvaluate: categoriesToEvaluate,
+      );
 
       final response = await _dio!.post(
         '/chat/completions',
@@ -102,10 +107,39 @@ class OpenAIClient {
 
   String _buildEvaluationPrompt(
     String selectedLetter,
-    List<Map<String, dynamic>> playerAnswers,
-  ) {
+    List<Map<String, dynamic>> playerAnswers, {
+    List<String>? categoriesToEvaluate,
+  }) {
     // Normalize the selected letter to uppercase for consistent comparison
     final normalizedLetter = selectedLetter.toUpperCase();
+
+    // Default to all categories if not specified
+    final standardCategoryMap = {
+      'name': 'Name',
+      'object': 'Object',
+      'animal': 'Animal',
+      'plant': 'Plant',
+      'country': 'Country',
+    };
+
+    // Filter categories if specific ones are requested
+    Map<String, String> activeCategories = standardCategoryMap;
+    if (categoriesToEvaluate != null && categoriesToEvaluate.isNotEmpty) {
+      activeCategories = {};
+      
+      for (final categoryKey in categoriesToEvaluate) {
+        final normalizedKey = categoryKey.toLowerCase();
+        
+        // Check if it's a standard category
+        if (standardCategoryMap.containsKey(normalizedKey)) {
+          activeCategories[normalizedKey] = standardCategoryMap[normalizedKey]!;
+        } else {
+          // For custom categories (like "tv show"), capitalize properly
+          final displayName = _capitalizeCategory(categoryKey);
+          activeCategories[normalizedKey] = displayName;
+        }
+      }
+    }
 
     final buffer = StringBuffer();
     buffer.writeln(
@@ -131,21 +165,27 @@ class OpenAIClient {
     );
     buffer.writeln('');
     buffer.writeln('3. CATEGORY VALIDATION:');
-    buffer.writeln(
-      '   - Name: First names, last names, or common nicknames (e.g., "Alice", "Bob", "Mohammed")',
-    );
-    buffer.writeln(
-      '   - Object: Physical objects, items, things (e.g., "apple", "book", "car")',
-    );
-    buffer.writeln(
-      '   - Animal: Living creatures, animals (e.g., "ant", "elephant", "dog")',
-    );
-    buffer.writeln(
-      '   - Plant: Trees, flowers, vegetables, fruits (e.g., "apple", "rose", "oak")',
-    );
-    buffer.writeln(
-      '   - Country: Official country names (e.g., "Argentina", "Australia", "Afghanistan")',
-    );
+    
+    // Define validation rules for each category
+    final categoryDescriptions = {
+      'name': 'First names, last names, or common nicknames (e.g., "Alice", "Bob", "Mohammed")',
+      'object': 'Physical objects, items, things (e.g., "apple", "book", "car")',
+      'animal': 'Living creatures, animals (e.g., "ant", "elephant", "dog")',
+      'plant': 'Trees, flowers, vegetables, fruits (e.g., "apple", "rose", "oak")',
+      'country': 'Official country names (e.g., "Argentina", "Australia", "Afghanistan")',
+    };
+    
+    activeCategories.forEach((key, displayName) {
+      if (categoryDescriptions.containsKey(key)) {
+        buffer.writeln('   - $displayName: ${categoryDescriptions[key]}');
+      } else {
+        // For custom categories, provide a generic description
+        buffer.writeln(
+          '   - $displayName: Valid entries that belong to this category and start with "$normalizedLetter"',
+        );
+      }
+    });
+    
     buffer.writeln(
       '   - If answer does not fit the category, mark as "incorrect"',
     );
@@ -192,17 +232,10 @@ class OpenAIClient {
           '  [DOUBLE POINTS ACTIVE - Correct answers will be doubled]',
         );
       }
-      final answers = answer['answers'] as Map<String, String>;
-      // Map lowercase category keys to capitalized display names
-      final categoryMap = {
-        'name': 'Name',
-        'object': 'Object',
-        'animal': 'Animal',
-        'plant': 'Plant',
-        'country': 'Country',
-      };
-      categoryMap.forEach((key, displayName) {
-        final answerText = answers[key] ?? '';
+      final answers = answer['answers'] as Map<String, dynamic>;
+      // Only show categories that are being evaluated
+      activeCategories.forEach((key, displayName) {
+        final answerText = answers[key]?.toString() ?? '';
         buffer.writeln('  $displayName: "$answerText"');
       });
       buffer.writeln('');
@@ -214,17 +247,22 @@ class OpenAIClient {
     buffer.writeln('{');
     buffer.writeln('  "evaluations": {');
     buffer.writeln('    "EXACT_PLAYER_ID": {');
-    buffer.writeln('      "Name": {"status": "correct", "points": 10},');
-    buffer.writeln('      "Object": {"status": "duplicate", "points": 5},');
-    buffer.writeln('      "Animal": {"status": "incorrect", "points": 0},');
-    buffer.writeln('      "Plant": {"status": "unclear", "points": 0},');
-    buffer.writeln('      "Country": {"status": "correct", "points": 10}');
+    // Build example format with only active categories
+    final exampleStatuses = ['correct', 'duplicate', 'incorrect', 'unclear', 'correct'];
+    int statusIndex = 0;
+    activeCategories.forEach((key, displayName) {
+      final status = exampleStatuses[statusIndex % exampleStatuses.length];
+      final points = status == 'correct' ? 10 : (status == 'duplicate' ? 5 : 0);
+      final comma = activeCategories.keys.last == key ? '' : ',';
+      buffer.writeln('      "$displayName": {"status": "$status", "points": $points}$comma');
+      statusIndex++;
+    });
     buffer.writeln('    }');
     buffer.writeln('  }');
     buffer.writeln('}');
     buffer.writeln('');
     buffer.writeln('POINTS SYSTEM:');
-    buffer.writeln('  - correct: 10 points');
+    buffer.writeln('  - correct: 10 points (base, may be multiplied for special rounds)');
     buffer.writeln('  - duplicate: 5 points');
     buffer.writeln('  - incorrect: 0 points');
     buffer.writeln('  - unclear: 0 points');
@@ -235,7 +273,25 @@ class OpenAIClient {
     buffer.writeln(
       'Evaluate consistently and fairly. Apply the same standards to all players.',
     );
+    buffer.writeln(
+      'ONLY evaluate the categories listed above. Do not include categories that are not in the player answers.',
+    );
 
     return buffer.toString();
+  }
+
+  /// Capitalizes category name properly
+  /// Examples: "tv show" -> "Tv Show", "name" -> "Name"
+  String _capitalizeCategory(String category) {
+    if (category.isEmpty) return category;
+    
+    // Split by spaces and capitalize each word
+    final words = category.toLowerCase().split(' ');
+    final capitalizedWords = words.map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1);
+    }).toList();
+    
+    return capitalizedWords.join(' ');
   }
 }

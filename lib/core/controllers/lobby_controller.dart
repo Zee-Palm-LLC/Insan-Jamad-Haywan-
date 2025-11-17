@@ -460,8 +460,12 @@ class LobbyController extends GetxController {
         _currentRoom.settings?.status != GameStatus.started;
 
     if (joinedPlayers.isNotEmpty) {
-      AudioService.instance.playAudio(AudioType.playerJoinPop);
+      final currentPlayerId = AppService.getPlayerName();
+      if (!joinedPlayers.contains(currentPlayerId)) {
+        AudioService.instance.playAudio(AudioType.playerJoinPop);
+      }
     }
+    
     if (gameStarted) {
       AudioService.instance.playAudio(AudioType.gameStartWhoosh);
     }

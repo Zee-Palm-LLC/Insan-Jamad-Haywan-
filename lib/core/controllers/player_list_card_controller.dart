@@ -5,6 +5,7 @@ import 'package:insan_jamd_hawan/core/services/audio/audio_service.dart';
 
 class PlayerListCardController extends GetxController {
   final List<String> joinedPlayers = [];
+  final Set<String> _playersWithSoundPlayed = {};
   List<String> _allPlayers = [];
   bool _isSimulating = false;
   bool _isInitialized = false;
@@ -14,11 +15,18 @@ class PlayerListCardController extends GetxController {
     if (_isInitialized) return;
     _isInitialized = true;
     _allPlayers = players;
+    _playersWithSoundPlayed.addAll(players);
     _simulateJoining();
   }
 
   void updatePlayers(List<String> players) {
     final newPlayers = players.where((p) => !joinedPlayers.contains(p)).toList();
+    
+    final leftPlayers = joinedPlayers.where((p) => !players.contains(p)).toList();
+    for (final leftPlayer in leftPlayers) {
+      _playersWithSoundPlayed.remove(leftPlayer);
+    }
+    
     if (newPlayers.isEmpty) {
       joinedPlayers.removeWhere((p) => !players.contains(p));
       _allPlayers = players;
@@ -49,7 +57,12 @@ class PlayerListCardController extends GetxController {
       if (!joinedPlayers.contains(player) && _allPlayers.contains(player)) {
         joinedPlayers.add(player);
         update();
-        await AudioService.instance.playAudio(AudioType.lobbyJoin);
+        
+        // Only play audio if this player hasn't had their join sound played before
+        if (!_playersWithSoundPlayed.contains(player)) {
+          _playersWithSoundPlayed.add(player);
+          await AudioService.instance.playAudio(AudioType.lobbyJoin);
+        }
       }
     }
 
@@ -59,6 +72,7 @@ class PlayerListCardController extends GetxController {
   @override
   void onClose() {
     _isSimulating = false;
+    _playersWithSoundPlayed.clear();
     super.onClose();
   }
 }
